@@ -1,7 +1,7 @@
 import './styles/panel.css';
 import './styles/gridstack.min.css';
 
-import {EventSystemAdapter, SystemPlugin} from './../../DTCD-SDK/index';
+import {EventSystemAdapter, SystemPlugin, GUIDSystemAdapter} from './../../DTCD-SDK/index';
 
 export class Plugin extends SystemPlugin {
 	static getRegistrationMeta() {
@@ -17,6 +17,7 @@ export class Plugin extends SystemPlugin {
 		this.guid = guid;
 		this.editMode = false;
 		this.eventSystem = new EventSystemAdapter();
+		this.GUIDSystem = new GUIDSystemAdapter();
 
 		const el = document.createElement('div');
 		el.setAttribute('class', 'grid-stack');
@@ -37,10 +38,9 @@ export class Plugin extends SystemPlugin {
 		});
 
 		this.addingOptions = {
+			autoPosition: true,
 			w: 3,
 			h: 3,
-			x: 1,
-			y: 1,
 		};
 
 		// MenuPanel
@@ -67,14 +67,13 @@ export class Plugin extends SystemPlugin {
 		this.eventSystem.createActionByCallback('compactAllPanels', guid, this.compactAllPanels.bind(this));
 	}
 
-	createWorkspaceCell(x = null, y = null, w = null, h = null) {
+	createWorkspaceCell(autoPosition = true, w = null, h = null, x = null, y = null) {
 		//TODO: Prettify next assignments
-		x = Number.isInteger(x) ? x : this.addingOptions.x;
-		y = Number.isInteger(y) ? y : this.addingOptions.y;
 		w = Number.isInteger(w) ? w : this.addingOptions.w;
 		h = Number.isInteger(h) ? h : this.addingOptions.h;
+		x = Number.isInteger(x) ? x : this.addingOptions.x;
+		y = Number.isInteger(y) ? y : this.addingOptions.y;
 
-		let guidOfPanelInCell;
 		const currentNumberPanel = new Number(this.numberPanelIncrement);
 
 		// TODO: Replace on WEB-COMPONENT with style!
@@ -94,7 +93,7 @@ export class Plugin extends SystemPlugin {
 				</div>
 			</div>
 		`,
-			{x, y, w, h, id: currentNumberPanel}
+			{autoPosition, x, y, w, h, id: currentNumberPanel}
 		);
 
 		const selectEl = document.createElement('select');
@@ -109,33 +108,27 @@ export class Plugin extends SystemPlugin {
 			}
 		});
 
+		let instanceOfPanel;
 		selectEl.onchange = evt => {
 			const idCell = evt.target.parentElement.getAttribute('id');
 			const workspaceCellID = idCell.split('-').pop();
 
 			// nextline for removing guid from systemGUID
-			guidOfPanelInCell = this.mountWorkspacePanel(workspaceCellID, this.pluginRegistrator.getPlugin(selectEl.value));
+			instanceOfPanel = this.installPlugin(selectEl.value, `#panel-${workspaceCellID}`);
 		};
 
 		document.getElementById(`panel-${currentNumberPanel}`).appendChild(selectEl);
 
 		// closePanelBtn
 		document.getElementById(`closePanelBtn-${currentNumberPanel}`).addEventListener('click', evt => {
-			console.log(evt);
 			const el = document.querySelector(`[gs-id="${currentNumberPanel}"]`);
 			this.grid.removeWidget(el);
-			this.systemGUID.removeGUID(guidOfPanelInCell);
+			this.GUIDSystem.removeInstance(instanceOfPanel);
 		});
 
 		this.numberPanelIncrement++;
 
 		return currentNumberPanel;
-	}
-
-	mountWorkspacePanel(workspaceCellID, plugin) {
-		const selector = `#panel-${workspaceCellID}`; // TODO: ADD PREFIX AFTER
-		const guid = this.pluginRegistrator.installPanel(selector, plugin);
-		return guid;
 	}
 
 	// Public actions
@@ -144,9 +137,8 @@ export class Plugin extends SystemPlugin {
 		this.createWorkspaceCell();
 	}
 
-	_mountPanelForDevelop(name, x = null, y = null, w = null, h = null) {
-		const numberPanel = this.createWorkspaceCell(x, y, w, h);
-		this.mountWorkspacePanel(numberPanel, this.pluginRegistrator.getPlugin(name));
+	_mountPanelForDevelop(name, w = null, h = null, x = null, y = null) {
+		const numberPanel = this.createWorkspaceCell(false, w, h, x, y);
 	}
 
 	compactAllPanels() {
