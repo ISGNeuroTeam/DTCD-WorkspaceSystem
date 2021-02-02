@@ -9,7 +9,7 @@ endef
 
 PROJECT_NAME = WorkspaceSystem
 
-GENERATE_VERSION = $(shell jq .version ./package.json )
+GENERATE_VERSION = $(shell jq .version ./${PROJECT_NAME}/package.json )
 GENERATE_BRANCH = $(shell git name-rev $$(git rev-parse HEAD) | cut -d\  -f2 | sed -re 's/^(remotes\/)?origin\///' | tr '/' '_')
 
 SET_VERSION = $(eval VERSION=$(GENERATE_VERSION))
@@ -34,10 +34,10 @@ build: ${PROJECT_NAME}/node_modules $(COMPONENTS)
 	echo Build!
 	$(SET_VERSION)
 	echo Start command: npm run build
-	npm run build 
+	npm run build --prefix ./$(PROJECT_NAME)
 	mkdir build
 	mkdir build/$(PROJECT_NAME)
-	cp -r ./dist/* ./build/$(PROJECT_NAME)
+	cp -r ./$(PROJECT_NAME)/dist/* ./build/$(PROJECT_NAME)
 	cp README.md build/
 	cp CHANGELOG.md build/
 	cp LICENSE.md build/
@@ -46,14 +46,18 @@ clean:
 	# required section"
 	$(SET_VERSION)
 	$(SET_PROJECT_NAME)
-	rm -rf ./build ./dist ./node_modules/ ./*-lock.* $(PROJECT_NAME)-*.tar.gz
+	rm -rf build ./$(PROJECT_NAME)/dist ./$(PROJECT_NAME)/node_modules/ ./*-lock.* ./$(PROJECT_NAME)/*-lock.* $(PROJECT_NAME)-*.tar.gz \
 
 test: $(PROJECT_NAME)/node_modules
 	# required section
 	echo "Testing..."
 	echo $(PROJECT_NAME)
-	npm run test
+	npm run --prefix ./$(PROJECT_NAME) test
+	
+dev: ${PROJECT_NAME}/node_modules $(COMPONENTS)
+	echo Development mode!
+	npm run dev --prefix ./$(PROJECT_NAME)
 
 $(PROJECT_NAME)/node_modules:
 	echo Start command: npm i
-	npm i 
+	npm i --prefix ./$(PROJECT_NAME)

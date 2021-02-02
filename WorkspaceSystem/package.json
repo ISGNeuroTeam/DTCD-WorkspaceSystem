@@ -1,11 +1,11 @@
 {
-  "name": "WorkspaceSystem",
-  "version": "1.0.0",
+  "name": "workspace-system",
+  "version": "0.1.0",
   "description": "WorkspaceSystem",
   "main": "index.js",
   "private": "true",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest",
     "build": "rollup -c",
     "dev": "rollup -cw"
   },
@@ -16,6 +16,7 @@
     "@rollup/plugin-commonjs": "^17.0.0",
     "@rollup/plugin-node-resolve": "^11.0.1",
     "gridstack": "^3.1.2",
+    "jest": "^26.6.3",
     "rollup": "^2.35.1",
     "rollup-plugin-styles": "^3.11.0"
   }

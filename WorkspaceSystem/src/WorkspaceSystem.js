@@ -1,7 +1,7 @@
 import './styles/panel.css';
 import './styles/gridstack.min.css';
 
-import {EventSystemAdapter, SystemPlugin, GUIDSystemAdapter} from './../../DTCD-SDK/index';
+import {EventSystemAdapter, SystemPlugin, GUIDSystemAdapter} from './../../../DTCD-SDK/index';
 
 export class Plugin extends SystemPlugin {
 	static getRegistrationMeta() {
@@ -113,7 +113,7 @@ export class Plugin extends SystemPlugin {
 			const idCell = evt.target.parentElement.getAttribute('id');
 			const workspaceCellID = idCell.split('-').pop();
 
-			// nextline for removing guid from systemGUID
+			// The next line is needed to delete an instance
 			instanceOfPanel = this.installPlugin(selectEl.value, `#panel-${workspaceCellID}`);
 		};
 
