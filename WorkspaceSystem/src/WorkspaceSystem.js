@@ -1,7 +1,7 @@
 import './styles/panel.css';
 import './styles/gridstack.min.css';
 
-import {EventSystemAdapter, SystemPlugin, GUIDSystemAdapter} from './../../../DTCD-SDK/index';
+import {EventSystemAdapter, SystemPlugin} from './../../../DTCD-SDK/index';
 
 export class Plugin extends SystemPlugin {
 	static getRegistrationMeta() {
@@ -12,12 +12,11 @@ export class Plugin extends SystemPlugin {
 		};
 	}
 
-	constructor(guid, styleSystem) {
+	constructor(guid) {
 		super();
 		this.guid = guid;
 		this.editMode = false;
 		this.eventSystem = new EventSystemAdapter();
-		this.GUIDSystem = new GUIDSystemAdapter();
 
 		const el = document.createElement('div');
 		el.setAttribute('class', 'grid-stack');
@@ -59,7 +58,7 @@ export class Plugin extends SystemPlugin {
 			}
 		);
 
-		this.installPlugin('MenuPanel', `#panel-MenuPanel`, styleSystem);
+		this.installPlugin('MenuPanel', `#panel-MenuPanel`);
 
 		this.numberPanelIncrement = 0;
 		this.eventSystem.createActionByCallback('changeMode', guid, this.changeMode.bind(this));
@@ -123,7 +122,7 @@ export class Plugin extends SystemPlugin {
 		document.getElementById(`closePanelBtn-${currentNumberPanel}`).addEventListener('click', evt => {
 			const el = document.querySelector(`[gs-id="${currentNumberPanel}"]`);
 			this.grid.removeWidget(el);
-			this.GUIDSystem.removeInstance(instanceOfPanel);
+			this.uninstallPluginByInstance(instanceOfPanel);
 		});
 
 		this.numberPanelIncrement++;
