@@ -4,7 +4,7 @@ const watch = Boolean(process.env.ROLLUP_WATCH);
 
 const pluginName = 'WorkspaceSystem';
 
-const fileDest = watch ? `./../../DTCD/server/plugins/${pluginName}.js` : `./dist/${pluginName}.js`;
+const fileDest = watch ? `./../../DTCD/server/plugins/${pluginName}.js` : `./build/${pluginName}.js`;
 
 const plugins = [styles({mode: 'inject'})];
 

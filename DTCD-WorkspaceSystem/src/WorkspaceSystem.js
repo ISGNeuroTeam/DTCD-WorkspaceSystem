@@ -1,7 +1,7 @@
 import './styles/panel.css';
 import './styles/gridstack.min.css';
 
-import {EventSystemAdapter, SystemPlugin} from './../../../DTCD-SDK/index';
+import {EventSystemAdapter, SystemPlugin} from './../../DTCD-SDK/index';
 
 export class Plugin extends SystemPlugin {
 	static getRegistrationMeta() {
