@@ -9,6 +9,10 @@ export class Plugin extends SystemPlugin {
 			name: 'WorkspaceSystem',
 			type: 'core',
 			title: 'Система рабочего стола',
+			version: '0.2.0',
+			withDependencies: true,
+			init: false,
+			priority: 2,
 		};
 	}
 
@@ -138,6 +142,7 @@ export class Plugin extends SystemPlugin {
 
 	_mountPanelForDevelop(name, w = null, h = null, x = null, y = null) {
 		const numberPanel = this.createWorkspaceCell(false, w, h, x, y);
+		this.installPlugin(name, `#panel-${numberPanel}`);
 	}
 
 	compactAllPanels() {
