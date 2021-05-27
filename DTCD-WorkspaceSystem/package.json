@@ -15,9 +15,11 @@
   "devDependencies": {
     "@rollup/plugin-commonjs": "^17.0.0",
     "@rollup/plugin-node-resolve": "^11.0.1",
-    "gridstack": "^3.1.2",
     "jest": "^26.6.3",
     "rollup": "^2.35.1",
     "rollup-plugin-styles": "^3.11.0"
+  },
+  "dependencies": {
+    "gridstack": "^4.2.3"
   }
 }

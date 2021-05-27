@@ -21,7 +21,7 @@ SET_PACK_NAME = $(eval PACK_NAME=$(PROJECT_NAME)-$(VERSION)-$(BRANCH).tar.gz)
 
 DEV_STORAGE = https://storage.dev.isgneuro.com/repository/components
 DTCD_SDK = DTCD-SDK
-DTCD_SDK_URL = $(DEV_STORAGE)/$(DTCD_SDK)/$(DTCD_SDK)-0.1.1-develop-0004.tar.gz
+DTCD_SDK_URL = $(DEV_STORAGE)/$(DTCD_SDK)/$(DTCD_SDK)-0.1.1-develop-0013.tar.gz
 
 .SILENT:
 
@@ -99,3 +99,4 @@ sdk:
 
 dev: build
 	cp -rf ./build/$(PROJECT_NAME) ./../DTCD/server/plugins
+	npm run dev --prefix ./$(PROJECT_NAME)
