@@ -79,6 +79,26 @@ export class Plugin extends SystemPlugin {
             guid: 'guid1',
           },
         },
+        {
+          event: {
+            name: 'WorkspaceDelete',
+            guid: 'guid2',
+          },
+          action: {
+            name: 'deleteConfiguration',
+            guid: 'guid1',
+          },
+        },
+        {
+          event: {
+            name: 'OpenEmptyWorkspace',
+            guid: 'guid2',
+          },
+          action: {
+            name: 'openEmptyWorkspace',
+            guid: 'guid1',
+          },
+        },
       ],
     };
 
@@ -116,7 +136,7 @@ export class Plugin extends SystemPlugin {
   downloadConfiguration(eventObject) {
     const { id } = eventObject.args;
     this.#interactionSystem.GETRequest(`/v2/workspace/object?id=${id}`).then(response => {
-      this.#currentConfiguration = response.data;
+      this.#currentConfiguration = JSON.parse(response.data.content);
       this.setConfiguration(this.#currentConfiguration);
     });
   }
@@ -132,6 +152,84 @@ export class Plugin extends SystemPlugin {
   setDefaultConfiguration() {
     if (this.#editMode) this.changeMode();
     this.setConfiguration(this.#defaultConfiguration);
+  }
+
+  deleteConfiguration(event) {
+    this.#interactionSystem
+      .DELETERequest('/v2/workspace/object', { data: [event.args.id] })
+      .then(res => {})
+      .catch(err => console.log(err));
+  }
+
+  openEmptyWorkspace() {
+    this.resetConfiguration();
+    this.setConfiguration({
+      systems: [
+        {
+          name: 'WorkspaceSystem',
+          version: '0.2.0',
+          guid: 'guid1',
+          metadata: {},
+        },
+      ],
+      panels: [
+        {
+          name: 'MenuPanel',
+          undeletable: true,
+          version: '1.0.0',
+          guid: 'guid2',
+          position: {
+            x: 0,
+            y: 0,
+            w: 12,
+            h: 1,
+          },
+          metadata: {},
+        },
+      ],
+      subscriptions: [
+        {
+          event: {
+            name: 'ChangeWorkspaceEditMode',
+            guid: 'guid2',
+          },
+          action: {
+            name: 'changeMode',
+            guid: 'guid1',
+          },
+        },
+        {
+          event: {
+            name: 'DefaultAddWorkspacePanel',
+            guid: 'guid2',
+          },
+          action: {
+            name: 'createEmptyCell',
+            guid: 'guid1',
+          },
+        },
+        {
+          event: {
+            name: 'CompactWorkspacePanel',
+            guid: 'guid2',
+          },
+          action: {
+            name: 'compactAllPanels',
+            guid: 'guid1',
+          },
+        },
+        {
+          event: {
+            name: 'BackToWorkspaceSelection',
+            guid: 'guid2',
+          },
+          action: {
+            name: 'setDefaultConfiguration',
+            guid: 'guid1',
+          },
+        },
+      ],
+    });
   }
   setConfiguration(configuration) {
     this.resetConfiguration();
