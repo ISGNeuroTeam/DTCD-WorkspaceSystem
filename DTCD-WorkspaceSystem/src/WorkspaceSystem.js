@@ -130,7 +130,12 @@ export class Plugin extends SystemPlugin {
     this.#numberPanelIncrement = 0;
   }
   init() {
-    this.setConfiguration(this.#defaultConfiguration);
+    const parsedURL = new URLSearchParams(window.location.search);
+    if (!parsedURL.has('workspace')) this.setConfiguration(this.#defaultConfiguration);
+    else {
+      const id = parsedURL.get('workspace');
+      this.downloadConfiguration({ args: { id } });
+    }
   }
 
   downloadConfiguration(eventObject) {
