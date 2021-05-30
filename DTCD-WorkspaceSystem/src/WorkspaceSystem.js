@@ -134,12 +134,12 @@ export class Plugin extends SystemPlugin {
     if (!parsedURL.has('workspace')) this.setConfiguration(this.#defaultConfiguration);
     else {
       const id = parsedURL.get('workspace');
-      this.downloadConfiguration({ args: { id } });
+      this.downloadConfiguration(id);
     }
   }
 
-  downloadConfiguration(eventObject) {
-    const { id } = eventObject.args;
+  downloadConfiguration(data) {
+    const id = typeof data === 'object' ? data.args.id : data;
     this.#interactionSystem.GETRequest(`/v2/workspace/object?id=${id}`).then(response => {
       this.#currentConfiguration = JSON.parse(response.data.content);
       this.setConfiguration(this.#currentConfiguration);
