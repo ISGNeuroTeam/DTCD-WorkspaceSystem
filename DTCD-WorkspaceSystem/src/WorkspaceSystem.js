@@ -115,10 +115,18 @@ export class Plugin extends SystemPlugin {
     this.#numberPanelIncrement = 0;
   }
 
-  init() {
-    this.#logSystem.debug('Initiating default workspace configuration');
-    this.#setConfiguration(this.#defaultConfiguration);
+  async init() {
+    const parsedURL = new URLSearchParams(window.location.search);
+    if (!parsedURL.has('workspace')) {
+      this.#logSystem.debug('Initializing default workspace configuration');
+      this.#setConfiguration(this.#defaultConfiguration);
+      return;
+    }
+    const id = parseInt(parsedURL.get('workspace'));
+    this.#logSystem.debug(`Initializing configuration from url param with id:${id}`);
+    await this.setConfiguration(id);
   }
+
   async getConfigurationList() {
     const response = await this.#interactionSystem.GETRequest('/v2/workspace/object');
     return response.data;
@@ -130,7 +138,6 @@ export class Plugin extends SystemPlugin {
       const response = await this.#interactionSystem.GETRequest(`/v2/workspace/object?id=${id}`);
       this.#logSystem.debug(`Parsing configuration from response`);
       this.#currentConfiguration = JSON.parse(response.data.content);
-      this.#setConfiguration(this.#currentConfiguration);
     } catch (err) {
       this.#logSystem.error(
         `Error occured while downloading workspace configuration: ${err.message}`
