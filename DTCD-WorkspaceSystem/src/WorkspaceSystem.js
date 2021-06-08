@@ -137,7 +137,11 @@ export class Plugin extends SystemPlugin {
     try {
       const response = await this.#interactionSystem.GETRequest(`/v2/workspace/object?id=${id}`);
       this.#logSystem.debug(`Parsing configuration from response`);
-      this.#currentConfiguration = JSON.parse(response.data.content);
+      const data = response.data;
+      let content = JSON.parse(data.content);
+      content['id'] = data.id;
+      content['title'] = data.title;
+      this.#currentConfiguration = content;
     } catch (err) {
       this.#logSystem.error(
         `Error occured while downloading workspace configuration: ${err.message}`
