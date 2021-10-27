@@ -1,5 +1,4 @@
 import './styles/panel.css';
-import './styles/gridstack.min.css';
 
 import {
   EventSystemAdapter,
@@ -9,7 +8,10 @@ import {
 } from './../../DTCD-SDK/index';
 
 import { GridStack } from 'gridstack';
+import 'gridstack/dist/gridstack.min.css';
 import 'gridstack/dist/h5/gridstack-dd-native';
+
+import emptyConfiguration from './utils/empty_configuration.json';
 
 export class Plugin extends SystemPlugin {
   #guid;
@@ -72,26 +74,7 @@ export class Plugin extends SystemPlugin {
       ],
       subscriptions: [],
     };
-    this.#emptyConfiguration = {
-      title: 'Empty configuration',
-      systems: [],
-      panels: [
-        {
-          name: 'MenuPanel',
-          undeletable: true,
-          version: '1.0.0',
-          guid: 'guid2',
-          position: {
-            x: 0,
-            y: 0,
-            w: 12,
-            h: 1,
-          },
-          metadata: {},
-        },
-      ],
-      subscriptions: [],
-    };
+    this.#emptyConfiguration = emptyConfiguration;
 
     this.#currentConfiguration = {};
     const el = document.createElement('div');
@@ -101,6 +84,7 @@ export class Plugin extends SystemPlugin {
 
     // GRIDSTACK INSTANCE OPTIONS
     this.#grid = GridStack.init({
+      styleInHead: true,
       float: true,
       draggable: {
         handle: '.handle-drag-of-panel',
@@ -508,5 +492,33 @@ export class Plugin extends SystemPlugin {
     this.#grid.setStatic(this.#editMode);
     this.#editMode = !this.#editMode;
     this.#logSystem.info(`Workspace edit mode turned ${this.#editMode ? 'on' : 'off'}`);
+  }
+
+  setColumn(count) {
+    this.#grid.column(count);
+    this.#grid.el.querySelectorAll('.grid-stack-item').forEach(itemEl => {
+      itemEl.style.minWidth = `${100 / count}%`;
+    });
+    const head = document.head || document.getElementsByTagName('head')[0];
+
+    let styleEl = head.querySelector('style#gridstack-custom-style');
+    if (styleEl) head.removeChild(styleEl);
+
+    styleEl = document.createElement('style');
+    styleEl.setAttribute('id', 'gridstack-custom-style');
+    styleEl.setAttribute('type', 'text/css');
+    let style = '';
+
+    for (let i = 0; i < count + 1; i++) {
+      style += `
+      .grid-stack > .grid-stack-item[gs-w='${i}']{width:${(100 / count) * i}%}
+      .grid-stack > .grid-stack-item[gs-x='${i}']{left:${(100 / count) * i}%}
+      .grid-stack > .grid-stack-item[gs-min-w='${i}']{min-width:${(100 / count) * i}%}
+      .grid-stack > .grid-stack-item[gs-max-w='${i}']{max-width:${(100 / count) * i}%}
+      `;
+    }
+
+    styleEl.innerHTML = style;
+    head.appendChild(styleEl);
   }
 }
