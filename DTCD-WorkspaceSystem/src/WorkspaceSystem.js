@@ -48,6 +48,7 @@ export class Plugin extends SystemPlugin {
     this.#logSystem = new LogSystemAdapter(this.#guid, 'WorkspaceSystem');
     this.#panels = [];
     this.#defaultConfiguration = {
+      column: 12,
       title: 'Default workspace configuration',
       systems: [
         {
@@ -147,6 +148,7 @@ export class Plugin extends SystemPlugin {
     this.#logSystem.info(
       `Setting workspace configuration (id:${configuration.id}, title:${configuration.title})`
     );
+    if (typeof configuration.column != 'undefined') this.setColumn(configuration.column);
     let guidMap = new Map();
     this.#logSystem.debug('Mapping guids of systems from configuration');
     configuration.systems.forEach(system => {
@@ -207,27 +209,26 @@ export class Plugin extends SystemPlugin {
 
   async saveConfiguration() {
     this.#logSystem.info('Saving current configuration');
-    this.#currentConfiguration.panels = [];
-    this.#panels.forEach(panel => {
-      let object;
+    this.#currentConfiguration.panels = this.#panels.map(panel => {
+      let panelMeta;
       if (!panel.plugin) {
-        object = {
+        panelMeta = {
           name: '',
           undeletable: false,
           position: panel.widget.gridstackNode._orig,
         };
       } else {
-        object = {
+        panelMeta = {
           guid: panel.guid,
           name: panel.name,
           version: panel.version,
           position: panel.widget.gridstackNode._orig,
           undeletable: panel.undeletable,
         };
-        if (!panel.plugin.getMetadata) object.metadata = {};
-        else object.metadata = panel.plugin.getMetadata();
+        if (!panel.plugin.getMetadata) panelMeta.metadata = {};
+        else panelMeta.metadata = panel.plugin.getMetadata();
       }
-      this.#currentConfiguration.panels.push(object);
+      return panelMeta;
     });
     this.#logSystem.debug('Sending updated configuration to server');
     this.#interactionSystem.PUTRequest('/v2/workspace/object', [
@@ -257,6 +258,7 @@ export class Plugin extends SystemPlugin {
     });
     this.#logSystem.debug(`Clearing panels array`);
     this.#panels = [];
+    this.setColumn();
   }
 
   async deleteConfiguration(id) {
@@ -495,30 +497,33 @@ export class Plugin extends SystemPlugin {
   }
 
   setColumn(count) {
-    this.#grid.column(count);
-    this.#grid.el.querySelectorAll('.grid-stack-item').forEach(itemEl => {
-      itemEl.style.minWidth = `${100 / count}%`;
-    });
     const head = document.head || document.getElementsByTagName('head')[0];
 
     let styleEl = head.querySelector('style#gridstack-custom-style');
     if (styleEl) head.removeChild(styleEl);
 
-    styleEl = document.createElement('style');
-    styleEl.setAttribute('id', 'gridstack-custom-style');
-    styleEl.setAttribute('type', 'text/css');
-    let style = '';
+    if (typeof count !== 'undefined') {
+      this.#grid.column(count);
+      this.#grid.el.querySelectorAll('.grid-stack-item').forEach(itemEl => {
+        itemEl.style.minWidth = `${100 / count}%`;
+      });
+      styleEl = document.createElement('style');
+      styleEl.setAttribute('id', 'gridstack-custom-style');
+      styleEl.setAttribute('type', 'text/css');
+      let style = '';
 
-    for (let i = 0; i < count + 1; i++) {
-      style += `
+      for (let i = 0; i < count + 1; i++) {
+        style += `
       .grid-stack > .grid-stack-item[gs-w='${i}']{width:${(100 / count) * i}%}
       .grid-stack > .grid-stack-item[gs-x='${i}']{left:${(100 / count) * i}%}
       .grid-stack > .grid-stack-item[gs-min-w='${i}']{min-width:${(100 / count) * i}%}
       .grid-stack > .grid-stack-item[gs-max-w='${i}']{max-width:${(100 / count) * i}%}
       `;
-    }
+      }
 
-    styleEl.innerHTML = style;
-    head.appendChild(styleEl);
+      styleEl.innerHTML = style;
+      head.appendChild(styleEl);
+      this.#currentConfiguration.column = count;
+    }
   }
 }
