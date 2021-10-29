@@ -335,7 +335,7 @@ export class Plugin extends SystemPlugin {
           }">
             <div id="panel-${panelID}">
             </div>
-          <div>
+          </div>
 				</div>
 			</div>
 		`,
