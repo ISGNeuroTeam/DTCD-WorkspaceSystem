@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - workspace templates
 - default built-in configurstion of workspace
 
+### Fixed
+- incorrect closing tag of "gridstack-content-container" div
+
 ## [0.2.0] - 2021-02-11
 
 ### Changed
