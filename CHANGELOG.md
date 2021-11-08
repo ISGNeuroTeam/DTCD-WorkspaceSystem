@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - routing by URL param "workspace"
 - workspace templates
 - default built-in configurstion of workspace
+- footer and heaader
 
 ### Fixed
 - incorrect closing tag of "gridstack-content-container" div

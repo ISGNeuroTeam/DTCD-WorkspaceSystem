@@ -1,4 +1,9 @@
 import './styles/panel.css';
+import './styles/header.css';
+import './styles/footer.css';
+
+import headerTemplate from './templates/header.html'
+import footerTemplate from './templates/footer.html'
 
 import {
   EventSystemAdapter,
@@ -12,6 +17,12 @@ import 'gridstack/dist/gridstack.min.css';
 import 'gridstack/dist/h5/gridstack-dd-native';
 
 import emptyConfiguration from './utils/empty_configuration.json';
+
+document.selectTab = async function(tabNumber) {
+  await Application.getSystem('WorkspaceSystem').setConfiguration(tabNumber);
+  document.querySelectorAll('.workspace-footer-item').forEach(tab => tab.classList.remove('active-tab'))
+  document.querySelectorAll('.workspace-footer-item')[tabNumber - 1].classList.add('active-tab')
+}
 
 export class Plugin extends SystemPlugin {
   #guid;
@@ -78,10 +89,21 @@ export class Plugin extends SystemPlugin {
     this.#emptyConfiguration = emptyConfiguration;
 
     this.#currentConfiguration = {};
-    const el = document.createElement('div');
-    el.setAttribute('class', 'grid-stack');
-    el.style = 'width:100%;height:100%';
-    document.body.appendChild(el);
+
+    const header = document.createElement('div')
+    header.innerHTML = headerTemplate;
+    header.classList.add('workspace-header');
+    document.body.appendChild(header);
+
+    const gridBody = document.createElement('div');
+    gridBody.setAttribute('class', 'grid-stack');
+    gridBody.style = 'width:100%;height:100%';
+    document.body.appendChild(gridBody);
+
+    const footer = document.createElement('div')
+    footer.innerHTML = footerTemplate;
+    footer.classList.add('workspace-footer');
+    document.body.appendChild(footer);
 
     // GRIDSTACK INSTANCE OPTIONS
     this.#grid = GridStack.init({

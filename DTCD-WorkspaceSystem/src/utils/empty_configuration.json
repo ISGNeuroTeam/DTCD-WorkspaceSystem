@@ -1,5 +1,6 @@
 {
     "title": "Empty configuration",
+    "column": 12,
     "systems": [
         {
             "name": "WorkspaceSystem",

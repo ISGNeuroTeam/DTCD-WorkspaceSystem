@@ -1,0 +1,51 @@
+.workspace-header {
+  height: 30px;
+  width: 100%;
+  background-color: #272A3A;
+  color: #FFF;
+}
+
+.workspace-header-wrapper {
+  height: 30px;
+  display: flex;
+  justify-content: space-between;
+  margin: 0 15px;
+}
+
+.workspace-header-menu {
+  height: 30px;
+  display: flex;
+  align-items: center;
+  column-gap: 40px;
+}
+
+.workspace-header-logo {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.workspace-header-item {
+  font-size: 13px;
+  /* cursor: pointer; */
+}
+
+.workspace-header-right-menu { 
+  height: 30px;
+  display: flex;
+  align-items: center;
+}
+
+.user-icon {
+  height: 18px;
+  width: 18px;
+  background-color: #AF52DE;
+  border-radius: 50%;
+  margin-left: 29px;
+}
+
+.username {
+  font-size: 13px;
+  font-weight: 600;
+  margin-left: 6px;
+  margin-right: 9px;
+}
