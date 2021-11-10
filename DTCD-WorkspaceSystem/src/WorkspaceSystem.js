@@ -2,8 +2,8 @@ import './styles/panel.css';
 import './styles/header.css';
 import './styles/footer.css';
 
-import headerTemplate from './templates/header.html'
-import footerTemplate from './templates/footer.html'
+import headerTemplate from './templates/header.html';
+import footerTemplate from './templates/footer.html';
 
 import {
   EventSystemAdapter,
@@ -18,11 +18,13 @@ import 'gridstack/dist/h5/gridstack-dd-native';
 
 import emptyConfiguration from './utils/empty_configuration.json';
 
-document.selectTab = async function(tabNumber) {
+document.selectTab = async function (tabNumber) {
   await Application.getSystem('WorkspaceSystem').setConfiguration(tabNumber);
-  document.querySelectorAll('.workspace-footer-item').forEach(tab => tab.classList.remove('active-tab'))
-  document.querySelectorAll('.workspace-footer-item')[tabNumber - 1].classList.add('active-tab')
-}
+  document
+    .querySelectorAll('.workspace-footer-item')
+    .forEach(tab => tab.classList.remove('active-tab'));
+  document.querySelectorAll('.workspace-footer-item')[tabNumber - 1].classList.add('active-tab');
+};
 
 export class Plugin extends SystemPlugin {
   #guid;
@@ -90,7 +92,7 @@ export class Plugin extends SystemPlugin {
 
     this.#currentConfiguration = {};
 
-    const header = document.createElement('div')
+    const header = document.createElement('div');
     header.innerHTML = headerTemplate;
     header.classList.add('workspace-header');
     document.body.appendChild(header);
@@ -100,7 +102,7 @@ export class Plugin extends SystemPlugin {
     gridBody.style = 'width:100%;height:100%';
     document.body.appendChild(gridBody);
 
-    const footer = document.createElement('div')
+    const footer = document.createElement('div');
     footer.innerHTML = footerTemplate;
     footer.classList.add('workspace-footer');
     document.body.appendChild(footer);
@@ -203,9 +205,9 @@ export class Plugin extends SystemPlugin {
       guidMap.set(panel.guid, pluginGUID);
       panel.guid = pluginGUID;
 
-      if (plugin.setMetadata) {
-        this.#logSystem.debug(`Setting metadata for panel ${panel.name}`);
-        plugin.setMetadata();
+      if (plugin.setPluginConfig) {
+        this.#logSystem.debug(`Setting configuration for panel ${panel.name}`);
+        plugin.setPluginConfig(panel.metadata);
       } else
         this.#logSystem.warn(
           `Plugin ${panel.name} v${panel.version} doesn't provide public method for setting metadata`
@@ -247,8 +249,17 @@ export class Plugin extends SystemPlugin {
           position: panel.widget.gridstackNode._orig,
           undeletable: panel.undeletable,
         };
-        if (!panel.plugin.getMetadata) panelMeta.metadata = {};
-        else panelMeta.metadata = panel.plugin.getMetadata();
+
+        if (!panel.plugin.getPluginConfig) panelMeta.metadata = {};
+
+        if (panel.plugin.getPluginConfig) {
+          this.#logSystem.debug(`Getting panel configuration: ${panel.name}`);
+          panelMeta.metadata = panel.plugin.getPluginConfig();
+        } else {
+          this.#logSystem.warn(
+            `Plugin ${panel.name} v${panel.version} doesn't provide public method for getting configuration`
+          );
+        }
       }
       return panelMeta;
     });
@@ -343,7 +354,7 @@ export class Plugin extends SystemPlugin {
     // TODO: Replace on WEB-COMPONENT with style!
     const widget = this.#grid.addWidget(
       `
-			<div class="grid-stack-item">
+      <div class="grid-stack-item">
         <div class="grid-stack-item-content">
           <div class="handle-drag-of-panel gridstack-panel-header" style="visibility:${
             this.#editMode ? 'visible' : 'hidden'
@@ -358,9 +369,9 @@ export class Plugin extends SystemPlugin {
             <div id="panel-${panelID}">
             </div>
           </div>
-				</div>
-			</div>
-		`,
+        </div>
+      </div>
+    `,
       { x, y, w, h, autoPosition, id: panelID }
     );
 
