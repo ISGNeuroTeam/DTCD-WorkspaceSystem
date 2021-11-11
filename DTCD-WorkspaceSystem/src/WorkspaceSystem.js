@@ -195,9 +195,9 @@ export class WorkspaceSystem extends SystemPlugin {
       guidMap.set(panel.guid, pluginGUID);
       panel.guid = pluginGUID;
 
-      if (plugin.setMetadata) {
-        this.#logSystem.debug(`Setting metadata for panel ${panel.name}`);
-        plugin.setMetadata();
+      if (plugin.setPluginConfig) {
+        this.#logSystem.debug(`Setting configuration for panel ${panel.name}`);
+        plugin.setPluginConfig(panel.metadata);
       } else
         this.#logSystem.warn(
           `Plugin ${panel.name} v${panel.version} doesn't provide public method for setting metadata`
@@ -245,8 +245,17 @@ export class WorkspaceSystem extends SystemPlugin {
           version,
           undeletable,
         };
-        if (!panel.plugin.getMetadata) panelMeta.metadata = {};
-        else panelMeta.config = panel.plugin.getMetadata();
+
+        if (!panel.plugin.getPluginConfig) panelMeta.metadata = {};
+
+        if (panel.plugin.getPluginConfig) {
+          this.#logSystem.debug(`Getting panel configuration: ${panel.name}`);
+          panelMeta.metadata = panel.plugin.getPluginConfig();
+        } else {
+          this.#logSystem.warn(
+            `Plugin ${panel.name} v${panel.version} doesn't provide public method for getting configuration`
+          );
+        }
       }
       return panelMeta;
     });
@@ -346,7 +355,7 @@ export class WorkspaceSystem extends SystemPlugin {
     // TODO: Replace on WEB-COMPONENT with style!
     const widget = this.#grid.addWidget(
       `
-			<div class="grid-stack-item">
+      <div class="grid-stack-item">
         <div class="grid-stack-item-content">
           <div class="handle-drag-of-panel gridstack-panel-header" style="visibility:${
             this.#editMode ? 'visible' : 'hidden'
@@ -361,9 +370,9 @@ export class WorkspaceSystem extends SystemPlugin {
             <div id="panel-${panelID}">
             </div>
           </div>
-				</div>
-			</div>
-		`,
+        </div>
+      </div>
+    `,
       { x, y, w, h, autoPosition, id: panelID }
     );
 

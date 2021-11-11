@@ -8,18 +8,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
 - setColumn public method
 - routing by URL param "workspace"
 - workspace templates
 - default built-in configurstion of workspace
 - footer and heaader
+- set and get plugin config methods
 
 ### Fixed
+
 - incorrect closing tag of "gridstack-content-container" div
 
 ## [0.2.0] - 2021-02-11
 
 ### Changed
+
 - code source directory name to DTCD-WorkspaceSystem
 - downloading DTCD-SDK from [storage](http://storage.dev.isgneuro.com)
 - paths in source files to DTCD-SDK
