@@ -269,7 +269,7 @@ export class WorkspaceSystem extends SystemPlugin {
     ]);
   }
 
-  goToHomePage() {
+  setDefaultConfiguration() {
     if (this.#editMode) this.changeMode();
     this.#setConfiguration(this.#defaultConfiguration);
   }
