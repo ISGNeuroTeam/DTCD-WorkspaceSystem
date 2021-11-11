@@ -1,0 +1,28 @@
+{
+	"column": 12,
+	"title": "Default workspace configuration",
+	"systems": [
+		{
+			"name": "WorkspaceSystem",
+			"version": "0.2.0",
+			"guid": "guid1",
+			"metadata": {}
+		}
+	],
+	"panels": [
+		{
+			"name": "WorkspacePanel",
+			"version": "0.1.0",
+			"guid": "guid2",
+			"undeletable": true,
+			"position": {
+				"x": 3,
+				"y": 1,
+				"w": 5,
+				"h": 5
+			},
+			"metadata": {}
+		}
+	],
+	"subscriptions": []
+}
