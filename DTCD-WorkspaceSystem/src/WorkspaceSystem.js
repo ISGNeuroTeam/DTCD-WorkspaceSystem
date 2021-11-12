@@ -110,22 +110,21 @@ export class WorkspaceSystem extends SystemPlugin {
   getPluginConfig() {
     const plugins = [];
 
-    this.getGUIDList().forEach(guid => {
-      const instance = this.getInstance(guid);
-      const config =
-        typeof instance.getPluginConfig === 'function' && instance !== this
-          ? instance.getPluginConfig()
-          : null;
-      const meta = instance.constructor.getRegistrationMeta();
-      const pluginInfo = { meta, config, guid };
-
-      if (meta.type === 'panel') {
-        const plugin = this.#plugins.find(plg => plg.instance === instance);
-        if (typeof plugin === 'object') {
-          pluginInfo.position = plugin.widget.gridstackNode._orig;
-          pluginInfo.undeletable = plugin.undeletable;
-        }
+    this.#plugins.forEach(({ instance, widget, meta, undeletable }) => {
+      const pluginInfo = { meta, undeletable };
+      if (instance) {
+        pluginInfo.guid = this.getGUID(instance);
+        pluginInfo.meta = instance.constructor.getRegistrationMeta();
+        pluginInfo.config =
+          typeof instance.getPluginConfig === 'function' && instance !== this
+            ? instance.getPluginConfig()
+            : null;
       }
+
+      if (widget) {
+        pluginInfo.position = widget.gridstackNode._orig;
+      }
+
       plugins.push(pluginInfo);
     });
     return {
@@ -138,7 +137,6 @@ export class WorkspaceSystem extends SystemPlugin {
 
   setPluginConfig(config) {
     this.resetWorkspace();
-    this.#plugins;
     this.#logSystem.info(
       `Setting workspace configuration (id:${config.id}, title:${config.title})`
     );
@@ -149,28 +147,36 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#currentID = config.id;
 
     // ---- PLUGINS ----
+    let eventSystemConfig;
     config.plugins.forEach(plugin => {
       const { meta, config, undeletable, position = {} } = plugin;
       switch (meta?.type) {
         case 'panel':
           const { w, h, x, y } = position;
-          const pluginExists = this.getPlugin(meta.name);
-          if (pluginExists) {
-            this.#logSystem.debug('Creating empty cell');
-            undeletable
-              ? this.#createUndeletableCell(meta.name, w, h, x, y, false)
-              : this.createCell(meta.name, w, h, x, y, false);
+          if (typeof meta.name !== 'undefined') {
+            const pluginExists = this.getPlugin(meta.name);
+            if (pluginExists) {
+              this.#logSystem.debug('Creating empty cell');
+              undeletable
+                ? this.#createUndeletableCell(meta.name, w, h, x, y, false)
+                : this.createCell(meta.name, w, h, x, y, false);
+            }
           } else {
             this.createEmptyCell(w, h, x, y, false);
           }
           break;
         case 'core':
           const instance = this.getSystem(meta.name);
+          if (meta.name === 'EventSystem') {
+            eventSystemConfig = config;
+            break;
+          }
           if (instance.setPluginConfig && config) instance.setPluginConfig(config);
           break;
         default:
           break;
       }
+      if (eventSystemConfig) this.getSystem('EventSystem').setPluginConfig(eventSystemConfig);
     });
   }
 
@@ -213,9 +219,9 @@ export class WorkspaceSystem extends SystemPlugin {
       if (meta?.type !== 'core') {
         if (widget) this.#grid.removeWidget(widget);
         if (instance) this.uninstallPluginByInstance(instance);
-        this.#plugins.splice(idx, 1);
       }
     });
+    this.#plugins = [];
     this.#logSystem.debug(`Clearing panels array`);
     this.setColumn();
   }
@@ -297,7 +303,7 @@ export class WorkspaceSystem extends SystemPlugin {
     `,
       { x, y, w, h, autoPosition, id: panelID }
     );
-    this.#plugins.push({ widget });
+    this.#plugins.push({ widget, meta: { type: 'panel' } });
 
     // Panel select
     const selectEl = document.createElement('select');
