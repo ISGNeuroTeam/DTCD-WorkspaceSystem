@@ -178,6 +178,7 @@ export class WorkspaceSystem extends SystemPlugin {
       }
       if (eventSystemConfig) this.getSystem('EventSystem').setPluginConfig(eventSystemConfig);
     });
+    return true;
   }
 
   #createUndeletableCell(name, w, h, x, y, autoposition) {
