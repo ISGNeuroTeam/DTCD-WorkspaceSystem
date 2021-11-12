@@ -1,18 +1,17 @@
 {
 	"column": 12,
+	"id":-1,
 	"title": "Default workspace configuration",
-	"systems": [
+	"plugins": [
 		{
-			"name": "WorkspaceSystem",
-			"version": "0.2.0",
-			"guid": "guid1",
-			"metadata": {}
-		}
-	],
-	"panels": [
+			"meta": {
+				"name": "WorkspaceSystem",
+				"version": "0.2.0",
+				"type":"core"
+			},
+			"guid": "guid1"
+		},
 		{
-			"name": "WorkspacePanel",
-			"version": "0.1.0",
 			"guid": "guid2",
 			"undeletable": true,
 			"position": {
@@ -21,8 +20,11 @@
 				"w": 5,
 				"h": 5
 			},
-			"metadata": {}
+			"meta": {
+				"name": "WorkspacePanel",
+				"version": "0.1.0",
+				"type":"panel"
+			}
 		}
-	],
-	"subscriptions": []
+	]
 }
