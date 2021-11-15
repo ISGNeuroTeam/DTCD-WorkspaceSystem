@@ -1,69 +1,17 @@
 {
-    "title": "Empty configuration",
     "column": 12,
-    "systems": [
+    "plugins": [
         {
-            "name": "WorkspaceSystem",
-            "version": "0.2.0",
-            "guid": "guid1",
-            "metadata": {}
-        }
-    ],
-    "panels": [
-        {
-            "name": "MenuPanel",
-            "undeletable": true,
-            "version": "1.0.0",
-            "guid": "guid2",
+            "meta": {
+                "type": "panel",
+                "name": "MenuPanel",
+                "title": "Панель меню",
+                "version": "0.1.0"
+            },
             "position": {
-                "x": 0,
-                "y": 0,
-                "w": 12,
-                "h": 1
+                "w": 12
             },
-            "metadata": {}
-        }
-    ],
-    "subscriptions": [
-        {
-            "event": {
-                "name": "ChangeWorkspaceEditMode",
-                "guid": "guid2"
-            },
-            "action": {
-                "name": "changeMode",
-                "guid": "guid1"
-            }
-        },
-        {
-            "event": {
-                "name": "DefaultAddWorkspacePanel",
-                "guid": "guid2"
-            },
-            "action": {
-                "name": "createEmptyCell",
-                "guid": "guid1"
-            }
-        },
-        {
-            "event": {
-                "name": "CompactWorkspacePanel",
-                "guid": "guid2"
-            },
-            "action": {
-                "name": "compactAllPanels",
-                "guid": "guid1"
-            }
-        },
-        {
-            "event": {
-                "name": "BackToWorkspaceSelection",
-                "guid": "guid2"
-            },
-            "action": {
-                "name": "setDefaultConfiguration",
-                "guid": "guid1"
-            }
+            "undeletable": true
         }
     ]
 }
