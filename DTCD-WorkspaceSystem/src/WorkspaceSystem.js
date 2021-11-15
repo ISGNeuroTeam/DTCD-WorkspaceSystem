@@ -35,7 +35,7 @@ export class WorkspaceSystem extends SystemPlugin {
   #defaultConfiguration;
 
   // ---- STATE ----
-  #plugins;
+  #panels;
   #currentTitle;
   #currentID;
   #column;
@@ -66,7 +66,7 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#defaultConfiguration = defaultConfiguration;
     this.#emptyConfiguration = emptyConfiguration;
 
-    this.#plugins = [];
+    this.#panels = [];
     this.#editMode = false;
 
     toMountTemplates();
@@ -109,24 +109,28 @@ export class WorkspaceSystem extends SystemPlugin {
 
   getPluginConfig() {
     const plugins = [];
-
-    this.#plugins.forEach(({ instance, widget, meta, undeletable }) => {
-      const pluginInfo = { meta, undeletable };
-      if (instance) {
-        pluginInfo.guid = this.getGUID(instance);
-        pluginInfo.meta = instance.constructor.getRegistrationMeta();
-        pluginInfo.config =
+    this.getGUIDList()
+      .map(this.getInstance)
+      .forEach(instance => {
+        let pluginInfo;
+        // ---- pluginInfo {guid, meta, config, position, undeletable}
+        const guid = this.getGUID(instance);
+        const meta = instance.constructor.getRegistrationMeta();
+        const config =
           typeof instance.getPluginConfig === 'function' && instance !== this
             ? instance.getPluginConfig()
             : null;
-      }
+        let position;
+        let undeletable;
 
-      if (widget) {
-        pluginInfo.position = widget.gridstackNode._orig;
-      }
+        const panel = this.#panels.find(panel => panel.instance === instance);
+        if (panel) {
+          position = panel?.widget.gridstackNode._orig;
+          undeletable = panel.undeletable;
+        }
 
-      plugins.push(pluginInfo);
-    });
+        plugins.push({ guid, meta, config, position, undeletable });
+      });
     return {
       id: this.#currentID,
       title: this.#currentTitle,
@@ -166,18 +170,18 @@ export class WorkspaceSystem extends SystemPlugin {
           }
           break;
         case 'core':
-          const instance = this.getSystem(meta.name);
           if (meta.name === 'EventSystem') {
             eventSystemConfig = config;
             break;
           }
+          const instance = this.getSystem(meta.name);
           if (instance.setPluginConfig && config) instance.setPluginConfig(config);
           break;
         default:
           break;
       }
-      if (eventSystemConfig) this.getSystem('EventSystem').setPluginConfig(eventSystemConfig);
     });
+    this.getSystem('EventSystem').setPluginConfig(eventSystemConfig);
     return true;
   }
 
@@ -193,7 +197,7 @@ export class WorkspaceSystem extends SystemPlugin {
     const instance = this.installPlugin(name, `#panel-${name}`);
     const guid = this.getGUID(instance);
     const meta = this.getPlugin(name, 'panel').getRegistrationMeta();
-    this.#plugins.push({ meta, widget, instance, guid, undeletable: true });
+    this.#panels.push({ meta, widget, instance, guid, undeletable: true });
     return widget;
   }
 
@@ -215,14 +219,14 @@ export class WorkspaceSystem extends SystemPlugin {
 
   resetWorkspace() {
     this.#logSystem.debug('Resetting current workspace configuration');
-    this.#plugins.forEach((plugin, idx) => {
+    this.#panels.forEach((plugin, idx) => {
       const { meta, widget, instance } = plugin;
       if (meta?.type !== 'core') {
         if (widget) this.#grid.removeWidget(widget);
         if (instance) this.uninstallPluginByInstance(instance);
       }
     });
-    this.#plugins = [];
+    this.#panels = [];
     this.#logSystem.debug(`Clearing panels array`);
     this.setColumn();
   }
@@ -304,7 +308,7 @@ export class WorkspaceSystem extends SystemPlugin {
     `,
       { x, y, w, h, autoPosition, id: panelID }
     );
-    this.#plugins.push({ widget, meta: { type: 'panel' } });
+    this.#panels.push({ widget, meta: { type: 'panel' } });
 
     // Panel select
     const selectEl = document.createElement('select');
@@ -327,7 +331,7 @@ export class WorkspaceSystem extends SystemPlugin {
       const workspaceCellID = idCell.split('-').pop();
       const meta = this.getPlugin(selectEl.value).getRegistrationMeta();
       instance = this.installPlugin(meta.name, `#panel-${workspaceCellID}`);
-      let pluginInfo = this.#plugins.find(panel => panel.widget === widget);
+      let pluginInfo = this.#panels.find(panel => panel.widget === widget);
       Object.assign(pluginInfo, {
         instance,
         meta,
@@ -339,8 +343,8 @@ export class WorkspaceSystem extends SystemPlugin {
 
     // closePanelBtn
     document.getElementById(`closePanelBtn-${panelID}`).addEventListener('click', evt => {
-      this.#plugins.splice(
-        this.#plugins.findIndex(plg => plg.widget !== widget),
+      this.#panels.splice(
+        this.#panels.findIndex(plg => plg.widget !== widget),
         1
       );
       this.#grid.removeWidget(widget);
