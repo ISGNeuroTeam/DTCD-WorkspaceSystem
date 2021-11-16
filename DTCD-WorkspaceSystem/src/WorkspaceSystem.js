@@ -152,8 +152,8 @@ export class WorkspaceSystem extends SystemPlugin {
 
     // ---- PLUGINS ----
     let eventSystemConfig;
-    config.plugins.forEach(plugin => {
-      const { meta, config, undeletable, position = {} } = plugin;
+    config.plugins.forEach(({ meta, config, undeletable, position = {}, guid }) => {
+      // WARNING: WITHOUT GUID-MAP
       switch (meta?.type) {
         case 'panel':
           const { w, h, x, y } = position;
@@ -174,12 +174,12 @@ export class WorkspaceSystem extends SystemPlugin {
             eventSystemConfig = config;
             break;
           }
-          const instance = this.getSystem(meta.name);
-          if (instance.setPluginConfig && config) instance.setPluginConfig(config);
           break;
         default:
           break;
       }
+      const instance = this.getInstance(guid);
+      if (instance && instance.setPluginConfig && config) instance.setPluginConfig(config);
     });
     this.getSystem('EventSystem').setPluginConfig(eventSystemConfig);
     return true;
