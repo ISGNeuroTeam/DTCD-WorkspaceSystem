@@ -154,7 +154,7 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#currentID = config.id;
 
     // ---- PLUGINS ----
-    let eventSystemConfig = {};
+    let eventSystemConfig = { events: [], actions: [] };
     const GUIDMap = {};
     for (let plugin of config.plugins) {
       let { meta, config, undeletable, position = {}, guid } = plugin;
@@ -197,7 +197,10 @@ export class WorkspaceSystem extends SystemPlugin {
       if (instance && instance !== this && instance.setPluginConfig && config)
         await instance.setPluginConfig(config);
     }
-    eventSystemConfig.GUIDMap = GUIDMap;
+
+    // EVENT-SYSTEM-MAPPING
+    eventSystemConfig.events.forEach(evt => (evt.guid = GUIDMap[evt.guid]));
+    eventSystemConfig.actions.forEach(action => (action.guid = GUIDMap[action.guid]));
 
     await this.getSystem('EventSystem').setPluginConfig(eventSystemConfig);
     return true;
