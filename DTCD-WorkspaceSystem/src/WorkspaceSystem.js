@@ -154,9 +154,14 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#currentID = config.id;
 
     // ---- PLUGINS ----
-    let eventSystemConfig = { events: [], actions: [] };
+
+    // ---- event-system-reset ----
+    this.#eventSystem.setPluginConfig({ events: [], actions: [], subscriptions: [] });
+    let subscriptions; // From workspace config for eventSystem process only subscriptions
+
+    // ---- installing-plugins-from-config ----
     const GUIDMap = {};
-    for (let plugin of config.plugins) {
+    pluginsLoop: for (let plugin of config.plugins) {
       let { meta, config, undeletable, position = {}, guid } = plugin;
       switch (meta?.type) {
         case 'panel':
@@ -184,10 +189,10 @@ export class WorkspaceSystem extends SystemPlugin {
           GUIDMap[guid] = systemGUID;
 
           if (meta.name === 'EventSystem') {
-            eventSystemConfig = config;
-            continue;
+            subscriptions = config.subscriptions;
+            continue pluginsLoop;
           }
-          if (meta.name === 'WorkspaceSystem') continue;
+          if (meta.name === 'WorkspaceSystem') continue pluginsLoop;
           break;
         default:
           break;
@@ -199,14 +204,20 @@ export class WorkspaceSystem extends SystemPlugin {
     }
 
     // EVENT-SYSTEM-MAPPING
-    if (eventSystemConfig.subscriptions)
-      for (let sub of eventSystemConfig.subscriptions) {
+    if (subscriptions)
+      for (let sub of subscriptions) {
         const { event, action } = sub;
         event.guid = GUIDMap[event.guid];
         action.guid = GUIDMap[action.guid];
       }
+    const actions = this.#eventSystem.actions;
+    const events = this.#eventSystem.events;
 
-    await this.getSystem('EventSystem').setPluginConfig(eventSystemConfig);
+    await this.getSystem('EventSystem').setPluginConfig({
+      subscriptions,
+      actions,
+      events,
+    });
     return true;
   }
 
