@@ -155,7 +155,7 @@ export class WorkspaceSystem extends SystemPlugin {
 
     // ---- PLUGINS ----
     let eventSystemConfig;
-    const GUIDMap = new Map();
+    const GUIDMap = {};
     for (let plugin of config.plugins) {
       let { meta, config, undeletable, position = {}, guid } = plugin;
       switch (meta?.type) {
@@ -172,7 +172,7 @@ export class WorkspaceSystem extends SystemPlugin {
             const plugin = this.#panels.find(panel => panel.widget === widget).instance;
             const pluginGUID = this.getGUID(plugin);
             this.#logSystem.debug(`Mapping guid of ${meta.name} from ${guid} to ${pluginGUID}`);
-            GUIDMap.set(guid, pluginGUID);
+            GUIDMap[guid] = pluginGUID;
           } else {
             this.createEmptyCell(w, h, x, y, false);
           }
@@ -181,7 +181,7 @@ export class WorkspaceSystem extends SystemPlugin {
           const systemInstance = this.getSystem(meta.name);
           const systemGUID = this.getGUID(systemInstance);
           this.#logSystem.debug(`Mapped guid of ${meta.name} from ${guid} to ${systemGUID}`);
-          GUIDMap.set(guid, systemGUID);
+          GUIDMap[guid] = systemGUID;
 
           if (meta.name === 'EventSystem') {
             eventSystemConfig = config;
@@ -193,7 +193,7 @@ export class WorkspaceSystem extends SystemPlugin {
           break;
       }
 
-      const instance = this.getInstance(GUIDMap.get(guid));
+      const instance = this.getInstance(GUIDMap[guid]);
       if (instance && instance !== this && instance.setPluginConfig && config)
         await instance.setPluginConfig(config);
     }
