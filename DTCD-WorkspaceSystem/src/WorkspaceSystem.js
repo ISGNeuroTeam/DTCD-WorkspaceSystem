@@ -154,7 +154,7 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#currentID = config.id;
 
     // ---- PLUGINS ----
-    let eventSystemConfig;
+    let eventSystemConfig = {};
     const GUIDMap = {};
     for (let plugin of config.plugins) {
       let { meta, config, undeletable, position = {}, guid } = plugin;
