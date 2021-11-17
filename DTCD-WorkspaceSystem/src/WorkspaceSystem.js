@@ -60,7 +60,6 @@ export class WorkspaceSystem extends SystemPlugin {
     super();
     this.#guid = guid;
     this.#eventSystem = new EventSystemAdapter(guid);
-    this.#eventSystem.registerPluginInstance(this);
     this.#interactionSystem = new InteractionSystemAdapter();
     this.#logSystem = new LogSystemAdapter(this.#guid, 'WorkspaceSystem');
     this.#defaultConfiguration = defaultConfiguration;
@@ -131,7 +130,6 @@ export class WorkspaceSystem extends SystemPlugin {
           position = panel?.widget.gridstackNode._orig;
           undeletable = panel.undeletable;
         }
-
         plugins.push({ guid, meta, config, position, undeletable });
       });
     return {
@@ -155,8 +153,7 @@ export class WorkspaceSystem extends SystemPlugin {
 
     // ---- PLUGINS ----
 
-    // ---- event-system-reset ----
-    this.#eventSystem.setPluginConfig({ events: [], actions: [], subscriptions: [] });
+    this.getSystem('EventSystem').resetSystem();
     let subscriptions; // From workspace config for eventSystem process only subscriptions
 
     // ---- installing-plugins-from-config ----
@@ -210,14 +207,8 @@ export class WorkspaceSystem extends SystemPlugin {
         event.guid = GUIDMap[event.guid];
         action.guid = GUIDMap[action.guid];
       }
-    const actions = this.#eventSystem.actions;
-    const events = this.#eventSystem.events;
 
-    await this.getSystem('EventSystem').setPluginConfig({
-      subscriptions,
-      actions,
-      events,
-    });
+    await this.getSystem('EventSystem').setPluginConfig({ subscriptions });
     return true;
   }
 
