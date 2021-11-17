@@ -199,8 +199,11 @@ export class WorkspaceSystem extends SystemPlugin {
     }
 
     // EVENT-SYSTEM-MAPPING
-    eventSystemConfig.events.forEach(evt => (evt.guid = GUIDMap[evt.guid]));
-    eventSystemConfig.actions.forEach(action => (action.guid = GUIDMap[action.guid]));
+    for (let sub of eventSystemConfig.subscriptions) {
+      const { event, action } = sub;
+      event.guid = GUIDMap[event.guid];
+      action.guid = GUIDMap[action.guid];
+    }
 
     await this.getSystem('EventSystem').setPluginConfig(eventSystemConfig);
     return true;
