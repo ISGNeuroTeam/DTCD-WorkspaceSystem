@@ -95,6 +95,10 @@ export class WorkspaceSystem extends SystemPlugin {
     return this.#currentID;
   }
 
+  get panels() {
+    return this.#panels;
+  }
+
   async init() {
     const parsedURL = new URLSearchParams(window.location.search);
     if (!parsedURL.has('workspace')) {
@@ -112,7 +116,6 @@ export class WorkspaceSystem extends SystemPlugin {
     this.getGUIDList()
       .map(this.getInstance)
       .forEach(instance => {
-        let pluginInfo;
         // ---- pluginInfo {guid, meta, config, position, undeletable}
         const guid = this.getGUID(instance);
         const meta = instance.constructor.getRegistrationMeta();
@@ -139,10 +142,10 @@ export class WorkspaceSystem extends SystemPlugin {
     };
   }
 
-  async setPluginConfig(config) {
+  async setPluginConfig(config = {}) {
     this.resetWorkspace();
     this.#logSystem.info(
-      `Setting workspace configuration (id:${config.id}, title:${config.title})`
+      `Setting workspace configuration (id:${config?.id}, title:${config?.title})`
     );
     // ---- COLUMN ----
     if (typeof config.column != 'undefined') this.setColumn(config.column);
@@ -152,25 +155,34 @@ export class WorkspaceSystem extends SystemPlugin {
 
     // ---- PLUGINS ----
     let eventSystemConfig;
+    const GUIDMap = new Map();
     for (let plugin of config.plugins) {
       let { meta, config, undeletable, position = {}, guid } = plugin;
-      // WARNING: WITHOUT GUID-MAP
       switch (meta?.type) {
         case 'panel':
           const { w, h, x, y } = position;
+          let widget;
           if (typeof meta.name !== 'undefined') {
             const pluginExists = this.getPlugin(meta.name);
             if (pluginExists) {
               this.#logSystem.debug('Creating empty cell');
-              undeletable
-                ? this.#createUndeletableCell(meta.name, w, h, x, y, false)
-                : this.createCell(meta.name, w, h, x, y, false);
+              if (undeletable) widget = this.#createUndeletableCell(meta.name, w, h, x, y, false);
+              else widget = this.createCell(meta.name, w, h, x, y, false);
             }
+            const plugin = this.#panels.find(panel => panel.widget === widget).instance;
+            const pluginGUID = this.getGUID(plugin);
+            this.#logSystem.debug(`Mapping guid of ${meta.name} from ${guid} to ${pluginGUID}`);
+            GUIDMap.set(guid, pluginGUID);
           } else {
             this.createEmptyCell(w, h, x, y, false);
           }
           break;
         case 'core':
+          const systemInstance = this.getSystem(meta.name);
+          const systemGUID = this.getGUID(systemInstance);
+          this.#logSystem.debug(`Mapped guid of ${meta.name} from ${guid} to ${systemGUID}`);
+          GUIDMap.set(guid, systemGUID);
+
           if (meta.name === 'EventSystem') {
             eventSystemConfig = config;
             continue;
@@ -180,10 +192,13 @@ export class WorkspaceSystem extends SystemPlugin {
         default:
           break;
       }
-      const instance = this.getInstance(guid);
+
+      const instance = this.getInstance(GUIDMap.get(guid));
       if (instance && instance !== this && instance.setPluginConfig && config)
         await instance.setPluginConfig(config);
     }
+    eventSystemConfig.GUIDMap = GUIDMap;
+
     await this.getSystem('EventSystem').setPluginConfig(eventSystemConfig);
     return true;
   }
