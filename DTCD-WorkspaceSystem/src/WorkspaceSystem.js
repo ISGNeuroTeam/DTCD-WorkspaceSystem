@@ -99,7 +99,7 @@ export class WorkspaceSystem extends SystemPlugin {
     const parsedURL = new URLSearchParams(window.location.search);
     if (!parsedURL.has('workspace')) {
       this.#logSystem.debug('Initializing default workspace configuration');
-      this.setPluginConfig(this.#defaultConfiguration);
+      await this.setPluginConfig(this.#defaultConfiguration);
       return;
     }
     const id = parseInt(parsedURL.get('workspace'));
@@ -139,7 +139,7 @@ export class WorkspaceSystem extends SystemPlugin {
     };
   }
 
-  setPluginConfig(config) {
+  async setPluginConfig(config) {
     this.resetWorkspace();
     this.#logSystem.info(
       `Setting workspace configuration (id:${config.id}, title:${config.title})`
@@ -152,7 +152,8 @@ export class WorkspaceSystem extends SystemPlugin {
 
     // ---- PLUGINS ----
     let eventSystemConfig;
-    config.plugins.forEach(({ meta, config, undeletable, position = {}, guid }) => {
+    for (let plugin of config.plugins) {
+      let { meta, config, undeletable, position = {}, guid } = plugin;
       // WARNING: WITHOUT GUID-MAP
       switch (meta?.type) {
         case 'panel':
@@ -172,16 +173,18 @@ export class WorkspaceSystem extends SystemPlugin {
         case 'core':
           if (meta.name === 'EventSystem') {
             eventSystemConfig = config;
-            break;
+            continue;
           }
+          if (meta.name === 'WorkspaceSystem') continue;
           break;
         default:
           break;
       }
       const instance = this.getInstance(guid);
-      if (instance && instance.setPluginConfig && config) instance.setPluginConfig(config);
-    });
-    this.getSystem('EventSystem').setPluginConfig(eventSystemConfig);
+      if (instance && instance !== this && instance.setPluginConfig && config)
+        await instance.setPluginConfig(config);
+    }
+    await this.getSystem('EventSystem').setPluginConfig(eventSystemConfig);
     return true;
   }
 
