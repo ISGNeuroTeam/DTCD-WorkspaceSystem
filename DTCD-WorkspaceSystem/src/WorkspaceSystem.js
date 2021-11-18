@@ -18,11 +18,14 @@ import emptyConfiguration from './utils/empty_configuration.json';
 import defaultConfiguration from './utils/default_configuration.json';
 
 document.selectTab = async function (tabNumber) {
-  await Application.getSystem('WorkspaceSystem').setConfiguration(tabNumber);
-  document
-    .querySelectorAll('.workspace-footer-item')
-    .forEach(tab => tab.classList.remove('active-tab'));
-  document.querySelectorAll('.workspace-footer-item')[tabNumber - 1].classList.add('active-tab');
+  const list = await Application.getSystem('WorkspaceSystem').getConfigurationList();
+  if (list[tabNumber]) {
+    await Application.getSystem('WorkspaceSystem').setConfiguration(list[tabNumber].id);
+    document
+      .querySelectorAll('.workspace-footer-item')
+      .forEach(tab => tab.classList.remove('active-tab'));
+    document.querySelectorAll('.workspace-footer-item')[tabNumber].classList.add('active-tab');
+  } else console.warn('There is no workspace for that tab!');
 };
 
 export class WorkspaceSystem extends SystemPlugin {
