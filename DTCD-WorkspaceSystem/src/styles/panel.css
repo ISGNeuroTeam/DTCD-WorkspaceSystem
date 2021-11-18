@@ -1,5 +1,6 @@
 body {
   margin: 0;
+  background-color: #f4f4fa;
 }
 
 .grid-stack {
@@ -8,8 +9,10 @@ body {
 
 .grid-stack-item-content {
   position: relative;
-  border: 1px solid gray;
+  border: 2px solid #f4f4fa;
   transition: 0.3s;
+  padding: 6px;
+  background-color: #fefefe;
 }
 .gridstack-content-container {
   height: 100%;
@@ -31,9 +34,7 @@ body {
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  position: absolute;
   z-index: 2000;
-  width: 100%;
   height: 2em;
   background-color: rgb(102, 102, 102);
 }

@@ -337,8 +337,8 @@ export class WorkspaceSystem extends SystemPlugin {
       `
       <div class="grid-stack-item">
         <div class="grid-stack-item-content">
-          <div class="handle-drag-of-panel gridstack-panel-header" style="visibility:${
-            this.#editMode ? 'visible' : 'hidden'
+          <div class="handle-drag-of-panel gridstack-panel-header" style="display:${
+            this.#editMode ? 'flex' : 'none'
           }">
             <div id="closePanelBtn-${panelID}" class="close-panel-button">
               <i  class="fas fa-lg fa-times"></i>
@@ -448,7 +448,7 @@ export class WorkspaceSystem extends SystemPlugin {
   changeMode() {
     const panelHeaders = document.querySelectorAll('.gridstack-panel-header');
     panelHeaders.forEach(header => {
-      header.style.visibility = this.#editMode ? 'hidden' : 'visible';
+      header.style.display = this.#editMode ? 'none' : 'flex';
     });
     const panelContents = document.querySelectorAll('.gridstack-content-container');
 
