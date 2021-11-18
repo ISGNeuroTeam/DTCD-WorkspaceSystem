@@ -478,10 +478,6 @@ export class WorkspaceSystem extends SystemPlugin {
   }
 
   async setConfiguration(id) {
-    if (typeof id != 'number') {
-      this.#logSystem.error('Wrong argument type: must be integer');
-      return;
-    }
     const config = await this.downloadConfiguration(id);
     return this.setPluginConfig(config);
   }
