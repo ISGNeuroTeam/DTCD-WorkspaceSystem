@@ -228,7 +228,7 @@ export class WorkspaceSystem extends SystemPlugin {
     return widget;
   }
 
-  async #downloadConfiguration(id) {
+  async downloadConfiguration(id) {
     this.#logSystem.debug(`Trying to download configuration with id:${id}`);
     try {
       const { data } = await this.#interactionSystem.GETRequest(`/v2/workspace/object?id=${id}`);
@@ -284,6 +284,26 @@ export class WorkspaceSystem extends SystemPlugin {
     } catch (err) {
       this.#logSystem.error(
         `Error occured while downloading workspace configuration: ${err.message}`
+      );
+    }
+  }
+
+  async importConfiguration(configuration) {
+    this.#logSystem.debug(`Trying to import configuration with title:'${configuration.title}`);
+    try {
+      this.#logSystem.debug(`Sending request to import configurations`);
+      await this.#interactionSystem.POSTRequest('/v2/workspace/object', [
+        {
+          title: configuration.title,
+          content: configuration,
+        },
+      ]);
+      this.#logSystem.info(
+        `Successfully imported configuration with title:'${configuration.title}'`
+      );
+    } catch (err) {
+      this.#logSystem.error(
+        `Error occured while importing workspace configuration: ${err.message}`
       );
     }
   }
@@ -456,7 +476,7 @@ export class WorkspaceSystem extends SystemPlugin {
       this.#logSystem.error('Wrong argument type: must be integer');
       return;
     }
-    const config = await this.#downloadConfiguration(id);
+    const config = await this.downloadConfiguration(id);
     return this.setPluginConfig(config);
   }
 
