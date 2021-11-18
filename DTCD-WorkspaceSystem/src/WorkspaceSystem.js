@@ -231,7 +231,9 @@ export class WorkspaceSystem extends SystemPlugin {
   async downloadConfiguration(id) {
     this.#logSystem.debug(`Trying to download configuration with id:${id}`);
     try {
-      const { data } = await this.#interactionSystem.GETRequest(`/v2/workspace/object?id=${id}`);
+      const { data } = await this.#interactionSystem.GETRequest(
+        `/mock_server/v1/workspace/object?id=${id}`
+      );
       this.#logSystem.debug(`Parsing configuration from response`);
       const content = data.content;
       content['id'] = data.id;
@@ -261,7 +263,9 @@ export class WorkspaceSystem extends SystemPlugin {
   async deleteConfiguration(id) {
     try {
       this.#logSystem.debug(`Trying to delete workspace configuration with id:${id}`);
-      await this.#interactionSystem.DELETERequest('/v2/workspace/object', { data: [id] });
+      await this.#interactionSystem.DELETERequest('/mock_server/v1/workspace/object', {
+        data: [id],
+      });
       this.#logSystem.info(`Deleted workspace configuration with id:${id}`);
     } catch (err) {
       this.#logSystem.error(`Error occured while deleting workspace configuration: ${err.message}`);
@@ -274,7 +278,7 @@ export class WorkspaceSystem extends SystemPlugin {
     tempConf.title = title;
     try {
       this.#logSystem.debug(`Sending request to create configurations`);
-      await this.#interactionSystem.POSTRequest('/v2/workspace/object', [
+      await this.#interactionSystem.POSTRequest('/mock_server/v1/workspace/object', [
         {
           title: title,
           content: tempConf,
@@ -292,7 +296,7 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#logSystem.debug(`Trying to import configuration with title:'${configuration.title}`);
     try {
       this.#logSystem.debug(`Sending request to import configurations`);
-      await this.#interactionSystem.POSTRequest('/v2/workspace/object', [
+      await this.#interactionSystem.POSTRequest('/mock_server/v1/workspace/object', [
         {
           title: configuration.title,
           content: configuration,
@@ -313,7 +317,9 @@ export class WorkspaceSystem extends SystemPlugin {
       `Trying to change configuration title with id:${id} to value:'${newTitle}'`
     );
     try {
-      await this.#interactionSystem.PUTRequest('/v2/workspace/object', [{ id, title: newTitle }]);
+      await this.#interactionSystem.PUTRequest('/mock_server/v1/workspace/object', [
+        { id, title: newTitle },
+      ]);
       this.#logSystem.info(`New title:'${newTitle}' was set to configuration with id:${id}`);
     } catch (err) {
       this.#logSystem.error(
@@ -467,7 +473,7 @@ export class WorkspaceSystem extends SystemPlugin {
   }
 
   async getConfigurationList() {
-    const response = await this.#interactionSystem.GETRequest('/v2/workspace/object');
+    const response = await this.#interactionSystem.GETRequest('/mock_server/v1/workspace/object');
     return response.data;
   }
 
@@ -482,7 +488,7 @@ export class WorkspaceSystem extends SystemPlugin {
 
   async saveConfiguration() {
     this.#logSystem.info('Saving current configuration');
-    this.#interactionSystem.PUTRequest('/v2/workspace/object', [
+    this.#interactionSystem.PUTRequest('/mock_server/v1/workspace/object/', [
       {
         id: this.#currentID,
         title: this.#currentTitle,
