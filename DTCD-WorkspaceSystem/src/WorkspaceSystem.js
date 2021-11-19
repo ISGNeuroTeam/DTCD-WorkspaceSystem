@@ -400,7 +400,7 @@ export class WorkspaceSystem extends SystemPlugin {
     // closePanelBtn
     document.getElementById(`closePanelBtn-${panelID}`).addEventListener('click', evt => {
       this.#panels.splice(
-        this.#panels.findIndex(plg => plg.widget !== widget),
+        this.#panels.findIndex(plg => plg.widget === widget),
         1
       );
       this.#grid.removeWidget(widget);
