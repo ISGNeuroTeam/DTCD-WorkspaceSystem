@@ -108,7 +108,7 @@ export class WorkspaceSystem extends SystemPlugin {
       await this.setPluginConfig(this.#defaultConfiguration);
       return;
     }
-    const id = parseInt(parsedURL.get('workspace'));
+    const id = parsedURL.get('workspace');
     this.#logSystem.debug(`Initializing configuration from url param with id:${id}`);
     await this.setConfiguration(id);
   }
@@ -144,6 +144,7 @@ export class WorkspaceSystem extends SystemPlugin {
   }
 
   async setPluginConfig(config = {}) {
+    this.getSystem('EventSystem').resetSystem();
     this.resetWorkspace();
     this.#logSystem.info(
       `Setting workspace configuration (id:${config?.id}, title:${config?.title})`
@@ -156,7 +157,6 @@ export class WorkspaceSystem extends SystemPlugin {
 
     // ---- PLUGINS ----
 
-    this.getSystem('EventSystem').resetSystem();
     let subscriptions; // From workspace config for eventSystem process only subscriptions
 
     // ---- installing-plugins-from-config ----
