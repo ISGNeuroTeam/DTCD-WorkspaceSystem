@@ -157,7 +157,7 @@ export class WorkspaceSystem extends SystemPlugin {
 
     // ---- PLUGINS ----
 
-    let subscriptions; // From workspace config for eventSystem process only subscriptions
+    let eventSystemConfig = {};
 
     // ---- installing-plugins-from-config ----
     const GUIDMap = {};
@@ -189,7 +189,7 @@ export class WorkspaceSystem extends SystemPlugin {
           GUIDMap[guid] = systemGUID;
 
           if (meta.name === 'EventSystem') {
-            subscriptions = config.subscriptions;
+            eventSystemConfig = config;
             continue pluginsLoop;
           }
           if (meta.name === 'WorkspaceSystem') continue pluginsLoop;
@@ -204,14 +204,14 @@ export class WorkspaceSystem extends SystemPlugin {
     }
 
     // EVENT-SYSTEM-MAPPING
-    if (subscriptions)
-      for (let sub of subscriptions) {
+    if (eventSystemConfig.hasOwnProperty('subscriptions'))
+      for (let sub of eventSystemConfig.subscriptions) {
         const { event, action } = sub;
         event.guid = GUIDMap[event.guid];
         action.guid = GUIDMap[action.guid];
       }
 
-    await this.getSystem('EventSystem').setPluginConfig({ subscriptions });
+    await this.getSystem('EventSystem').setPluginConfig(eventSystemConfig);
     return true;
   }
 

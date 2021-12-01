@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - footer and heaader
 - set and get plugin config methods
 
+### Changed
+
+- EventSystem config object properties
+
 ### Fixed
 
 - incorrect closing tag of "gridstack-content-container" div
