@@ -62,7 +62,7 @@ export class WorkspaceSystem extends SystemPlugin {
   constructor(guid) {
     super();
     this.#guid = guid;
-    this.#eventSystem = new EventSystemAdapter(guid);
+    this.#eventSystem = new EventSystemAdapter(guid, ['WorkspaceSellClicked']);
     this.#interactionSystem = new InteractionSystemAdapter();
     this.#logSystem = new LogSystemAdapter(this.#guid, 'WorkspaceSystem');
     this.#defaultConfiguration = defaultConfiguration;
@@ -99,6 +99,10 @@ export class WorkspaceSystem extends SystemPlugin {
 
   get panels() {
     return this.#panels;
+  }
+
+  get currentWorkspaceColumn() {
+    return this.#column;
   }
 
   async init() {
@@ -215,22 +219,6 @@ export class WorkspaceSystem extends SystemPlugin {
     return true;
   }
 
-  #createUndeletableCell(name, w, h, x, y, autoposition) {
-    const widget = this.#grid.addWidget(
-      `<div class="grid-stack-item">
-      <div class="grid-stack-item-content handle-drag-of-panel">
-        <div id="panel-${name}"></div>
-      </div>
-    </div>`,
-      { x, y, w, h, autoposition }
-    );
-    const instance = this.installPlugin(name, `#panel-${name}`);
-    const guid = this.getGUID(instance);
-    const meta = this.getPlugin(name, 'panel').getRegistrationMeta();
-    this.#panels.push({ meta, widget, instance, guid, undeletable: true });
-    return widget;
-  }
-
   async downloadConfiguration(id) {
     this.#logSystem.debug(`Trying to download configuration with id:${id}`);
     try {
@@ -315,20 +303,41 @@ export class WorkspaceSystem extends SystemPlugin {
     }
   }
 
-  async changeConfigurationTitle(id, newTitle) {
-    this.#logSystem.debug(
-      `Trying to change configuration title with id:${id} to value:'${newTitle}'`
-    );
+  async changeConfigurationTitle(id, title) {
+    this.#logSystem.debug(`Trying to change configuration title with id:${id} to value:'${title}'`);
     try {
       await this.#interactionSystem.PUTRequest('/mock_server/v1/workspace/object', [
-        { id, title: newTitle },
+        {
+          id,
+          title,
+        },
       ]);
-      this.#logSystem.info(`New title:'${newTitle}' was set to configuration with id:${id}`);
+
+      this.#logSystem.info(`New title:'${title}' was set to configuration with id:${id}`);
     } catch (err) {
       this.#logSystem.error(
         `Error occured while downloading workspace configuration: ${err.message}`
       );
     }
+  }
+
+  #createUndeletableCell(name, w, h, x, y, autoposition) {
+    const widget = this.#grid.addWidget(
+      `<div class="grid-stack-item">
+      <div class="grid-stack-item-content handle-drag-of-panel">
+        <div id="panel-${name}"></div>
+      </div>
+    </div>`,
+      { x, y, w, h, autoposition }
+    );
+    const instance = this.installPlugin(name, `#panel-${name}`);
+    const guid = this.getGUID(instance);
+    widget.addEventListener('click', () =>
+      this.#eventSystem.publishEvent('WorkspaceCellClicked', { guid })
+    );
+    const meta = this.getPlugin(name, 'panel').getRegistrationMeta();
+    this.#panels.push({ meta, widget, instance, guid, undeletable: true });
+    return widget;
   }
 
   createEmptyCell(w = 4, h = 4, x = 0, y = 0, autoPosition = true) {
@@ -387,6 +396,10 @@ export class WorkspaceSystem extends SystemPlugin {
       const workspaceCellID = idCell.split('-').pop();
       const meta = this.getPlugin(selectEl.value).getRegistrationMeta();
       instance = this.installPlugin(meta.name, `#panel-${workspaceCellID}`);
+      const guid = this.getGUID(instance);
+      widget.addEventListener('click', () =>
+        this.#eventSystem.publishEvent('WorkspaceCellClicked', { guid })
+      );
       let pluginInfo = this.#panels.find(panel => panel.widget === widget);
       Object.assign(pluginInfo, {
         instance,
@@ -487,7 +500,7 @@ export class WorkspaceSystem extends SystemPlugin {
 
   async saveConfiguration() {
     this.#logSystem.info('Saving current configuration');
-    this.#interactionSystem.PUTRequest('/mock_server/v1/workspace/object/', [
+    this.#interactionSystem.PUTRequest('/mock_server/v1/workspace/object', [
       {
         id: this.#currentID,
         title: this.#currentTitle,
