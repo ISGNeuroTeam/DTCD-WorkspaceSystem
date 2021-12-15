@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - default built-in configurstion of workspace
 - footer and heaader
 - set and get plugin config methods
+- ability to open panel in modal window
 
 ### Changed
 

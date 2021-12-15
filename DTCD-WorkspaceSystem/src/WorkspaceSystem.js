@@ -1,6 +1,7 @@
 import './styles/panel.css';
 import './styles/header.css';
 import './styles/footer.css';
+import './styles/modal.css';
 
 import {
   EventSystemAdapter,
@@ -47,6 +48,7 @@ export class WorkspaceSystem extends SystemPlugin {
   #grid;
   #editMode;
   #numberPanelIncrement;
+  #modalInstance;
 
   static getRegistrationMeta() {
     return {
@@ -70,6 +72,7 @@ export class WorkspaceSystem extends SystemPlugin {
 
     this.#panels = [];
     this.#editMode = false;
+    this.#modalInstance = null;
 
     toMountTemplates();
 
@@ -529,5 +532,46 @@ export class WorkspaceSystem extends SystemPlugin {
     styleEl.innerHTML = style;
     head.appendChild(styleEl);
     this.#column = column;
+  }
+
+  openPanelInModal(panelName) {
+    if (!this.#modalInstance) {
+      const modalBackdrop = document.createElement('div');
+      modalBackdrop.classList.add('modal-backdrop');
+      modalBackdrop.id = 'modal-backdrop';
+      const modal = document.createElement('div');
+      modal.classList.add('modal');
+
+      const panelContainer = document.createElement('div');
+      panelContainer.id = 'mount-point';
+      modal.appendChild(panelContainer);
+      modalBackdrop.appendChild(modal);
+
+      modalBackdrop.addEventListener('click', evt => {
+        if (evt.target.isEqualNode(modalBackdrop)) {
+          this.closeModal();
+        }
+      });
+
+      modal.addEventListener('click', evt => {
+        evt.stopPropagation();
+      });
+
+      try {
+        const plugin = this.getPlugin(panelName);
+        document.body.append(modalBackdrop);
+        this.#modalInstance = new plugin('', '#mount-point', true);
+      } catch (err) {
+        this.#logSystem.error(`Can't create modal with panel '${panelName}' due to error: ${err}`);
+      }
+    }
+  }
+
+  closeModal() {
+    const modal = document.getElementById('modal-backdrop');
+    if (modal) {
+      modal.remove();
+      this.#modalInstance = null;
+    }
   }
 }
