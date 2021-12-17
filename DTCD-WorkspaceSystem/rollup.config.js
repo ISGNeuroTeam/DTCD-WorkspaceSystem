@@ -15,9 +15,9 @@ const fileDest = watch
 
 const plugins = [
   resolve(),
+  babel({ babelHelpers: 'bundled' }),
   commonjs(),
   html({ include: '**/*.html' }),
-  babel({ babelHelpers: 'bundled' }),
   styles({ mode: 'inject' }),
   json(),
 ];
