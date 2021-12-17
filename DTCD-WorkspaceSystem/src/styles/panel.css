@@ -1,10 +1,17 @@
 body {
   margin: 0;
+  background-color: #f4f4fa;
 }
+
+.grid-stack {
+  margin-bottom: 30px;
+}
+
 .grid-stack-item-content {
   position: relative;
-  border: 1px solid gray;
+  border: 2px solid #f4f4fa;
   transition: 0.3s;
+  background-color: #fefefe;
 }
 .gridstack-content-container {
   height: 100%;
@@ -23,7 +30,7 @@ body {
 }
 
 .gridstack-panel-header {
-  display: none;
+  display: flex;
   justify-content: flex-end;
   align-items: center;
   position: absolute;
