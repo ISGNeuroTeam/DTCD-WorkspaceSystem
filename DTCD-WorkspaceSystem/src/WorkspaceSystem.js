@@ -66,9 +66,9 @@ export class WorkspaceSystem extends SystemPlugin {
   constructor(guid) {
     super();
     this.#guid = guid;
-    this.#eventSystem = new EventSystemAdapter('0.2.0', guid, ['WorkspaceSellClicked']);
+    this.#eventSystem = new EventSystemAdapter('0.3.0', guid, ['WorkspaceSellClicked']);
     this.#interactionSystem = new InteractionSystemAdapter('0.3.1');
-    this.#logSystem = new LogSystemAdapter('0.3.1', this.#guid, 'WorkspaceSystem');
+    this.#logSystem = new LogSystemAdapter('0.4.0', this.#guid, 'WorkspaceSystem');
     this.#defaultConfiguration = defaultConfiguration;
     this.#emptyConfiguration = emptyConfiguration;
 
