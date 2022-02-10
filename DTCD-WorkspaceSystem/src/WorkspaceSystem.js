@@ -10,18 +10,20 @@ import {
   LogSystemAdapter,
 } from './../../DTCD-SDK/index';
 
-import { GridStack } from 'gridstack';
 import 'gridstack/dist/gridstack.min.css';
+import { GridStack } from 'gridstack';
 import 'gridstack/dist/h5/gridstack-dd-native';
 
 import { toMountTemplates } from './utils/templates';
 import emptyConfiguration from './utils/empty_configuration.json';
 import defaultConfiguration from './utils/default_configuration.json';
 
+import { version } from './../package.json';
+
 document.selectTab = async function (tabNumber) {
-  const list = await Application.getSystem('WorkspaceSystem').getConfigurationList();
+  const list = await Application.getSystem('WorkspaceSystem', '0.3.0').getConfigurationList();
   if (list[tabNumber]) {
-    await Application.getSystem('WorkspaceSystem').setConfiguration(list[tabNumber].id);
+    await Application.getSystem('WorkspaceSystem', '0.3.0').setConfiguration(list[tabNumber].id);
     document
       .querySelectorAll('.workspace-footer-item')
       .forEach(tab => tab.classList.remove('active-tab'));
@@ -55,7 +57,7 @@ export class WorkspaceSystem extends SystemPlugin {
       name: 'WorkspaceSystem',
       type: 'core',
       title: 'Система рабочего стола',
-      version: '0.2.0',
+      version,
       withDependencies: true,
       priority: 2,
     };
@@ -64,9 +66,9 @@ export class WorkspaceSystem extends SystemPlugin {
   constructor(guid) {
     super();
     this.#guid = guid;
-    this.#eventSystem = new EventSystemAdapter(guid, ['WorkspaceSellClicked']);
-    this.#interactionSystem = new InteractionSystemAdapter();
-    this.#logSystem = new LogSystemAdapter(this.#guid, 'WorkspaceSystem');
+    this.#eventSystem = new EventSystemAdapter('0.2.0', guid, ['WorkspaceSellClicked']);
+    this.#interactionSystem = new InteractionSystemAdapter('0.3.1');
+    this.#logSystem = new LogSystemAdapter('0.3.1', this.#guid, 'WorkspaceSystem');
     this.#defaultConfiguration = defaultConfiguration;
     this.#emptyConfiguration = emptyConfiguration;
 
@@ -151,7 +153,7 @@ export class WorkspaceSystem extends SystemPlugin {
   }
 
   async setPluginConfig(config = {}) {
-    this.getSystem('EventSystem').resetSystem();
+    this.#eventSystem.resetSystem();
     this.resetWorkspace();
     this.#logSystem.info(
       `Setting workspace configuration (id:${config?.id}, title:${config?.title})`
@@ -175,10 +177,19 @@ export class WorkspaceSystem extends SystemPlugin {
           const { w, h, x, y } = position;
           let widget;
           if (typeof meta.name !== 'undefined') {
-            const pluginExists = this.getPlugin(meta.name);
+            const pluginExists = this.getPlugin(meta.name, meta.version);
             if (pluginExists) {
               this.#logSystem.debug('Creating empty cell');
-              if (undeletable) widget = this.#createUndeletableCell(meta.name, w, h, x, y, false);
+              if (undeletable)
+                widget = this.#createUndeletableCell({
+                  name: meta.name,
+                  version: meta.version,
+                  w,
+                  h,
+                  x,
+                  y,
+                  autoposition: false,
+                });
               else widget = this.createCell(meta.name, w, h, x, y, false);
             }
             const plugin = this.#panels.find(panel => panel.widget === widget).instance;
@@ -190,7 +201,7 @@ export class WorkspaceSystem extends SystemPlugin {
           }
           break;
         case 'core':
-          const systemInstance = this.getSystem(meta.name);
+          const systemInstance = this.getSystem(meta.name, meta.version);
           const systemGUID = this.getGUID(systemInstance);
           this.#logSystem.debug(`Mapped guid of ${meta.name} from ${guid} to ${systemGUID}`);
           GUIDMap[guid] = systemGUID;
@@ -218,7 +229,7 @@ export class WorkspaceSystem extends SystemPlugin {
         action.guid = GUIDMap[action.guid];
       }
 
-    await this.getSystem('EventSystem').setPluginConfig(eventSystemConfig);
+    await this.#eventSystem.setPluginConfig(eventSystemConfig);
     return true;
   }
 
@@ -324,7 +335,7 @@ export class WorkspaceSystem extends SystemPlugin {
     }
   }
 
-  #createUndeletableCell(name, w, h, x, y, autoposition) {
+  #createUndeletableCell({ name, version, w, h, x, y, autoposition }) {
     const widget = this.#grid.addWidget(
       `<div class="grid-stack-item">
       <div class="grid-stack-item-content handle-drag-of-panel">
@@ -333,12 +344,12 @@ export class WorkspaceSystem extends SystemPlugin {
     </div>`,
       { x, y, w, h, autoposition }
     );
-    const instance = this.installPlugin(name, `#panel-${name}`);
+    const instance = this.installPanel({ name, version, selector: `#panel-${name}` });
     const guid = this.getGUID(instance);
     widget.addEventListener('click', () =>
       this.#eventSystem.publishEvent('WorkspaceCellClicked', { guid })
     );
-    const meta = this.getPlugin(name, 'panel').getRegistrationMeta();
+    const meta = this.getPlugin(name, version).getRegistrationMeta();
     this.#panels.push({ meta, widget, instance, guid, undeletable: true });
     return widget;
   }
@@ -384,9 +395,12 @@ export class WorkspaceSystem extends SystemPlugin {
     selectEl.options[0] = new Option('Выбрать панель ↓');
     let nextOptionIndex = 1;
     this.getPanels().forEach(plug => {
-      const { type, title, name } = plug;
+      const { type, title, name, version } = plug;
       if (type === 'panel' && name !== 'MenuPanel' && name !== 'WorkspacePanel') {
-        selectEl.options[nextOptionIndex] = new Option(title, name);
+        selectEl.options[nextOptionIndex] = new Option(
+          `${title} ${version}`,
+          JSON.stringify({ name, version })
+        );
         nextOptionIndex++;
       }
     });
@@ -394,11 +408,16 @@ export class WorkspaceSystem extends SystemPlugin {
     // Creating instance of panel handler
     let instance;
     selectEl.onchange = evt => {
-      this.#logSystem.info(`Selected plugin '${selectEl.value}' in empty cell with id ${panelID}`);
+      const { name, version } = JSON.parse(selectEl.value);
+      this.#logSystem.info(`Selected plugin '${name} ${version}' in empty cell with id ${panelID}`);
       const idCell = evt.target.parentElement.getAttribute('id');
       const workspaceCellID = idCell.split('-').pop();
-      const meta = this.getPlugin(selectEl.value).getRegistrationMeta();
-      instance = this.installPlugin(meta.name, `#panel-${workspaceCellID}`);
+      const meta = this.getPlugin(name, version).getRegistrationMeta();
+      instance = this.installPanel({
+        name: meta.name,
+        version,
+        selector: `#panel-${workspaceCellID}`,
+      });
       const guid = this.getGUID(instance);
       widget.addEventListener('click', () =>
         this.#eventSystem.publishEvent('WorkspaceCellClicked', { guid })

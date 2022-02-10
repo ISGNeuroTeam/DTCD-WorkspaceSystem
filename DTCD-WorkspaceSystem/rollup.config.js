@@ -5,12 +5,14 @@ import babel from '@rollup/plugin-babel';
 import json from '@rollup/plugin-json';
 import html from 'rollup-plugin-html';
 
+import { version } from './package.json';
+
 const watch = Boolean(process.env.ROLLUP_WATCH);
 
 const pluginName = 'WorkspaceSystem';
 
 const fileDest = watch
-  ? `./../../DTCD/server/plugins/DTCD-${pluginName}/${pluginName}.js`
+  ? `./../../DTCD/server/plugins/DTCD-${pluginName}_${version}/${pluginName}.js`
   : `./build/${pluginName}.js`;
 
 const plugins = [

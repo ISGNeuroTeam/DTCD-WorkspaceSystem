@@ -34,6 +34,7 @@ all:
 
 build: $(PROJECT_NAME)/node_modules COMPONENTS
 	# required section
+	$(SET_VERSION)
 	echo Removing previous build...
 	rm -rf ./build/
 	echo Building started...
@@ -42,13 +43,13 @@ build: $(PROJECT_NAME)/node_modules COMPONENTS
 	cp README.md ./build/
 	cp CHANGELOG.md ./build/
 	cp LICENSE.md ./build/;
-	mkdir ./build/$(PROJECT_NAME) && mv ./build/$(PLUGIN_NAME).js ./build/$(PROJECT_NAME);
+	mkdir ./build/$(PROJECT_NAME)_$(VERSION) && mv ./build/$(PLUGIN_NAME).js ./build/$(PROJECT_NAME)_$(VERSION);
 	if [ -d ./$(PROJECT_NAME)/dependencies/ ];\
-		then echo Prepare dependencies for $(PROJECT_NAME) in build directory...;\
-		cp -r ./$(PROJECT_NAME)/dependencies ./build/$(PROJECT_NAME);\
-		cat ./build/$(PROJECT_NAME)/dependencies/manifest.json | jq 'map(del(.source))' > ./build/$(PROJECT_NAME)/manifest.json;\
-		rm ./build/$(PROJECT_NAME)/dependencies/manifest.json;\
-		cat ./$(PROJECT_NAME)/dependencies/manifest.json |  jq -r '.[] | "\(.source) \(.fileName)"' | grep -vP '^null ' | xargs -n2 -r sh -c 'curl $$1 -o ./build/$(PROJECT_NAME)/dependencies/$$2' sh;\
+		then echo Prepare dependencies for $(PROJECT_NAME)_$(VERSION) in build directory...;\
+		cp -r ./$(PROJECT_NAME)/dependencies ./build/$(PROJECT_NAME)_$(VERSION);\
+		cat ./build/$(PROJECT_NAME)_$(VERSION)/dependencies/manifest.json | jq 'map(del(.source))' > ./build/$(PROJECT_NAME)_$(VERSION)/manifest.json;\
+		rm ./build/$(PROJECT_NAME)_$(VERSION)/dependencies/manifest.json;\
+		cat ./$(PROJECT_NAME)/dependencies/manifest.json |  jq -r '.[] | "\(.source) \(.fileName)"' | grep -vP '^null ' | xargs -n2 -r sh -c 'curl $$1 -o ./build/$(PROJECT_NAME)_$(VERSION)/dependencies/$$2' sh;\
 		else echo no dependencies folder. ;\
 	fi
 	echo Building completed;
@@ -98,5 +99,5 @@ sdk:
 	fi
 
 dev: build
-	cp -rf ./build/$(PROJECT_NAME) ./../DTCD/server/plugins
+	cp -rf ./build/$(PROJECT_NAME)_$(VERSION) ./../DTCD/server/plugins
 	npm run dev --prefix ./$(PROJECT_NAME)
