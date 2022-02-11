@@ -190,7 +190,16 @@ export class WorkspaceSystem extends SystemPlugin {
                   y,
                   autoposition: false,
                 });
-              else widget = this.createCell(meta.name, w, h, x, y, false);
+              else
+                widget = this.createCell({
+                  name: meta.name,
+                  version: meta.version,
+                  w,
+                  h,
+                  x,
+                  y,
+                  autoPosition: false,
+                });
             }
             const plugin = this.#panels.find(panel => panel.widget === widget).instance;
             const pluginGUID = this.getGUID(plugin);
@@ -253,7 +262,7 @@ export class WorkspaceSystem extends SystemPlugin {
 
   resetWorkspace() {
     this.#logSystem.debug('Resetting current workspace configuration');
-    this.#panels.forEach((plugin, idx) => {
+    this.#panels.forEach(plugin => {
       const { meta, widget, instance } = plugin;
       if (meta?.type !== 'core') {
         if (widget) this.#grid.removeWidget(widget);
@@ -448,11 +457,11 @@ export class WorkspaceSystem extends SystemPlugin {
     return widget;
   }
 
-  createCell(panelName, w = 4, h = 4, x = 0, y = 0, autoPosition = true) {
+  createCell({ name, version, w = 4, h = 4, x = 0, y = 0, autoPosition = true }) {
     this.#logSystem.debug(
-      `Adding panel-plugin widget with name:'${panelName}', w:${w},h:${h},x:${x},y:${y}, autoPosition:${autoPosition}`
+      `Adding panel-plugin widget with name:'${name}', version:${version}, w:${w},h:${h},x:${x},y:${y}, autoPosition:${autoPosition}`
     );
-    this.#logSystem.info(`Adding panel widget with name:'${panelName}'`);
+    this.#logSystem.info(`Adding panel widget with name: '${name}', version: '${version}'`);
     const widget = this.createEmptyCell(w, h, x, y, autoPosition);
     const selectElement = widget.querySelector('select');
     const optionElements = selectElement.options;
@@ -460,9 +469,15 @@ export class WorkspaceSystem extends SystemPlugin {
     for (let i = 0; i < optionElements.length; i++) {
       options.push(optionElements[i].value);
     }
-    const tempArr = options.slice(1, options.length).toString();
-    this.#logSystem.debug(`Available plugin list for widget: [${tempArr}]`);
-    const panelIndex = options.indexOf(panelName);
+    options = options.slice(1, options.length);
+    this.#logSystem.debug(`Available plugin list for widget: [${options}]`);
+    const panelIndex =
+      options.indexOf(
+        options.find(option => {
+          const optionObject = JSON.parse(option);
+          return optionObject.name === name && optionObject.version === version;
+        })
+      ) + 1;
     this.#logSystem.debug(`Setting select selected option index to '${panelIndex}`);
     selectElement.selectedIndex = panelIndex;
     this.#logSystem.debug(`Dispatching select event 'change' to trigger callback`);
