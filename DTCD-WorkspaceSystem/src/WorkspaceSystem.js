@@ -581,7 +581,7 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#column = column;
   }
 
-  openPanelInModal(panelName) {
+  openPanelInModal(panelName, version) {
     if (!this.#modalInstance) {
       const modalBackdrop = document.createElement('div');
       modalBackdrop.classList.add('modal-backdrop');
@@ -605,11 +605,13 @@ export class WorkspaceSystem extends SystemPlugin {
       });
 
       try {
-        const plugin = this.getPlugin(panelName);
+        const plugin = this.getPlugin(panelName, version);
         document.body.append(modalBackdrop);
         this.#modalInstance = new plugin('', '#mount-point', true);
       } catch (err) {
-        this.#logSystem.error(`Can't create modal with panel '${panelName}' due to error: ${err}`);
+        this.#logSystem.error(
+          `Can't create modal with panel '${panelName} ${version}' due to error: ${err}`
+        );
       }
     }
   }
