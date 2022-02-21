@@ -9,7 +9,7 @@ In order to use this plugin you need to download it, build and move it to plugin
 ### Prerequisites
 
 - [Node.js](https://nodejs.org/en/) LTS version 14.x.x
-- [DTCD](https://github.com/ISGNeuroTeam/DTCD) v0.3.0
+- [DTCD](https://github.com/ISGNeuroTeam/DTCD) v0.4.0
 
 ## Building
 
@@ -41,9 +41,9 @@ Use `make pack` to get a deployable tarball. Move it to plugins directory of com
 
 ## Built With
 
-- [DTCD-SDK](https://github.com/ISGNeuroTeam/DTCD-SDK) v0.1.2
-- [Rollup.js](https://rollupjs.org/guide/en/) v2.35.1
-- [gridstack](https://gridstackjs.com/) v4.2.3
+- [DTCD-SDK](https://github.com/ISGNeuroTeam/DTCD-SDK)
+- [Rollup.js](https://rollupjs.org/guide/en/)
+- [gridstack](https://gridstackjs.com/)
 
 ## Versioning
 

@@ -1,17 +1,17 @@
 {
-    "column": 12,
-    "plugins": [
-        {
-            "meta": {
-                "type": "panel",
-                "name": "MenuPanel",
-                "title": "Панель меню",
-                "version": "0.1.0"
-            },
-            "position": {
-                "w": 12
-            },
-            "undeletable": true
-        }
-    ]
+  "column": 12,
+  "plugins": [
+    {
+      "meta": {
+        "type": "panel",
+        "name": "MenuPanel",
+        "title": "Панель меню",
+        "version": "0.3.0"
+      },
+      "position": {
+        "w": 12
+      },
+      "undeletable": true
+    }
+  ]
 }
