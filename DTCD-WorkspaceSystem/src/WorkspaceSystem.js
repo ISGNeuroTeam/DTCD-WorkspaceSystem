@@ -66,9 +66,9 @@ export class WorkspaceSystem extends SystemPlugin {
   constructor(guid) {
     super();
     this.#guid = guid;
-    this.#eventSystem = new EventSystemAdapter('0.3.0', guid, ['WorkspaceSellClicked']);
-    this.#interactionSystem = new InteractionSystemAdapter('0.3.1');
-    this.#logSystem = new LogSystemAdapter('0.4.0', this.#guid, 'WorkspaceSystem');
+    this.#eventSystem = new EventSystemAdapter('0.4.0', guid, ['WorkspaceSellClicked']);
+    this.#interactionSystem = new InteractionSystemAdapter('0.4.0');
+    this.#logSystem = new LogSystemAdapter('0.5.0', this.#guid, 'WorkspaceSystem');
     this.#defaultConfiguration = defaultConfiguration;
     this.#emptyConfiguration = emptyConfiguration;
 
@@ -80,6 +80,7 @@ export class WorkspaceSystem extends SystemPlugin {
 
     // GRIDSTACK INSTANCE OPTIONS
     this.#grid = GridStack.init({
+      // cellHeight: '50',
       styleInHead: true,
       float: true,
       draggable: {
