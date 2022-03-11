@@ -15,6 +15,7 @@ import { GridStack } from 'gridstack';
 import 'gridstack/dist/h5/gridstack-dd-native';
 
 import { toMountTemplates } from './utils/templates';
+import gridstackOptions from './utils/gridstackOptions';
 import emptyConfiguration from './utils/empty_configuration.json';
 import defaultConfiguration from './utils/default_configuration.json';
 
@@ -76,22 +77,6 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#editMode = false;
     this.#modalInstance = null;
 
-    toMountTemplates();
-
-    // GRIDSTACK INSTANCE OPTIONS
-    this.#grid = GridStack.init({
-      // cellHeight: '50',
-      styleInHead: true,
-      float: true,
-      draggable: {
-        handle: '.handle-drag-of-panel',
-      },
-      resizable: {
-        handles: 'e, se, s, sw, w, nw, n, ne',
-      },
-      margin: 0,
-      staticGrid: true,
-    });
     this.#numberPanelIncrement = 0;
   }
 
@@ -112,6 +97,8 @@ export class WorkspaceSystem extends SystemPlugin {
   }
 
   async init() {
+    return
+    toMountTemplates();
     const parsedURL = new URLSearchParams(window.location.search);
     if (!parsedURL.has('workspace')) {
       this.#logSystem.debug('Initializing default workspace configuration');
@@ -121,6 +108,10 @@ export class WorkspaceSystem extends SystemPlugin {
     const id = parsedURL.get('workspace');
     this.#logSystem.debug(`Initializing configuration from url param with id:${id}`);
     await this.setConfiguration(id);
+  }
+
+  mountDashboardContainer() {
+    this.#grid = GridStack.init(gridstackOptions);
   }
 
   getPluginConfig() {
