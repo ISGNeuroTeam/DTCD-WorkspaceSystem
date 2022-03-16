@@ -110,8 +110,21 @@ export class WorkspaceSystem extends SystemPlugin {
     await this.setConfiguration(id);
   }
 
-  mountDashboardContainer() {
+  mountDashboardContainer(element) {
+    if (!(element instanceof HTMLElement)) {
+      this.#logSystem.debug('The element is not an HTMLElement');
+      return false;
+    }
+
+    if (!document.body.contains(element)) {
+      this.#logSystem.debug('The element is not contained in the DOM');
+      return false;
+    }
+
+    element.innerHTML = `<div class="grid-stack"></div>`;
     this.#grid = GridStack.init(gridstackOptions);
+
+    return true;
   }
 
   getPluginConfig() {
