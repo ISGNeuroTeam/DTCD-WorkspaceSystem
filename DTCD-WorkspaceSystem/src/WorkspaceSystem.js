@@ -144,19 +144,21 @@ export class WorkspaceSystem extends SystemPlugin {
       plugins.push({ guid, meta, config });
     });
 
-    this.#panels.forEach(panel => {
-      const guid = panel.guid;
-      const meta = panel.meta;
-      const config =
-        typeof panel.instance.getPluginConfig === 'function'
-          ? panel.instance.getPluginConfig()
-          : null;
+    this.#panels
+      .filter(panel => panel.instance)
+      .forEach(panel => {
+        const guid = panel.guid;
+        const meta = panel.meta;
+        const config =
+          typeof panel.instance.getPluginConfig === 'function'
+            ? panel.instance.getPluginConfig()
+            : null;
 
-      let position = panel?.widget.gridstackNode._orig;
-      let undeletable = panel.undeletable;
+        let position = panel?.widget.gridstackNode._orig;
+        let undeletable = panel.undeletable;
 
-      plugins.push({ guid, meta, config, position, undeletable });
-    });
+        plugins.push({ guid, meta, config, position, undeletable });
+      });
 
     return {
       id: this.#currentID,
