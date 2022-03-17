@@ -97,7 +97,7 @@ export class WorkspaceSystem extends SystemPlugin {
   }
 
   async init() {
-    return
+    return;
     toMountTemplates();
     const parsedURL = new URLSearchParams(window.location.search);
     if (!parsedURL.has('workspace')) {
@@ -124,31 +124,40 @@ export class WorkspaceSystem extends SystemPlugin {
     element.innerHTML = `<div class="grid-stack"></div>`;
     this.#grid = GridStack.init(gridstackOptions);
 
+    const workspaceID = history.state.workspaceID;
+    this.setConfiguration(workspaceID);
+
     return true;
   }
 
   getPluginConfig() {
     const plugins = [];
-    this.getGUIDList()
-      .map(this.getInstance)
-      .forEach(instance => {
-        // ---- pluginInfo {guid, meta, config, position, undeletable}
-        const guid = this.getGUID(instance);
-        const meta = instance.constructor.getRegistrationMeta();
-        const config =
-          typeof instance.getPluginConfig === 'function' && instance !== this
-            ? instance.getPluginConfig()
-            : null;
-        let position;
-        let undeletable;
+    Object.values(Application.systems).forEach(system => {
+      // ---- pluginInfo {guid, meta, config, position, undeletable}
+      const guid = this.getGUID(system);
+      const meta = system.constructor.getRegistrationMeta();
+      const config =
+        typeof system.getPluginConfig === 'function' && system !== this
+          ? system.getPluginConfig()
+          : null;
 
-        const panel = this.#panels.find(panel => panel.instance === instance);
-        if (panel) {
-          position = panel?.widget.gridstackNode._orig;
-          undeletable = panel.undeletable;
-        }
-        plugins.push({ guid, meta, config, position, undeletable });
-      });
+      plugins.push({ guid, meta, config });
+    });
+
+    this.#panels.forEach(panel => {
+      const guid = panel.guid;
+      const meta = panel.meta;
+      const config =
+        typeof panel.instance.getPluginConfig === 'function'
+          ? panel.instance.getPluginConfig()
+          : null;
+
+      let position = panel?.widget.gridstackNode._orig;
+      let undeletable = panel.undeletable;
+
+      plugins.push({ guid, meta, config, position, undeletable });
+    });
+
     return {
       id: this.#currentID,
       title: this.#currentTitle,
