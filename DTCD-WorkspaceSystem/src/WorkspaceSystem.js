@@ -1,5 +1,4 @@
 import './styles/panel.css';
-import './styles/header.css';
 import './styles/footer.css';
 import './styles/modal.css';
 
@@ -419,16 +418,18 @@ export class WorkspaceSystem extends SystemPlugin {
     selectEl.classList = 'default-select-panel';
     selectEl.options[0] = new Option('Выбрать панель ↓');
     let nextOptionIndex = 1;
-    this.getPanels().forEach(plug => {
-      const { type, title, name, version } = plug;
-      if (type === 'panel' && name !== 'MenuPanel' && name !== 'WorkspacePanel') {
-        selectEl.options[nextOptionIndex] = new Option(
-          `${title} ${version}`,
-          JSON.stringify({ name, version })
-        );
-        nextOptionIndex++;
-      }
-    });
+    this.getPanels()
+      .filter(plugin => Object.getPrototypeOf(plugin.plugin).name === 'PanelPlugin')
+      .forEach(plug => {
+        const { type, title, name, version } = plug;
+        if (type === 'panel') {
+          selectEl.options[nextOptionIndex] = new Option(
+            `${title} ${version}`,
+            JSON.stringify({ name, version })
+          );
+          nextOptionIndex++;
+        }
+      });
 
     // Creating instance of panel handler
     let instance;
@@ -450,6 +451,7 @@ export class WorkspaceSystem extends SystemPlugin {
       let pluginInfo = this.#panels.find(panel => panel.widget === widget);
       Object.assign(pluginInfo, {
         instance,
+        guid,
         meta,
         undeletable: false,
       });
