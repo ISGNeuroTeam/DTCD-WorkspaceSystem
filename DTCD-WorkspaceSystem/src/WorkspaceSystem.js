@@ -66,7 +66,8 @@ export class WorkspaceSystem extends SystemPlugin {
   constructor(guid) {
     super();
     this.#guid = guid;
-    this.#eventSystem = new EventSystemAdapter('0.4.0', guid, ['WorkspaceSellClicked']);
+    this.#eventSystem = new EventSystemAdapter('0.4.0', guid);
+    this.#eventSystem.registerPluginInstance(this, ['WorkspaceCellClicked']);
     this.#interactionSystem = new InteractionSystemAdapter('0.4.0');
     this.#logSystem = new LogSystemAdapter('0.5.0', this.#guid, 'WorkspaceSystem');
     this.#defaultConfiguration = defaultConfiguration;
@@ -168,7 +169,6 @@ export class WorkspaceSystem extends SystemPlugin {
   }
 
   async setPluginConfig(config = {}) {
-    this.#eventSystem.resetSystem();
     this.resetWorkspace();
     this.#logSystem.info(
       `Setting workspace configuration (id:${config?.id}, title:${config?.title})`
