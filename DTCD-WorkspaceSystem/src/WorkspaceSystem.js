@@ -130,14 +130,14 @@ export class WorkspaceSystem extends SystemPlugin {
             callback: this.changeMode.bind(this),
           },
         },
-        {
-          component: 'button',
-          content: 'Добавить панель',
-          handler: {
-            event: 'click',
-            callback: this.createEmptyCell.bind(this),
-          },
-        },
+        // {
+        //   component: 'button',
+        //   content: 'Добавить панель',
+        //   handler: {
+        //     event: 'click',
+        //     callback: this.createEmptyCell.bind(this),
+        //   },
+        // },
       ],
     };
   }
