@@ -96,6 +96,59 @@ export class WorkspaceSystem extends SystemPlugin {
     return this.#column;
   }
 
+  getFormSettings() {
+    return {
+      fields: [
+        {
+          component: 'title',
+          propValue: 'Настройки рабочего стола',
+        },
+        {
+          component: 'text',
+          propName: 'title',
+          attrs: {
+            label: 'Название рабочего стола',
+            required: true,
+          },
+        },
+        {
+          component: 'text',
+          propName: 'column',
+          attrs: {
+            type: 'number',
+            label: 'Количество колонок',
+          },
+        },
+        {
+          component: 'subtitle',
+          propValue: 'Перемещение панелей',
+        },
+        {
+          component: 'switch',
+          handler: {
+            event: 'input',
+            callback: this.changeMode.bind(this),
+          },
+        },
+        {
+          component: 'button',
+          content: 'Добавить панель',
+          handler: {
+            event: 'click',
+            callback: this.createEmptyCell.bind(this),
+          },
+        },
+      ],
+    };
+  }
+
+  setFormSettings(config) {
+    const { title, column } = config;
+    this.#currentTitle = title;
+    this.setColumn(column);
+    this.saveConfiguration();
+  }
+
   async init() {
     return;
     toMountTemplates();
@@ -189,6 +242,7 @@ export class WorkspaceSystem extends SystemPlugin {
       let { meta, config, undeletable, position = {}, guid } = plugin;
       switch (meta?.type) {
         case 'panel':
+          if (['MenuPanel', 'ConfigEditorPanel'].includes(meta.name)) continue pluginsLoop;
           const { w, h, x, y } = position;
           let widget;
           if (typeof meta.name !== 'undefined') {
@@ -445,9 +499,10 @@ export class WorkspaceSystem extends SystemPlugin {
         selector: `#panel-${workspaceCellID}`,
       });
       const guid = this.getGUID(instance);
-      widget.addEventListener('click', () =>
-        this.#eventSystem.publishEvent('WorkspaceCellClicked', { guid })
-      );
+      widget.addEventListener('click', e => {
+        e.stopPropagation();
+        this.#eventSystem.publishEvent('WorkspaceCellClicked', { guid });
+      });
       let pluginInfo = this.#panels.find(panel => panel.widget === widget);
       Object.assign(pluginInfo, {
         instance,
