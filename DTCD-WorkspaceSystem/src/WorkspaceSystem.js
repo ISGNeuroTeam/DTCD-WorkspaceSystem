@@ -58,7 +58,6 @@ export class WorkspaceSystem extends SystemPlugin {
       type: 'core',
       title: 'Система рабочего стола',
       version,
-      withDependencies: true,
       priority: 2,
     };
   }
@@ -424,9 +423,9 @@ export class WorkspaceSystem extends SystemPlugin {
     );
     const instance = this.installPanel({ name, version, selector: `#panel-${name}` });
     const guid = this.getGUID(instance);
-    widget.addEventListener('click', () =>
-      this.#eventSystem.publishEvent('WorkspaceCellClicked', { guid })
-    );
+    widget.addEventListener('click', () => {
+      if (!this.#editMode) this.#eventSystem.publishEvent('WorkspaceCellClicked', { guid });
+    });
     const meta = this.getPlugin(name, version).getRegistrationMeta();
     this.#panels.push({ meta, widget, instance, guid, undeletable: true });
     return widget;
@@ -501,7 +500,7 @@ export class WorkspaceSystem extends SystemPlugin {
       const guid = this.getGUID(instance);
       widget.addEventListener('click', e => {
         e.stopPropagation();
-        this.#eventSystem.publishEvent('WorkspaceCellClicked', { guid });
+        if (!this.#editMode) this.#eventSystem.publishEvent('WorkspaceCellClicked', { guid });
       });
       let pluginInfo = this.#panels.find(panel => panel.widget === widget);
       Object.assign(pluginInfo, {

@@ -9,4 +9,5 @@ export default {
   },
   margin: 0,
   staticGrid: true,
+  cellHeight: '25px',
 };
