@@ -1,5 +1,4 @@
 import './styles/panel.css';
-import './styles/footer.css';
 import './styles/modal.css';
 
 import {
@@ -19,17 +18,6 @@ import emptyConfiguration from './utils/empty_configuration.json';
 import defaultConfiguration from './utils/default_configuration.json';
 
 import { version } from './../package.json';
-
-document.selectTab = async function (tabNumber) {
-  const list = await Application.getSystem('WorkspaceSystem', '0.3.0').getConfigurationList();
-  if (list[tabNumber]) {
-    await Application.getSystem('WorkspaceSystem', '0.3.0').setConfiguration(list[tabNumber].id);
-    document
-      .querySelectorAll('.workspace-footer-item')
-      .forEach(tab => tab.classList.remove('active-tab'));
-    document.querySelectorAll('.workspace-footer-item')[tabNumber].classList.add('active-tab');
-  } else console.warn('There is no workspace for that tab!');
-};
 
 export class WorkspaceSystem extends SystemPlugin {
   // ---- PLUGIN PROPS ----
@@ -431,7 +419,7 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#panels.push({ meta, widget, instance, guid, undeletable: true });
     return widget;
   }
-
+  
   createEmptyCell(w = 4, h = 4, x = 0, y = 0, autoPosition = true) {
     //TODO: Prettify next assignments
     w = Number.isInteger(w) ? w : 4;
@@ -451,8 +439,13 @@ export class WorkspaceSystem extends SystemPlugin {
             this.#editMode ? 'flex' : 'none'
           }">
             <div id="closePanelBtn-${panelID}" class="close-panel-button">
-              <i  class="fas fa-lg fa-times"></i>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12L19 6.41L17.59 5Z" fill="#0579F7"/>
+              </svg>            
             </div>
+            <svg class="drag-panel-button" width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M13 11.0626V6.0476H16L12 2.03564L8 6.0476H11V11.0626H6V8.05358L2 12.0655L6 16.0775V13.0685H11V18.0835H8L12 22.0954L16 18.0835H13V13.0685H18V16.0775L22 12.0655L18 8.05358V11.0626H13Z" fill="#0579F7"/>
+            </svg>
           </div>
           <div class="gridstack-content-container${
             this.#editMode ? ' gridstack-panel-overlay' : ''
@@ -578,6 +571,11 @@ export class WorkspaceSystem extends SystemPlugin {
   }
 
   changeMode() {
+    const panelBorder = document.querySelectorAll('.grid-stack-item-content');
+    panelBorder.forEach(content => {
+      content.style.border = this.#editMode ? '2px solid var(--background_secondary)' : '2px solid var(--button_primary)';
+    });
+
     const panelHeaders = document.querySelectorAll('.gridstack-panel-header');
     panelHeaders.forEach(header => {
       header.style.display = this.#editMode ? 'none' : 'flex';
@@ -589,7 +587,7 @@ export class WorkspaceSystem extends SystemPlugin {
       this.#editMode ? content.classList.remove(overlayClass) : content.classList.add(overlayClass);
     });
 
-    const margin = this.#editMode ? '0px' : '10px';
+    const margin = this.#editMode ? '0px' : '2px';
     this.#grid.batchUpdate();
     this.#grid.margin(margin);
     this.#grid.commit();
