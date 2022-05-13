@@ -1,5 +1,4 @@
 import './styles/panel.css';
-import './styles/footer.css';
 import './styles/modal.css';
 
 import {
@@ -20,10 +19,12 @@ import defaultConfiguration from './utils/default_configuration.json';
 
 import { version } from './../package.json';
 
+import TabsSwitcher from './TabsSwitcher';
+
 document.selectTab = async function (tabNumber) {
-  const list = await Application.getSystem('WorkspaceSystem', '0.3.0').getConfigurationList();
+  const list = await Application.getSystem('WorkspaceSystem', '0.4.0').getConfigurationList();
   if (list[tabNumber]) {
-    await Application.getSystem('WorkspaceSystem', '0.3.0').setConfiguration(list[tabNumber].id);
+    await Application.getSystem('WorkspaceSystem', '0.4.0').setConfiguration(list[tabNumber].id);
     document
       .querySelectorAll('.workspace-footer-item')
       .forEach(tab => tab.classList.remove('active-tab'));
@@ -175,6 +176,9 @@ export class WorkspaceSystem extends SystemPlugin {
 
     element.innerHTML = `<div class="grid-stack"></div>`;
     this.#grid = GridStack.init(gridstackOptions);
+
+    const tabSwitcher = new TabsSwitcher();
+    element.appendChild(tabSwitcher.htmlElement);
 
     const workspaceID = history.state.workspaceID;
     this.setConfiguration(workspaceID);

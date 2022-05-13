@@ -1,0 +1,82 @@
+.TabsSwitcher {
+  display: flex;
+  align-items: center;
+  column-gap: 10px;
+  background-color: var(--background_main);
+  font-family: "Proxima Nova";
+
+  .TabsList {
+    display: flex;
+    align-items: center;
+  }
+}
+
+
+
+.TabBtn {
+  display: flex;
+  align-items: center;
+  column-gap: 10px;
+  padding: 6px 10px;
+  background-color: var(--border_12);
+  font-family: "Proxima Nova";
+  color: var(--text_main);
+  cursor: pointer;
+
+  .BtnIcon {
+    cursor: pointer;
+
+    &.type_check {
+      display: none;
+    }
+  }
+
+  .InputField {
+    display: none;
+    padding: 0;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+  }
+
+  .TabName {
+    display: inline-block;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    max-width: 200px;
+  }
+
+  &.status_active {
+    background-color: var(--button_primary_12);
+    color: var(--button_primary);
+  }
+
+  &:not(.status_edit) {
+    .InputField {
+      background-color: transparent;
+      border-color: transparent;
+      outline: none;
+      cursor: default;
+    }
+  }
+
+  &.status_edit {
+    .TabName {
+      display: none;
+    }
+    .InputField {
+      display: block;
+    }
+
+    .BtnIcon {
+      &.type_check {
+        display: inline-flex;
+      }
+      &.type_edit,
+      &.type_delete {
+        display: none;
+      }
+    }
+  }
+}
