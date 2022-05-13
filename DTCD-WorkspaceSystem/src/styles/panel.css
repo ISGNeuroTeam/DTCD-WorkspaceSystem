@@ -28,13 +28,18 @@ body {
   height: 100%;
 }
 
+.grid-stack-item-content > .gridstack-panel-overlay {
+  overflow-y: hidden;
+  overflow-x: hidden;
+}
+
 .gridstack-panel-overlay:before {
   content: '';
   display: block;
   position: absolute;
   top: 0;
   left: 0;
-  height: 100vw;
+  height: 100%;
   width: 100%;
   z-index: 1500;
   background-color: var(--button_primary_12);
