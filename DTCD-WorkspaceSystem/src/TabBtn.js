@@ -1,3 +1,4 @@
+import './styles/TabBtn.scss';
 import TabBtnHtml from './templates/TabBtn.html';
 
 const STATUS_EDIT = 'edit';
@@ -11,8 +12,13 @@ class TabBtn {
   #btnCheck;
   #btnDelete;
   #name;
+  #btnLayer
   
   constructor(options) {
+    const {
+      name = 'Без названия',
+    } = options instanceof Object ? options : {};
+
     this.#htmlElement = document.createElement('div');
     this.#htmlElement.classList.add('TabBtn');
     this.#htmlElement.innerHTML = TabBtnHtml;
@@ -21,15 +27,17 @@ class TabBtn {
     this.#inputFieldName = this.#htmlElement.querySelector('.InputField-js');
     this.#inputFieldName.addEventListener('input', this.#handleNameFieldInput);
 
-    this.name = 'Без названия';
+    this.name = name;
 
     this.#btnEdit = this.#htmlElement.querySelector('.BtnIcon.type_edit-js');
     this.#btnCheck = this.#htmlElement.querySelector('.BtnIcon.type_check-js');
     this.#btnDelete = this.#htmlElement.querySelector('.BtnIcon.type_delete-js');
+    this.#btnLayer = this.#htmlElement.querySelector('.BtnLayer-js');
 
     this.#btnEdit.addEventListener('click', this.#handleBtnEditClick);
     this.#btnCheck.addEventListener('click', this.#handleBtnCheckClick);
     this.#btnDelete.addEventListener('click', this.#handleBtnDeleteClick);
+    this.#btnLayer.addEventListener('click', this.#handleBtnLayerClick);
   }
 
   get htmlElement() {
@@ -82,6 +90,14 @@ class TabBtn {
   #handleBtnDeleteClick = (event) => {
     event.preventDefault();
     this.#htmlElement.dispatchEvent(new CustomEvent('tab-delete', {
+      bubbles: true,
+      cancelable: true,
+    }));
+  }
+
+  #handleBtnLayerClick = (event) => {
+    event.preventDefault();
+    this.#htmlElement.dispatchEvent(new CustomEvent('tab-choose', {
       bubbles: true,
       cancelable: true,
     }));

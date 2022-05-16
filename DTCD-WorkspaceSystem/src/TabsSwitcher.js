@@ -11,36 +11,34 @@ class TabsSwitcher {
     this.#htmlElement = document.createElement('div');
     this.#htmlElement.classList.add('TabsSwitcher');
     this.#htmlElement.innerHTML = TabsSwitcherHtml;
-
-    this.#tabsList = this.#htmlElement.querySelector('.TabsList-js');
-    for (let i = 1; i <= 2; i++) {
-      this.#addNewTabBtn();
-    }
-
+    
     this.#addTabBtn = this.#htmlElement.querySelector('.AddBtn-js');
     this.#addTabBtn.addEventListener('click', this.#handleAddTabBtnClick);
+
+    this.#tabsList = this.#htmlElement.querySelector('.TabsList-js');
+    this.addNewTabBtn();
   }
 
   get htmlElement() {
     return this.#htmlElement;
   }
 
-  #addNewTabBtn() {
-    const newTabBtn = new TabBtn();
+  addNewTabBtn(tabBtnOptions) {
+    const newTabBtn = new TabBtn(tabBtnOptions);
     this.#tabsList.appendChild(newTabBtn.htmlElement);
 
     newTabBtn.htmlElement.addEventListener('tab-delete', () => {
       newTabBtn.htmlElement.remove();
     });
 
-    newTabBtn.htmlElement.addEventListener('click', () => {
+    newTabBtn.htmlElement.addEventListener('tab-choose', () => {
       newTabBtn.setStatus('active');
     });
   }
 
   #handleAddTabBtnClick = (event) => {
     event.preventDefault();
-    this.#addNewTabBtn();
+    this.addNewTabBtn();
   }
 }
 
