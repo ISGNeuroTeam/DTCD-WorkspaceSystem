@@ -3,6 +3,10 @@ body {
   background-color: var(--background_secondary);
 }
 
+.FontIcon {
+  color: var(--button_primary);
+}
+
 .grid-stack {
   margin-bottom: 30px;
   background-color: var(--background_main);
@@ -13,10 +17,6 @@ body {
   border: 2px solid var(--background_secondary);
   transition: 0.3s;
   background-color: var(--background_main);
-}
-
-.grid-stack-item-content > svg > path {
-  fill: var(--button_primary);
 }
 
 .grid-stack-item-content:active,

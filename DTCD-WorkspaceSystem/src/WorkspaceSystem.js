@@ -439,13 +439,9 @@ export class WorkspaceSystem extends SystemPlugin {
             this.#editMode ? 'flex' : 'none'
           }">
             <div id="closePanelBtn-${panelID}" class="close-panel-button">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12L19 6.41L17.59 5Z" fill="#0579F7"/>
-              </svg>            
+              <span class="FontIcon name_closeBig size_lg"></span>           
             </div>
-            <svg class="drag-panel-button" width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M13 11.0626V6.0476H16L12 2.03564L8 6.0476H11V11.0626H6V8.05358L2 12.0655L6 16.0775V13.0685H11V18.0835H8L12 22.0954L16 18.0835H13V13.0685H18V16.0775L22 12.0655L18 8.05358V11.0626H13Z" fill="#0579F7"/>
-            </svg>
+            <span class="drag-panel-button FontIcon name_move size_lg"></span>  
           </div>
           <div class="gridstack-content-container${
             this.#editMode ? ' gridstack-panel-overlay' : ''
