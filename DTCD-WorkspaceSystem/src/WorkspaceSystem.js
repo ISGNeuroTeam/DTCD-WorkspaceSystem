@@ -113,6 +113,7 @@ export class WorkspaceSystem extends SystemPlugin {
         },
         {
           component: 'switch',
+          propName: 'editMode',
           handler: {
             event: 'input',
             callback: this.changeMode.bind(this),
@@ -205,6 +206,7 @@ export class WorkspaceSystem extends SystemPlugin {
       id: this.#currentID,
       title: this.#currentTitle,
       column: this.#column,
+      editMode: this.#editMode,
       plugins,
     };
   }
@@ -327,6 +329,7 @@ export class WorkspaceSystem extends SystemPlugin {
       }
     });
     this.#panels = [];
+    this.#editMode = false;
     this.#logSystem.debug(`Clearing panels array`);
     this.setColumn();
   }
@@ -419,7 +422,7 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#panels.push({ meta, widget, instance, guid, undeletable: true });
     return widget;
   }
-  
+
   createEmptyCell(w = 4, h = 4, x = 0, y = 0, autoPosition = true) {
     //TODO: Prettify next assignments
     w = Number.isInteger(w) ? w : 4;
@@ -569,7 +572,9 @@ export class WorkspaceSystem extends SystemPlugin {
   changeMode() {
     const panelBorder = document.querySelectorAll('.grid-stack-item-content');
     panelBorder.forEach(content => {
-      content.style.border = this.#editMode ? '2px solid var(--background_secondary)' : '2px solid var(--button_primary)';
+      content.style.border = this.#editMode
+        ? '2px solid var(--background_secondary)'
+        : '2px solid var(--button_primary)';
     });
 
     const panelHeaders = document.querySelectorAll('.gridstack-panel-header');
