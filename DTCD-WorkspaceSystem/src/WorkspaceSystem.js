@@ -1,5 +1,4 @@
 import './styles/panel.css';
-import './styles/footer.css';
 import './styles/modal.css';
 
 import {
@@ -19,17 +18,6 @@ import emptyConfiguration from './utils/empty_configuration.json';
 import defaultConfiguration from './utils/default_configuration.json';
 
 import { version } from './../package.json';
-
-document.selectTab = async function (tabNumber) {
-  const list = await Application.getSystem('WorkspaceSystem', '0.3.0').getConfigurationList();
-  if (list[tabNumber]) {
-    await Application.getSystem('WorkspaceSystem', '0.3.0').setConfiguration(list[tabNumber].id);
-    document
-      .querySelectorAll('.workspace-footer-item')
-      .forEach(tab => tab.classList.remove('active-tab'));
-    document.querySelectorAll('.workspace-footer-item')[tabNumber].classList.add('active-tab');
-  } else console.warn('There is no workspace for that tab!');
-};
 
 export class WorkspaceSystem extends SystemPlugin {
   // ---- PLUGIN PROPS ----
@@ -124,6 +112,7 @@ export class WorkspaceSystem extends SystemPlugin {
         },
         {
           component: 'switch',
+          propName: 'editMode',
           handler: {
             event: 'input',
             callback: this.changeMode.bind(this),
@@ -216,6 +205,7 @@ export class WorkspaceSystem extends SystemPlugin {
       id: this.#currentID,
       title: this.#currentTitle,
       column: this.#column,
+      editMode: this.#editMode,
       plugins,
     };
   }
@@ -338,6 +328,7 @@ export class WorkspaceSystem extends SystemPlugin {
       }
     });
     this.#panels = [];
+    this.#editMode = false;
     this.#logSystem.debug(`Clearing panels array`);
     this.setColumn();
   }
@@ -450,8 +441,9 @@ export class WorkspaceSystem extends SystemPlugin {
             this.#editMode ? 'flex' : 'none'
           }">
             <div id="closePanelBtn-${panelID}" class="close-panel-button">
-              <i  class="fas fa-lg fa-times"></i>
+              <span class="FontIcon name_closeBig size_lg"></span>           
             </div>
+            <span class="drag-panel-button FontIcon name_move size_lg"></span>  
           </div>
           <div class="gridstack-content-container${
             this.#editMode ? ' gridstack-panel-overlay' : ''
@@ -577,6 +569,13 @@ export class WorkspaceSystem extends SystemPlugin {
   }
 
   changeMode() {
+    const panelBorder = document.querySelectorAll('.grid-stack-item-content');
+    panelBorder.forEach(content => {
+      content.style.border = this.#editMode
+        ? '2px solid var(--background_secondary)'
+        : '2px solid var(--button_primary)';
+    });
+
     const panelHeaders = document.querySelectorAll('.gridstack-panel-header');
     panelHeaders.forEach(header => {
       header.style.display = this.#editMode ? 'none' : 'flex';
@@ -588,7 +587,7 @@ export class WorkspaceSystem extends SystemPlugin {
       this.#editMode ? content.classList.remove(overlayClass) : content.classList.add(overlayClass);
     });
 
-    const margin = this.#editMode ? '0px' : '10px';
+    const margin = this.#editMode ? '0px' : '2px';
     this.#grid.batchUpdate();
     this.#grid.margin(margin);
     this.#grid.commit();

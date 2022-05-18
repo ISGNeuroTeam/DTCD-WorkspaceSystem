@@ -1,5 +1,3 @@
-import footerTemplate from './../templates/footer.html';
-
 export function toMountTemplates() {
   const gridBody = document.createElement('div');
   gridBody.setAttribute('class', 'grid-stack');
