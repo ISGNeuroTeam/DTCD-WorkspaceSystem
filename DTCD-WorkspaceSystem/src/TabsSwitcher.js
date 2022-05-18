@@ -6,6 +6,7 @@ class TabsSwitcher {
   #htmlElement;
   #tabsList;
   #addTabBtn;
+  #tabsContainer;
 
   constructor(options) {
     this.#htmlElement = document.createElement('div');
@@ -16,14 +17,23 @@ class TabsSwitcher {
     this.#addTabBtn.addEventListener('click', this.#handleAddTabBtnClick);
 
     this.#tabsList = this.#htmlElement.querySelector('.TabsList-js');
-    this.addNewTabBtn();
+    this.#tabsContainer = this.#htmlElement.querySelector('.TabItemsContainer-js');
   }
 
   get htmlElement() {
     return this.#htmlElement;
   }
 
-  addNewTabBtn(tabBtnOptions) {
+  addNewTab(tabOptions) {
+    const newTab = document.createElement('div');
+    newTab.classList.add('TabItem');
+    this.#tabsContainer.appendChild(newTab);
+    this.#addNewTabBtn();
+
+    return newTab;
+  }
+
+  #addNewTabBtn(tabBtnOptions) {
     const newTabBtn = new TabBtn(tabBtnOptions);
     this.#tabsList.appendChild(newTabBtn.htmlElement);
 
@@ -38,7 +48,7 @@ class TabsSwitcher {
 
   #handleAddTabBtnClick = (event) => {
     event.preventDefault();
-    this.addNewTabBtn();
+    this.addNewTab();
   }
 }
 

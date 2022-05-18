@@ -1,9 +1,19 @@
 .TabsSwitcher {
-  display: flex;
-  align-items: center;
-  column-gap: 10px;
-  background-color: var(--background_main);
   font-family: "Proxima Nova";
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+
+  .TabItemsContainer {
+    flex: 1 0 auto;
+  }
+
+  .NavPanel {
+    display: flex;
+    align-items: center;
+    column-gap: 10px;
+    background-color: var(--background_main);
+  }
 
   .TabsList {
     display: flex;

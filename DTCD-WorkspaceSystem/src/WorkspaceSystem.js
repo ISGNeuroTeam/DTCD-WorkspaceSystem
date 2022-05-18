@@ -174,11 +174,16 @@ export class WorkspaceSystem extends SystemPlugin {
       return false;
     }
 
-    element.innerHTML = `<div class="grid-stack"></div>`;
-    this.#grid = GridStack.init(gridstackOptions);
+    // element.innerHTML = `<div class="grid-stack"></div>`;
+    // this.#grid = GridStack.init(gridstackOptions);
 
+    element.innerHTML = '';
     const tabSwitcher = new TabsSwitcher();
     element.appendChild(tabSwitcher.htmlElement);
+    
+    tabSwitcher.addNewTab().innerHTML = `<div class="grid-stack"></div>`;
+
+    this.#grid = GridStack.init(gridstackOptions);
 
     const workspaceID = history.state.workspaceID;
     this.setConfiguration(workspaceID);
