@@ -1,22 +1,68 @@
 .TabsSwitcher {
-  font-family: "Proxima Nova";
-  height: 100%;
+  font-family: "Proxima Nova", sans-serif;
+  height: calc(100% - 2px); // костыль
   display: flex;
   flex-direction: column;
-
+  
   .TabItemsContainer {
     flex: 1 0 auto;
   }
-
+  
   .NavPanel {
     display: flex;
     align-items: center;
-    column-gap: 10px;
     background-color: var(--background_main);
+    border-top: 1px solid var(--border);
+    min-height: 30px;
   }
 
-  .TabsList {
+  .TabBtnsListWrapper {
+    flex: 0 1 auto;
+    overflow: hidden;
+  }
+
+  .TabBtnsList {
     display: flex;
     align-items: center;
+  }
+
+  .ScrollBtn,
+  .AddBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: none;
+    box-shadow: none;
+    background: none;
+    width: 24px;
+    height: 24px;
+    margin-left: 6px;
+    margin-right: 6px;
+    color: var(--text_secondary);
+    cursor: pointer;
+  }
+
+  .AddBtn {
+    &:hover {
+      color: var(--button_primary);
+    }
+  }
+
+  .ScrollBtn {
+    color: var(--button_primary);
+
+    &:hover {
+      color: var(--button_primary_72);
+    }
+
+    &.disabled {
+      color: var(--border);
+      cursor: not-allowed;
+    }
+
+    &.type_next {
+      margin-left: auto;
+    }
   }
 }

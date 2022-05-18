@@ -4,7 +4,7 @@ import TabBtn from './TabBtn';
 
 class TabsSwitcher {
   #htmlElement;
-  #tabsList;
+  #tabBtnsList;
   #addTabBtn;
   #tabsContainer;
 
@@ -16,7 +16,7 @@ class TabsSwitcher {
     this.#addTabBtn = this.#htmlElement.querySelector('.AddBtn-js');
     this.#addTabBtn.addEventListener('click', this.#handleAddTabBtnClick);
 
-    this.#tabsList = this.#htmlElement.querySelector('.TabsList-js');
+    this.#tabBtnsList = this.#htmlElement.querySelector('.TabBtnsList-js');
     this.#tabsContainer = this.#htmlElement.querySelector('.TabItemsContainer-js');
   }
 
@@ -35,7 +35,7 @@ class TabsSwitcher {
 
   #addNewTabBtn(tabBtnOptions) {
     const newTabBtn = new TabBtn(tabBtnOptions);
-    this.#tabsList.appendChild(newTabBtn.htmlElement);
+    this.#tabBtnsList.appendChild(newTabBtn.htmlElement);
 
     newTabBtn.htmlElement.addEventListener('tab-delete', () => {
       newTabBtn.htmlElement.remove();

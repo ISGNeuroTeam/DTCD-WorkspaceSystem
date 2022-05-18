@@ -5,8 +5,13 @@
   column-gap: 10px;
   padding: 6px 10px;
   background-color: var(--border_12);
-  font-family: "Proxima Nova";
+  border-right: 1px solid var(--border);
   color: var(--text_main);
+
+  &:hover {
+    background-color: var(--button_primary_12);
+    color: var(--button_primary);
+  }
   
   .BtnLayer {
     cursor: pointer;
@@ -26,10 +31,6 @@
   .InputField {
     position: relative;
     display: none;
-    padding: 0;
-    border-top: none;
-    border-left: none;
-    border-right: none;
     z-index: 1;
   }
 
@@ -39,21 +40,48 @@
     text-overflow: ellipsis;
     overflow: hidden;
     max-width: 200px;
+    line-height: 1;
   }
 
   .BtnIcon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: none;
+    box-shadow: none;
+    background: none;
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+    color: var(--text_secondary);
     cursor: pointer;
     position: relative;
     z-index: 1;
 
+    &.type_edit {
+      &:hover {
+        color: var(--button_primary);
+      }
+    }
+    &.type_delete {
+      &:hover {
+        color: var(--danger);
+      }
+    }
     &.type_check {
       display: none;
+
+      &:hover {
+        color: var(--success);
+      }
     }
   }
 
   &.status_active {
-    background-color: var(--button_primary_12);
+    background-color: var(--button_primary_24);
     color: var(--button_primary);
+    font-weight: 600;
   }
 
   &:not(.status_edit) {
@@ -77,8 +105,7 @@
       &.type_check {
         display: inline-flex;
       }
-      &.type_edit,
-      &.type_delete {
+      &.type_edit {
         display: none;
       }
     }
