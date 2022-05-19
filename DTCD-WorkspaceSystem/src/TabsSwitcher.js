@@ -7,6 +7,7 @@ class TabsSwitcher {
   #tabBtnsList;
   #addTabBtn;
   #tabsContainer;
+  #tabsCollection = new Map();
 
   constructor(options) {
     this.#htmlElement = document.createElement('div');
@@ -25,12 +26,61 @@ class TabsSwitcher {
   }
 
   addNewTab(tabOptions) {
-    const newTab = document.createElement('div');
-    newTab.classList.add('TabItem');
-    this.#tabsContainer.appendChild(newTab);
-    this.#addNewTabBtn();
+    const tabId = TabsSwitcher.getIdNewTab();
 
-    return newTab;
+    const newTabItem = document.createElement('div');
+    newTabItem.classList.add('TabItem');
+    newTabItem.setAttribute('data-tab-id', tabId);
+    this.#tabsContainer.appendChild(newTabItem);
+
+    const newTabBtn = new TabBtn();
+    newTabBtn.htmlElement.setAttribute('data-tab-id', tabId);
+    this.#tabBtnsList.appendChild(newTabBtn.htmlElement);
+
+    newTabBtn.htmlElement.addEventListener('tab-delete', () => {
+      this.removeTab(tabId);
+    });
+
+    newTabBtn.htmlElement.addEventListener('tab-choose', () => {
+      this.activeTab(tabId);
+    });
+
+    this.#tabsCollection.set(tabId, {
+      tabItem: newTabItem,
+      tabBtn: newTabBtn,
+    });
+
+    if (this.#tabsCollection.size === 1) {
+      this.activeTab(tabId);
+    }
+
+    return newTabItem;
+  }
+
+  activeTab(tabId) {
+    for (let tab of this.#tabsCollection) {
+      if (tab[0] === tabId) {
+        tab[1].tabBtn.setStatus('active');
+        tab[1].tabItem.classList.add('status_active');
+      } else {
+        tab[1].tabBtn.setStatus('active', false);
+        tab[1].tabItem.classList.remove('status_active');
+      }
+    }
+  }
+
+  removeTab(tabId) {
+    if (!tabId) {
+      return;
+    }
+
+    for (let tab of this.#tabsCollection) {
+      if (tab[0] === tabId) {
+        tab[1].tabBtn.htmlElement.remove();
+        tab[1].tabItem.remove();
+      }
+    }
+    this.#tabsCollection.delete(tabId);
   }
 
   #addNewTabBtn(tabBtnOptions) {
@@ -44,11 +94,17 @@ class TabsSwitcher {
     newTabBtn.htmlElement.addEventListener('tab-choose', () => {
       newTabBtn.setStatus('active');
     });
+
+    return newTabBtn;
   }
 
   #handleAddTabBtnClick = (event) => {
     event.preventDefault();
     this.addNewTab();
+  }
+
+  static getIdNewTab() {
+    return `workspace-system-tab-${Math.ceil(Math.random() * 10000)}`;
   }
 }
 

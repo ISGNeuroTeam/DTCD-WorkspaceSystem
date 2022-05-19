@@ -59,11 +59,9 @@ class TabBtn {
       case STATUS_EDIT:
         if (value) {
           this.#htmlElement.classList.add('status_edit');
-          this.#inputFieldName.readOnly = false;
           this.#inputFieldName.value = this.name;
         } else {
           this.#htmlElement.classList.remove('status_edit');
-          this.#inputFieldName.readOnly = true;
         }
         break;
 
