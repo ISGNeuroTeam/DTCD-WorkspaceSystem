@@ -8,8 +8,7 @@ body {
 }
 
 .grid-stack {
-  margin-bottom: 30px;
-  background-color: var(--background_main);
+  background-color: var(--background_secondary);
 }
 
 .grid-stack-item-content {
