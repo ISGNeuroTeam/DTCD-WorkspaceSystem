@@ -1,12 +1,3 @@
-body {
-  margin: 0;
-  background-color: var(--background_secondary);
-}
-
-.FontIcon {
-  color: var(--button_primary);
-}
-
 .grid-stack {
   min-height: 100%;
   background-color: var(--background_secondary);
