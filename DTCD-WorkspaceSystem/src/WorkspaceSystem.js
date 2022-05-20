@@ -167,11 +167,27 @@ export class WorkspaceSystem extends SystemPlugin {
     // element.innerHTML = `<div class="grid-stack"></div>`;
     // this.#grid = GridStack.init(gridstackOptions);
 
+    const workspaceTabsSwitcher = {
+      editMode: false,
+      tabsOptions: [
+        {
+          id: 12312,
+          name: 'workspace tab 1',
+          isActive: true,
+        },
+        {
+          id: 353524,
+          name: 'workspace tab 2',
+          isActive: true,
+        },
+      ],
+    };
+
     element.innerHTML = '';
-    const tabSwitcher = new TabsSwitcher();
+    const tabSwitcher = new TabsSwitcher(workspaceTabsSwitcher);
     element.appendChild(tabSwitcher.htmlElement);
     
-    tabSwitcher.addNewTab().innerHTML = `<div class="grid-stack"></div>`;
+    // tabSwitcher.addNewTab().innerHTML = `<div class="grid-stack"></div>`;
 
     this.#grid = GridStack.init(gridstackOptions);
 

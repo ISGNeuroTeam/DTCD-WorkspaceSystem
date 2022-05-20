@@ -10,6 +10,11 @@ class TabsSwitcher {
   #tabsCollection = new Map();
 
   constructor(options) {
+    const {
+      editMode = false,
+      tabsOptions = [],
+    } = options;
+
     this.#htmlElement = document.createElement('div');
     this.#htmlElement.classList.add('TabsSwitcher');
     this.#htmlElement.innerHTML = TabsSwitcherHtml;
@@ -19,6 +24,14 @@ class TabsSwitcher {
 
     this.#tabBtnsList = this.#htmlElement.querySelector('.TabBtnsList-js');
     this.#tabsContainer = this.#htmlElement.querySelector('.TabItemsContainer-js');
+
+    for (let i = 0; i < tabsOptions.length; i++) {
+      this.addNewTab(tabsOptions[i]);
+      
+      if (tabsOptions[i].isActive) {
+        this.activeTab(tabsOptions[i].id);
+      }
+    }
   }
 
   get htmlElement() {
@@ -26,14 +39,19 @@ class TabsSwitcher {
   }
 
   addNewTab(tabOptions) {
-    const tabId = TabsSwitcher.getIdNewTab();
+    const {
+      id,
+      name,
+    } = tabOptions;
+
+    const tabId = id ? id : TabsSwitcher.getIdNewTab();
 
     const newTabItem = document.createElement('div');
     newTabItem.classList.add('TabItem');
     newTabItem.setAttribute('data-tab-id', tabId);
     this.#tabsContainer.appendChild(newTabItem);
 
-    const newTabBtn = new TabBtn();
+    const newTabBtn = new TabBtn({name});
     newTabBtn.htmlElement.setAttribute('data-tab-id', tabId);
     this.#tabBtnsList.appendChild(newTabBtn.htmlElement);
 

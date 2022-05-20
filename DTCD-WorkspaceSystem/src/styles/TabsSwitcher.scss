@@ -48,11 +48,12 @@
     height: 24px;
     margin-left: 6px;
     margin-right: 6px;
-    color: var(--text_secondary);
     cursor: pointer;
   }
-
+  
   .AddBtn {
+    color: var(--text_secondary);
+    
     &:hover {
       color: var(--button_primary);
     }
