@@ -1,7 +1,8 @@
 import './styles/TabBtn.scss';
 import TabBtnHtml from './templates/TabBtn.html';
 
-const STATUS_EDIT = 'edit';
+const STATUS_EDIT_NAME = 'edit_name';
+const STATUS_EDIT_ON = 'edit_on';
 const STATUS_ACTIVE = 'active';
 
 class TabBtn {
@@ -56,12 +57,21 @@ class TabBtn {
 
   setStatus(status, value = true) {
     switch (status) {
-      case STATUS_EDIT:
+      case STATUS_EDIT_NAME:
         if (value) {
-          this.#htmlElement.classList.add('status_edit');
+          this.#htmlElement.classList.add('status_editName');
           this.#inputFieldName.value = this.name;
         } else {
-          this.#htmlElement.classList.remove('status_edit');
+          this.#htmlElement.classList.remove('status_editName');
+        }
+        break;
+        
+      case STATUS_EDIT_ON:
+        if (value) {
+          this.#htmlElement.classList.add('status_editOn');
+        } else {
+          this.setStatus(STATUS_EDIT_NAME, false);
+          this.#htmlElement.classList.remove('status_editOn');
         }
         break;
 
@@ -77,12 +87,12 @@ class TabBtn {
 
   #handleBtnEditClick = (event) => {
     event.preventDefault();
-    this.setStatus('edit');
+    this.setStatus('edit_name');
   }
 
   #handleBtnCheckClick = (event) => {
     event.preventDefault();
-    this.setStatus('edit', false);
+    this.setStatus('edit_name', false);
   }
 
   #handleBtnDeleteClick = (event) => {

@@ -41,6 +41,7 @@ export class WorkspaceSystem extends SystemPlugin {
   #editMode;
   #numberPanelIncrement;
   #modalInstance;
+  #tabsSwitcherInstance;
 
   static getRegistrationMeta() {
     return {
@@ -167,8 +168,8 @@ export class WorkspaceSystem extends SystemPlugin {
     // element.innerHTML = `<div class="grid-stack"></div>`;
     // this.#grid = GridStack.init(gridstackOptions);
 
-    const workspaceTabsSwitcher = {
-      editMode: false,
+    const tabPanelsConfig = {
+      editMode: true,
       tabsOptions: [
         {
           id: 12312,
@@ -178,16 +179,23 @@ export class WorkspaceSystem extends SystemPlugin {
         {
           id: 353524,
           name: 'workspace tab 2',
-          isActive: true,
         },
       ],
     };
 
     element.innerHTML = '';
-    const tabSwitcher = new TabsSwitcher(workspaceTabsSwitcher);
-    element.appendChild(tabSwitcher.htmlElement);
+    this.#tabsSwitcherInstance = new TabsSwitcher({editMode: tabPanelsConfig.editMode});
+    element.appendChild(this.#tabsSwitcherInstance.htmlElement);
     
-    // tabSwitcher.addNewTab().innerHTML = `<div class="grid-stack"></div>`;
+    for (let i = 0; i < tabPanelsConfig.tabsOptions.length; i++) {
+      const tabOptions = tabPanelsConfig.tabsOptions[i];
+
+      this.#tabsSwitcherInstance.addNewTab(tabOptions).innerHTML = `<div class="grid-stack"></div>`;
+      
+      if (tabOptions.isActive) {
+        this.#tabsSwitcherInstance.activeTab(tabOptions.id);
+      }
+    }
 
     this.#grid = GridStack.init(gridstackOptions);
 
@@ -233,6 +241,7 @@ export class WorkspaceSystem extends SystemPlugin {
       column: this.#column,
       editMode: this.#editMode,
       plugins,
+      tabPanelsConfig: this.#tabsSwitcherInstance.getConfig(),
     };
   }
 

@@ -4,6 +4,8 @@ import TabBtn from './TabBtn';
 
 class TabsSwitcher {
   #htmlElement;
+  #editMode;
+
   #tabBtnsList;
   #addTabBtn;
   #tabsContainer;
@@ -12,8 +14,7 @@ class TabsSwitcher {
   constructor(options) {
     const {
       editMode = false,
-      tabsOptions = [],
-    } = options;
+    } = options instanceof Object ? options : {};
 
     this.#htmlElement = document.createElement('div');
     this.#htmlElement.classList.add('TabsSwitcher');
@@ -25,24 +26,34 @@ class TabsSwitcher {
     this.#tabBtnsList = this.#htmlElement.querySelector('.TabBtnsList-js');
     this.#tabsContainer = this.#htmlElement.querySelector('.TabItemsContainer-js');
 
-    for (let i = 0; i < tabsOptions.length; i++) {
-      this.addNewTab(tabsOptions[i]);
-      
-      if (tabsOptions[i].isActive) {
-        this.activeTab(tabsOptions[i].id);
-      }
-    }
+    this.editMode = editMode;
   }
 
   get htmlElement() {
     return this.#htmlElement;
   }
 
+  get editMode() {
+    return this.#editMode;
+  }
+
+  set editMode (newValue) {
+    this.#editMode = Boolean(newValue);
+
+    for (let tab of this.#tabsCollection) {
+      tab[1].tabBtn.setStatus('edit_on', this.#editMode);
+    }
+
+    this.#editMode
+      ? this.htmlElement.classList.add('status_editOn')
+      : this.htmlElement.classList.remove('status_editOn');
+  }
+
   addNewTab(tabOptions) {
     const {
       id,
       name,
-    } = tabOptions;
+    } = tabOptions instanceof Object ? tabOptions : {};
 
     const tabId = id ? id : TabsSwitcher.getIdNewTab();
 
@@ -55,6 +66,8 @@ class TabsSwitcher {
     newTabBtn.htmlElement.setAttribute('data-tab-id', tabId);
     this.#tabBtnsList.appendChild(newTabBtn.htmlElement);
 
+    this.editMode && newTabBtn.setStatus('edit_on', this.editMode);
+
     newTabBtn.htmlElement.addEventListener('tab-delete', () => {
       this.removeTab(tabId);
     });
@@ -66,6 +79,7 @@ class TabsSwitcher {
     this.#tabsCollection.set(tabId, {
       tabItem: newTabItem,
       tabBtn: newTabBtn,
+      isActive: false,
     });
 
     if (this.#tabsCollection.size === 1) {
@@ -78,9 +92,11 @@ class TabsSwitcher {
   activeTab(tabId) {
     for (let tab of this.#tabsCollection) {
       if (tab[0] === tabId) {
+        tab[1].isActive = true;
         tab[1].tabBtn.setStatus('active');
         tab[1].tabItem.classList.add('status_active');
       } else {
+        tab[1].isActive = false;
         tab[1].tabBtn.setStatus('active', false);
         tab[1].tabItem.classList.remove('status_active');
       }
@@ -99,6 +115,23 @@ class TabsSwitcher {
       }
     }
     this.#tabsCollection.delete(tabId);
+  }
+
+  getConfig () {
+    const config = {
+      editMode: this.editMode,
+      tabsOptions: [],
+    };
+    
+    for (let tab of this.#tabsCollection) {
+      config.tabsOptions.push({
+        id: tab[0],
+        name: tab[1].tabBtn.name,
+        isActive: tab[1].isActive,
+      });
+    }
+
+    return config;
   }
 
   #addNewTabBtn(tabBtnOptions) {

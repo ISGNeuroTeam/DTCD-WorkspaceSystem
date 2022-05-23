@@ -7,6 +7,16 @@
   background-color: var(--border_12);
   border-right: 1px solid var(--border);
   color: var(--text_main);
+  min-height: 30px;
+
+  &,
+  * {
+    &,
+    &::after,
+    &::before {
+      box-sizing: border-box;
+    }
+  }
 
   &:hover {
     background-color: var(--button_primary_12);
@@ -60,11 +70,15 @@
     z-index: 1;
 
     &.type_edit {
+      display: none;
+
       &:hover {
         color: var(--button_primary);
       }
     }
     &.type_delete {
+      display: none;
+
       &:hover {
         color: var(--danger);
       }
@@ -84,16 +98,16 @@
     font-weight: 600;
   }
 
-  &:not(.status_edit) {
-    .InputField {
-      background-color: transparent;
-      border-color: transparent;
-      outline: none;
-      cursor: default;
+  &.status_editOn {
+    .BtnIcon {
+      &.type_edit,
+      &.type_delete {
+        display: inline-flex;
+      }
     }
   }
 
-  &.status_edit {
+  &.status_editName {
     .TabName {
       display: none;
     }
