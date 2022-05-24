@@ -77,7 +77,7 @@ class TabsSwitcher {
     });
 
     this.#tabsCollection.set(tabId, {
-      tabItem: newTabItem,
+      tabPanel: newTabItem,
       tabBtn: newTabBtn,
       isActive: false,
     });
@@ -86,7 +86,7 @@ class TabsSwitcher {
       this.activeTab(tabId);
     }
 
-    return newTabItem;
+    return tabId;
   }
 
   activeTab(tabId) {
@@ -94,11 +94,11 @@ class TabsSwitcher {
       if (tab[0] === tabId) {
         tab[1].isActive = true;
         tab[1].tabBtn.setStatus('active');
-        tab[1].tabItem.classList.add('status_active');
+        tab[1].tabPanel.classList.add('status_active');
       } else {
         tab[1].isActive = false;
         tab[1].tabBtn.setStatus('active', false);
-        tab[1].tabItem.classList.remove('status_active');
+        tab[1].tabPanel.classList.remove('status_active');
       }
     }
   }
@@ -111,10 +111,24 @@ class TabsSwitcher {
     for (let tab of this.#tabsCollection) {
       if (tab[0] === tabId) {
         tab[1].tabBtn.htmlElement.remove();
-        tab[1].tabItem.remove();
+        tab[1].tabPanel.remove();
       }
     }
     this.#tabsCollection.delete(tabId);
+  }
+
+  getTab(tabId) {
+    if (!tabId) {
+      return;
+    }
+
+    for (let tab of this.#tabsCollection) {
+      if (tab[0] === tabId) {
+        return tab[1];
+      }
+    }
+
+    return null;
   }
 
   getConfig () {

@@ -29,6 +29,7 @@ export class WorkspaceSystem extends SystemPlugin {
   #logSystem;
   #emptyConfiguration;
   #defaultConfiguration;
+  #tabPanelsConfig;
 
   // ---- STATE ----
   #panels;
@@ -168,36 +169,11 @@ export class WorkspaceSystem extends SystemPlugin {
     // element.innerHTML = `<div class="grid-stack"></div>`;
     // this.#grid = GridStack.init(gridstackOptions);
 
-    const tabPanelsConfig = {
-      editMode: true,
-      tabsOptions: [
-        {
-          id: 12312,
-          name: 'workspace tab 1',
-          isActive: true,
-        },
-        {
-          id: 353524,
-          name: 'workspace tab 2',
-        },
-      ],
-    };
-
     element.innerHTML = '';
-    this.#tabsSwitcherInstance = new TabsSwitcher({editMode: tabPanelsConfig.editMode});
+    this.#tabsSwitcherInstance = new TabsSwitcher();
     element.appendChild(this.#tabsSwitcherInstance.htmlElement);
-    
-    for (let i = 0; i < tabPanelsConfig.tabsOptions.length; i++) {
-      const tabOptions = tabPanelsConfig.tabsOptions[i];
 
-      this.#tabsSwitcherInstance.addNewTab(tabOptions).innerHTML = `<div class="grid-stack"></div>`;
-      
-      if (tabOptions.isActive) {
-        this.#tabsSwitcherInstance.activeTab(tabOptions.id);
-      }
-    }
-
-    this.#grid = GridStack.init(gridstackOptions);
+    // this.#grid = GridStack.init(gridstackOptions);
 
     const workspaceID = history.state.workspaceID;
     this.setConfiguration(workspaceID);
@@ -250,6 +226,13 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#logSystem.info(
       `Setting workspace configuration (id:${config?.id}, title:${config?.title})`
     );
+
+    // Tabs panels
+    config.tabPanelsConfig instanceof Object
+      ? this.#tabPanelsConfig = config.tabPanelsConfig
+      : this.#tabPanelsConfig = null;
+    this.#createTabsSwitcher();
+
     // ---- COLUMN ----
     if (typeof config.column != 'undefined') this.setColumn(config.column);
 
@@ -324,12 +307,13 @@ export class WorkspaceSystem extends SystemPlugin {
     }
 
     // EVENT-SYSTEM-MAPPING
-    if (eventSystemConfig.hasOwnProperty('subscriptions'))
+    if (eventSystemConfig.hasOwnProperty('subscriptions')) {
       for (let sub of eventSystemConfig.subscriptions) {
         const { event, action } = sub;
         event.guid = GUIDMap[event.guid];
         action.guid = GUIDMap[action.guid];
       }
+    }
 
     await this.#eventSystem.setPluginConfig(eventSystemConfig);
     return true;
@@ -365,7 +349,7 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#panels = [];
     this.#editMode = false;
     this.#logSystem.debug(`Clearing panels array`);
-    this.setColumn();
+    // this.setColumn();
   }
 
   async deleteConfiguration(id) {
@@ -728,5 +712,25 @@ export class WorkspaceSystem extends SystemPlugin {
       modal.remove();
       this.#modalInstance = null;
     }
+  }
+
+  #createTabsSwitcher () {
+    if (this.#tabPanelsConfig instanceof Object) {
+      for (let i = 0; i < this.#tabPanelsConfig.tabsOptions.length; i++) {
+        const tabOptions = this.#tabPanelsConfig.tabsOptions[i];
+
+        const tabId = this.#tabsSwitcherInstance.addNewTab(tabOptions);
+        this.#tabsSwitcherInstance.getTab(tabId).tabPanel.innerHTML = `<div class="grid-stack"></div>`;
+        
+        if (tabOptions.isActive) {
+          this.#tabsSwitcherInstance.activeTab(tabId);
+        }
+      }
+    } else {
+      const tabId = this.#tabsSwitcherInstance.addNewTab();
+      this.#tabsSwitcherInstance.getTab(tabId).tabPanel.innerHTML = `<div class="grid-stack"></div>`;
+    }
+
+    this.#grid = GridStack.init(gridstackOptions);
   }
 }
