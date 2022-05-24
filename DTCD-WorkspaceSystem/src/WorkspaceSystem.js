@@ -612,6 +612,11 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#grid.commit();
     this.#grid.setStatic(this.#editMode);
     this.#editMode = !this.#editMode;
+
+    if (this.#tabsSwitcherInstance) {
+      this.#tabsSwitcherInstance.editMode = this.#editMode;
+    }
+    
     this.#logSystem.info(`Workspace edit mode turned ${this.#editMode ? 'on' : 'off'}`);
   }
 
