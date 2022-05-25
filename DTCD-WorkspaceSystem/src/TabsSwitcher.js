@@ -82,9 +82,9 @@ class TabsSwitcher {
       isActive: false,
     });
 
-    if (this.#tabsCollection.size === 1) {
-      this.activeTab(tabId);
-    }
+    // if (this.#tabsCollection.size === 1) {
+    //   this.activeTab(tabId);
+    // }
 
     return tabId;
   }
@@ -101,6 +101,14 @@ class TabsSwitcher {
         tab[1].tabPanel.classList.remove('status_active');
       }
     }
+
+    this.#htmlElement.dispatchEvent(new CustomEvent('tab-active', {
+      bubbles: true,
+      cancelable: true,
+      detail: {
+        tabId,
+      }
+    }));
   }
 
   removeTab(tabId) {
