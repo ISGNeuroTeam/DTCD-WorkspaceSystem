@@ -177,7 +177,7 @@ class TabsSwitcher {
   }
 
   static getIdNewTab() {
-    return `workspace-system-tab-${Math.ceil(Math.random() * 10000)}`;
+    return `wss-tab-${Math.ceil(Math.random() * 10000)}`;
   }
 }
 
