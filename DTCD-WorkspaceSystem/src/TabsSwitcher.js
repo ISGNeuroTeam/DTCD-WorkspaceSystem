@@ -84,9 +84,13 @@ class TabsSwitcher {
       isActive: false,
     });
 
-    // if (this.#tabsCollection.size === 1) {
-    //   this.activeTab(tabId);
-    // }
+    this.#htmlElement.dispatchEvent(new CustomEvent('tab-add', {
+      bubbles: true,
+      cancelable: false,
+      detail: {
+        tabId: tabId,
+      },
+    }));
 
     return tabId;
   }

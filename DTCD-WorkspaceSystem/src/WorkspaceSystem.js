@@ -172,6 +172,7 @@ export class WorkspaceSystem extends SystemPlugin {
     element.appendChild(this.#tabsSwitcherInstance.htmlElement);
     this.#tabsSwitcherInstance.htmlElement.addEventListener('tab-active', this.#handleTabsSwitcherActive);
     this.#tabsSwitcherInstance.htmlElement.addEventListener('tab-delete', this.#handleTabsSwitcherDelete);
+    this.#tabsSwitcherInstance.htmlElement.addEventListener('tab-add', this.#handleTabsSwitcherAdd);
 
     const workspaceID = history.state.workspaceID;
     this.setConfiguration(workspaceID);
@@ -752,17 +753,7 @@ export class WorkspaceSystem extends SystemPlugin {
     if (this.#tabPanelsConfig instanceof Object) {
       for (let i = 0; i < this.#tabPanelsConfig.tabsOptions.length; i++) {
         const tabOptions = this.#tabPanelsConfig.tabsOptions[i];
-
         const tabId = this.#tabsSwitcherInstance.addNewTab(tabOptions);
-        const gridStackEl = document.createElement('div');
-              gridStackEl.className = 'grid-stack'
-        this.#tabsSwitcherInstance.getTab(tabId).tabPanel.appendChild(gridStackEl);
-        const newGrid = GridStack.init(gridstackOptions, gridStackEl);
-        
-        this.#gridCollection.set(tabId, {
-          isActive: false,
-          gridInstance: newGrid,
-        });
         
         if (tabOptions.isActive) {
           this.#tabsSwitcherInstance.activeTab(tabId);
@@ -770,17 +761,24 @@ export class WorkspaceSystem extends SystemPlugin {
       }
     } else {
       const tabId = this.#tabsSwitcherInstance.addNewTab();
-      const gridStackEl = document.createElement('div');
-            gridStackEl.className = 'grid-stack';
-      this.#tabsSwitcherInstance.getTab(tabId).tabPanel.appendChild(gridStackEl);
-      const newGrid = GridStack.init(gridstackOptions, gridStackEl);
-
-      this.#gridCollection.set(tabId, {
-        isActive: false,
-        gridInstance: newGrid,
-      });
       this.#tabsSwitcherInstance.activeTab(tabId);
     }
+  }
+
+  #handleTabsSwitcherAdd = (event) => {
+    const tabId = event.detail?.tabId;
+
+    if (!tabId) return;
+
+    const gridStackEl = document.createElement('div');
+          gridStackEl.className = 'grid-stack'
+    this.#tabsSwitcherInstance.getTab(tabId).tabPanel.appendChild(gridStackEl);
+    const newGrid = GridStack.init(gridstackOptions, gridStackEl);
+    
+    this.#gridCollection.set(tabId, {
+      isActive: false,
+      gridInstance: newGrid,
+    });
   }
 
   #handleTabsSwitcherActive = (event) => {
