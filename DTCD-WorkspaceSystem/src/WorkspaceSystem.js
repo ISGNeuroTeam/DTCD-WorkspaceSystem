@@ -174,6 +174,7 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#tabsSwitcherInstance = new TabsSwitcher();
     element.appendChild(this.#tabsSwitcherInstance.htmlElement);
     this.#tabsSwitcherInstance.htmlElement.addEventListener('tab-active', this.#handleTabsSwitcherActive);
+    this.#tabsSwitcherInstance.htmlElement.addEventListener('tab-delete', this.#handleTabsSwitcherDelete);
 
     const workspaceID = history.state.workspaceID;
     this.setConfiguration(workspaceID);
@@ -425,7 +426,7 @@ export class WorkspaceSystem extends SystemPlugin {
   }
 
   #createUndeletableCell({ name, version, w, h, x, y, tabId, autoposition }) {
-    let targetGrid = this.#getGridById(tabId);
+    let targetGrid = this.#gridCollection.get(tabId)?.gridInstance;
     targetGrid = targetGrid ? targetGrid : this.#activeGrid;
 
     const widget = targetGrid.addWidget(
@@ -455,7 +456,7 @@ export class WorkspaceSystem extends SystemPlugin {
   }
 
   createEmptyCell(w = 4, h = 4, x = 0, y = 0, tabId, autoPosition = true) {
-    let targetGrid = this.#getGridById(tabId);
+    let targetGrid = this.#gridCollection.get(tabId)?.gridInstance;
     targetGrid = targetGrid ? targetGrid : this.#activeGrid;
 
     //TODO: Prettify next assignments
@@ -800,11 +801,30 @@ export class WorkspaceSystem extends SystemPlugin {
     }
   }
 
-  #getGridById (id) {
-    for (const gridData of this.#gridCollection) {
-      if (gridData[0] === id) return gridData[1].gridInstance;
+  #handleTabsSwitcherDelete = (event) => {
+    if (!this.#gridCollection) return;
+
+    const deletingTabId = event.detail.tabId;
+    this.#logSystem.debug(`Deleting workspace tab panel with id '${deletingTabId}'.`);
+
+    const deletingGrid = this.#gridCollection.get(deletingTabId)?.gridInstance;
+    if (!deletingGrid) {
+      this.#logSystem.debug(`Deleting workspace tab panel with id '${deletingTabId}' not found.`);
+      return;
     }
-    return null;
+
+    this.#panels = this.#panels.filter((plugin) => {
+      const { widget, instance, position } = plugin;
+      if (position.tabId === deletingTabId) {
+        widget && deletingGrid.removeWidget(widget);
+        // if (instance) this.uninstallPluginByInstance(instance);
+        return false;
+      } else {
+        return true;
+      }
+    });
+
+    this.#gridCollection.delete(deletingTabId);
   }
 
   #getGridIdByObject (desiredGrid) {

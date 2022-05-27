@@ -68,11 +68,13 @@ class TabsSwitcher {
 
     this.editMode && newTabBtn.setStatus('edit_on', this.editMode);
 
-    newTabBtn.htmlElement.addEventListener('tab-delete', () => {
+    newTabBtn.htmlElement.addEventListener('tab-delete', (event) => {
+      event.stopPropagation();
       this.removeTab(tabId);
     });
 
     newTabBtn.htmlElement.addEventListener('tab-choose', () => {
+      event.stopPropagation();
       this.activeTab(tabId);
     });
 
@@ -123,6 +125,13 @@ class TabsSwitcher {
       }
     }
     this.#tabsCollection.delete(tabId);
+    this.#htmlElement.dispatchEvent(new CustomEvent('tab-delete', {
+      bubbles: true,
+      cancelable: false,
+      detail: {
+        tabId: tabId,
+      },
+    }));
   }
 
   getTab(tabId) {
