@@ -1,5 +1,6 @@
-import './styles/panel.css';
-import './styles/modal.css';
+import 'gridstack/dist/gridstack.min.css';
+import { GridStack } from 'gridstack';
+import 'gridstack/dist/h5/gridstack-dd-native';
 
 import {
   EventSystemAdapter,
@@ -7,17 +8,13 @@ import {
   InteractionSystemAdapter,
   LogSystemAdapter,
 } from './../../DTCD-SDK/index';
-
-import 'gridstack/dist/gridstack.min.css';
-import { GridStack } from 'gridstack';
-import 'gridstack/dist/h5/gridstack-dd-native';
-
+import { version } from './../package.json';
+import './styles/panel.css';
+import './styles/modal.css';
 import { toMountTemplates } from './utils/templates';
 import gridstackOptions from './utils/gridstackOptions';
 import emptyConfiguration from './utils/empty_configuration.json';
 import defaultConfiguration from './utils/default_configuration.json';
-
-import { version } from './../package.json';
 
 import TabsSwitcher from './TabsSwitcher';
 
