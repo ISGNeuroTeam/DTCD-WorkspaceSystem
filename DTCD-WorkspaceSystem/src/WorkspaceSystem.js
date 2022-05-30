@@ -819,8 +819,11 @@ export class WorkspaceSystem extends SystemPlugin {
       }
     });
 
-    // если удаляемый таб был активным...
-    if ( this.#gridCollection.get(deletingTabId).isActive ) {
+    // если удаляемый таб был активным и не единственным...
+    const isDeletedTabActive = this.#gridCollection.get(deletingTabId).isActive;
+    const isLastTab = this.#gridCollection.size === 1;
+    const resultCondition = isDeletedTabActive && !isLastTab;
+    if ( resultCondition ) {
       // ...то находим следующий таб и активируем его.
       let nextTabPanelId;
       this.#gridCollection.forEach((value, key, map) => {
