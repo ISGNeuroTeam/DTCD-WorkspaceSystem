@@ -62,7 +62,9 @@ class TabsSwitcher {
     newTabItem.setAttribute('data-tab-id', tabId);
     this.#tabsContainer.appendChild(newTabItem);
 
-    const newTabBtn = new TabBtn({name});
+    const newTabBtn = new TabBtn({
+      name: this.#checkTabName(name) ? name : tabId,
+    });
     newTabBtn.htmlElement.setAttribute('data-tab-id', tabId);
     this.#tabBtnsList.appendChild(newTabBtn.htmlElement);
 
@@ -73,7 +75,7 @@ class TabsSwitcher {
       this.removeTab(tabId);
     });
 
-    newTabBtn.htmlElement.addEventListener('tab-choose', () => {
+    newTabBtn.htmlElement.addEventListener('tab-choose', (event) => {
       event.stopPropagation();
       this.activeTab(tabId);
     });
@@ -187,6 +189,18 @@ class TabsSwitcher {
   #handleAddTabBtnClick = (event) => {
     event.preventDefault();
     this.addNewTab();
+  }
+
+  #checkTabName (name) {
+    // название не пустое.
+    if (!name) return false;
+
+    // проверка на повтор названия таба.
+    this.#tabsCollection.forEach((tabItem) => {
+      if (tabItem.tabBtn.name === name) return false;
+    });
+
+    return true;
   }
 
   static getIdNewTab() {
