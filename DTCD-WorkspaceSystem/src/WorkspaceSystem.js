@@ -819,7 +819,21 @@ export class WorkspaceSystem extends SystemPlugin {
       }
     });
 
-    this.#gridCollection.delete(deletingTabId);
+    // если удаляемый таб был активным...
+    if ( this.#gridCollection.get(deletingTabId).isActive ) {
+      // ...то находим следующий таб и активируем его.
+      let nextTabPanelId;
+      this.#gridCollection.forEach((value, key, map) => {
+        if (key === deletingTabId) return;
+        else nextTabPanelId = key;
+      });
+
+      this.#gridCollection.delete(deletingTabId);
+      this.#tabsSwitcherInstance.activeTab(nextTabPanelId);
+    } else {
+      // ...иначе просто удаляем сетку.
+      this.#gridCollection.delete(deletingTabId);
+    }
   }
 
   #getGridIdByObject (desiredGrid) {
