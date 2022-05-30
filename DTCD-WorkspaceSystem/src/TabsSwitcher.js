@@ -131,6 +131,7 @@ class TabsSwitcher {
       }
     }
     this.#tabsCollection.delete(tabId);
+    
     this.#htmlElement.dispatchEvent(new CustomEvent('tab-delete', {
       bubbles: true,
       cancelable: false,
@@ -145,13 +146,7 @@ class TabsSwitcher {
       return;
     }
 
-    for (let tab of this.#tabsCollection) {
-      if (tab[0] === tabId) {
-        return tab[1];
-      }
-    }
-
-    return null;
+    return this.#tabsCollection.get(tabId);
   }
 
   getConfig () {
@@ -169,21 +164,6 @@ class TabsSwitcher {
     }
 
     return config;
-  }
-
-  #addNewTabBtn(tabBtnOptions) {
-    const newTabBtn = new TabBtn(tabBtnOptions);
-    this.#tabBtnsList.appendChild(newTabBtn.htmlElement);
-
-    newTabBtn.htmlElement.addEventListener('tab-delete', () => {
-      newTabBtn.htmlElement.remove();
-    });
-
-    newTabBtn.htmlElement.addEventListener('tab-choose', () => {
-      newTabBtn.setStatus('active');
-    });
-
-    return newTabBtn;
   }
 
   #handleAddTabBtnClick = (event) => {
