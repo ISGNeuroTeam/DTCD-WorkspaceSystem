@@ -7,17 +7,21 @@ const STATUS_ACTIVE = 'active';
 
 class TabBtn {
   #htmlElement;
-  #inputFieldName;
+  #name;
   #tabNameHtml;
+
+  #inputFieldName;
   #btnEdit;
   #btnCheck;
   #btnDelete;
-  #name;
-  #btnLayer
+  #btnLayer;
+
+  #callbackCheckTabName;
   
   constructor(options) {
     const {
       name = 'Без названия',
+      callbackCheckTabName,
     } = options instanceof Object ? options : {};
 
     this.#htmlElement = document.createElement('div');
@@ -29,6 +33,7 @@ class TabBtn {
     this.#inputFieldName.addEventListener('input', this.#handleNameFieldInput);
 
     this.name = name;
+    this.#callbackCheckTabName = callbackCheckTabName;
 
     this.#btnEdit = this.#htmlElement.querySelector('.BtnIcon.type_edit-js');
     this.#btnCheck = this.#htmlElement.querySelector('.BtnIcon.type_check-js');
@@ -92,6 +97,16 @@ class TabBtn {
 
   #handleBtnCheckClick = (event) => {
     event.preventDefault();
+
+    const {
+      value,
+      theme,
+    } = this.#inputFieldName;
+
+    if (theme.indexOf('withError') === -1) {
+      this.name = value;
+    }
+
     this.setStatus('edit_name', false);
   }
 
@@ -112,7 +127,19 @@ class TabBtn {
   }
 
   #handleNameFieldInput = (event) => {
-    this.name = event.target.value;
+    const newName = event.target.value;
+
+    if (this.#callbackCheckTabName instanceof Function) {
+      let inputThemes = this.#inputFieldName.theme;
+
+      if (this.#callbackCheckTabName(this.name, newName)) {
+        inputThemes = inputThemes.filter((theme) => theme !== 'withError');
+      } else {
+        inputThemes.indexOf('withError') === -1 && inputThemes.push('withError');
+      }
+      this.#inputFieldName.theme = inputThemes;
+    } else {
+    }
   }
 }
 

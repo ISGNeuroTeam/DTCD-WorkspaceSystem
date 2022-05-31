@@ -63,7 +63,8 @@ class TabsSwitcher {
     this.#tabsContainer.appendChild(newTabItem);
 
     const newTabBtn = new TabBtn({
-      name: this.#checkTabName(name) ? name : tabId,
+      name: name ? name : tabId,
+      callbackCheckTabName: this.#checkTabName,
     });
     newTabBtn.htmlElement.setAttribute('data-tab-id', tabId);
     this.#tabBtnsList.appendChild(newTabBtn.htmlElement);
@@ -131,7 +132,7 @@ class TabsSwitcher {
       }
     }
     this.#tabsCollection.delete(tabId);
-    
+
     this.#htmlElement.dispatchEvent(new CustomEvent('tab-delete', {
       bubbles: true,
       cancelable: false,
@@ -171,16 +172,23 @@ class TabsSwitcher {
     this.addNewTab();
   }
 
-  #checkTabName (name) {
+  #checkTabName = (oldValue, newName) => {
     // название не пустое.
-    if (!name) return false;
-
+    if (!newName) return false;
+    
     // проверка на повтор названия таба.
+    let checkResult = true;
     this.#tabsCollection.forEach((tabItem) => {
-      if (tabItem.tabBtn.name === name) return false;
+      // условие, чтобы не проверять таб, название которого сейчас редактируется
+      if (tabItem.tabBtn.name !== oldValue) {
+        if(tabItem.tabBtn.name === newName) {
+          checkResult = false;
+          return;
+        }
+      }
     });
 
-    return true;
+    return checkResult;
   }
 
   static getIdNewTab() {
