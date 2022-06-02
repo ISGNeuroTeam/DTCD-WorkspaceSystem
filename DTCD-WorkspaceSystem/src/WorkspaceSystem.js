@@ -302,20 +302,14 @@ export class WorkspaceSystem extends SystemPlugin {
 
   async downloadConfiguration(id) {
     this.#logSystem.debug(`Trying to download configuration with id:${id}`);
-    try {
-      const { data } = await this.#interactionSystem.GETRequest(
-        `/mock_server/v1/workspace/object?id=${id}`
-      );
-      this.#logSystem.debug(`Parsing configuration from response`);
-      const content = data.content;
-      content['id'] = data.id;
-      content['title'] = data.title;
-      return content;
-    } catch (err) {
-      this.#logSystem.error(
-        `Error occured while downloading workspace configuration: ${err.message}`
-      );
-    }
+    const { data } = await this.#interactionSystem.GETRequest(
+      `/mock_server/v1/workspace/object?id=${id}`
+    );
+    this.#logSystem.debug(`Parsing configuration from response`);
+    const content = data.content;
+    content['id'] = data.id;
+    content['title'] = data.title;
+    return content;
   }
 
   resetWorkspace() {
@@ -602,8 +596,15 @@ export class WorkspaceSystem extends SystemPlugin {
   }
 
   async setConfiguration(id) {
-    const config = await this.downloadConfiguration(id);
-    return this.setPluginConfig(config);
+    try {
+      const config = await this.downloadConfiguration(id);
+      return this.setPluginConfig(config);
+    } catch (err) {
+      this.getSystem('AppGUISystem', '0.1.0').goTo404();
+      this.#logSystem.error(
+        `Error occured while downloading workspace configuration: ${err.message}`
+      );
+    }
   }
 
   async saveConfiguration() {
