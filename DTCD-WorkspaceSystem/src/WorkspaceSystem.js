@@ -235,6 +235,15 @@ export class WorkspaceSystem extends SystemPlugin {
       : this.#tabPanelsConfig = null;
     this.#createTabsSwitcher();
 
+    // remember id of active tab panel
+    let activeTabId;
+    this.#gridCollection.forEach((gridData, key) => {
+      if (gridData.isActive){
+        activeTabId = key;
+        return;
+      }
+    });
+
     // ---- COLUMN ----
     if (typeof config.column != 'undefined') this.setColumn(config.column);
 
@@ -258,20 +267,28 @@ export class WorkspaceSystem extends SystemPlugin {
             const pluginExists = this.getPlugin(meta.name, meta.version);
             if (pluginExists) {
               this.#logSystem.debug('Creating empty cell');
-              if (undeletable)
+
+              // активирование таба нужно для корректной отрисовки визуализаций
+              if (position?.tabId) {
+                this.#tabsSwitcherInstance.activeTab(position.tabId);
+              }
+
+              if (undeletable) {
                 widget = this.#createUndeletableCell({
                   name: meta.name,
                   version: meta.version,
                   ...position,
                   autoposition: false,
                 });
-              else
+              }
+              else {
                 widget = this.createCell({
                   name: meta.name,
                   version: meta.version,
                   ...position,
                   autoPosition: false,
                 });
+              }
             }
             const plugin = this.#panels.find(panel => panel.widget === widget).instance;
             const pluginGUID = this.getGUID(plugin);
@@ -302,6 +319,9 @@ export class WorkspaceSystem extends SystemPlugin {
       if (instance && instance !== this && instance.setPluginConfig && config)
         await instance.setPluginConfig(config);
     }
+
+    // активируем таб, который должен быть активным после открытия рабочего стола.
+    this.#tabsSwitcherInstance.activeTab(activeTabId);
 
     // EVENT-SYSTEM-MAPPING
     if (eventSystemConfig.hasOwnProperty('subscriptions')) {
@@ -771,7 +791,7 @@ export class WorkspaceSystem extends SystemPlugin {
     if (!tabId) return;
 
     const gridStackEl = document.createElement('div');
-          gridStackEl.className = 'grid-stack'
+          gridStackEl.className = 'grid-stack';
     this.#tabsSwitcherInstance.getTab(tabId).tabPanel.appendChild(gridStackEl);
     const newGrid = GridStack.init(gridstackOptions, gridStackEl);
     
