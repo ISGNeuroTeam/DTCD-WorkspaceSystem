@@ -7,9 +7,11 @@ class TabsSwitcher {
   #editMode;
 
   #tabBtnsList;
+  #tabBtnsListWrapper;
   #addTabBtn;
   #tabsContainer;
   #tabsCollection = new Map();
+  #scrollBtnsInterval;
 
   constructor(options) {
     const {
@@ -24,9 +26,15 @@ class TabsSwitcher {
     this.#addTabBtn.addEventListener('click', this.#handleAddTabBtnClick);
 
     this.#tabBtnsList = this.#htmlElement.querySelector('.TabBtnsList-js');
+    this.#tabBtnsListWrapper = this.#htmlElement.querySelector('.TabBtnsListWrapper-js');
     this.#tabsContainer = this.#htmlElement.querySelector('.TabItemsContainer-js');
 
     this.editMode = editMode;
+    this.#scrollBtnsInterval = setInterval(this.#toggleVisibilityScrollBtns, 200);
+  }
+
+  destructor() {
+    clearInterval(this.#scrollBtnsInterval);
   }
 
   get htmlElement() {
@@ -189,6 +197,16 @@ class TabsSwitcher {
     });
 
     return checkResult;
+  }
+
+  #toggleVisibilityScrollBtns = () => {
+    console.log('toggleVisibilityScrollBtns');
+
+    if (this.#tabBtnsListWrapper.scrollWidth > this.#tabBtnsListWrapper.clientWidth) {
+      this.#htmlElement.classList.add('withScroll');
+    } else {
+      this.#htmlElement.classList.remove('withScroll');
+    }
   }
 
   static getIdNewTab() {

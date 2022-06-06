@@ -164,10 +164,8 @@ export class WorkspaceSystem extends SystemPlugin {
       return false;
     }
 
-    // element.innerHTML = `<div class="grid-stack"></div>`;
-    // this.#activeGrid = GridStack.init(gridstackOptions);
-
     element.innerHTML = '';
+    this.#tabsSwitcherInstance && this.#tabsSwitcherInstance.destructor();
     this.#tabsSwitcherInstance = new TabsSwitcher();
     element.appendChild(this.#tabsSwitcherInstance.htmlElement);
     this.#tabsSwitcherInstance.htmlElement.addEventListener('tab-active', this.#handleTabsSwitcherActive);

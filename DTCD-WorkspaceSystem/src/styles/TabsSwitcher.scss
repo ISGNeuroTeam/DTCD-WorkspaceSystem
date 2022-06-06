@@ -70,7 +70,7 @@
   }
 
   .ScrollBtn {
-    display: inline-flex;
+    display: none;
     color: var(--button_primary);
 
     &:hover {
@@ -89,6 +89,12 @@
 
   &.status_editOn {
     .AddBtn {
+      display: inline-flex;
+    }
+  }
+
+  &.withScroll {
+    .ScrollBtn {
       display: inline-flex;
     }
   }
