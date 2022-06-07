@@ -138,7 +138,6 @@ class TabBtn {
         inputThemes.indexOf('withError') === -1 && inputThemes.push('withError');
       }
       this.#inputFieldName.theme = inputThemes;
-    } else {
     }
   }
 }
