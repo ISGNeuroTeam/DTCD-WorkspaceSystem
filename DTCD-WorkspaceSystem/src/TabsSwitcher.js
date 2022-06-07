@@ -10,6 +10,8 @@ class TabsSwitcher {
   #tabBtnsListWrapper;
   #addTabBtn;
   #tabsContainer;
+  #scrollBtnPrev;
+  #scrollBtnNext;
   #tabsCollection = new Map();
   #scrollBtnsInterval;
 
@@ -26,10 +28,20 @@ class TabsSwitcher {
     this.#addTabBtn.addEventListener('click', this.#handleAddTabBtnClick);
 
     this.#tabBtnsList = this.#htmlElement.querySelector('.TabBtnsList-js');
+
     this.#tabBtnsListWrapper = this.#htmlElement.querySelector('.TabBtnsListWrapper-js');
+    this.#tabBtnsListWrapper.addEventListener('scroll', this.#handleTabBtnsListWrapperScroll);
+
+    this.#scrollBtnPrev = this.#htmlElement.querySelector('.ScrollBtn.type_prev-js');
+    this.#scrollBtnPrev.addEventListener('click', this.#handleScrollBtnClick);
+    this.#scrollBtnNext = this.#htmlElement.querySelector('.ScrollBtn.type_next-js');
+    this.#scrollBtnNext.addEventListener('click', this.#handleScrollBtnClick);
+
     this.#tabsContainer = this.#htmlElement.querySelector('.TabItemsContainer-js');
 
     this.editMode = editMode;
+
+    this.#toggleVisibilityScrollBtns();
     this.#scrollBtnsInterval = setInterval(this.#toggleVisibilityScrollBtns, 200);
   }
 
@@ -200,13 +212,49 @@ class TabsSwitcher {
   }
 
   #toggleVisibilityScrollBtns = () => {
-    console.log('toggleVisibilityScrollBtns');
+    const {
+      scrollWidth,
+      clientWidth,
+    } = this.#tabBtnsListWrapper;
 
-    if (this.#tabBtnsListWrapper.scrollWidth > this.#tabBtnsListWrapper.clientWidth) {
+    if (scrollWidth > clientWidth) {
       this.#htmlElement.classList.add('withScroll');
     } else {
       this.#htmlElement.classList.remove('withScroll');
     }
+
+    this.#handleTabBtnsListWrapperScroll();
+  }
+
+  #handleTabBtnsListWrapperScroll = () => {
+    const {
+      scrollLeft,
+      scrollWidth,
+      clientWidth,
+    } = this.#tabBtnsListWrapper;
+
+    if (scrollLeft === 0) {
+      this.#scrollBtnPrev.setAttribute('disabled', 'disabled');
+    } else {
+      this.#scrollBtnPrev.removeAttribute('disabled');
+    }
+
+    if (scrollLeft + clientWidth === scrollWidth) {
+      this.#scrollBtnNext.setAttribute('disabled', 'disabled');
+    } else {
+      this.#scrollBtnNext.removeAttribute('disabled');
+    }
+  }
+
+  #handleScrollBtnClick = (event) => {
+    event.preventDefault();
+
+    const isBtnNext = event.currentTarget.classList.contains('type_next-js');
+    const {
+      clientWidth,
+    } = this.#tabBtnsListWrapper;
+
+    this.#tabBtnsListWrapper.scrollLeft += isBtnNext ? (clientWidth * 0.8) : -(clientWidth * 0.8);
   }
 
   static getIdNewTab() {
