@@ -100,12 +100,10 @@ class TabBtn {
 
     const {
       value,
-      theme,
+      invalid
     } = this.#inputFieldName;
 
-    if (theme.indexOf('withError') === -1) {
-      this.name = value;
-    }
+    if (!invalid) this.name = value;
 
     this.setStatus('edit_name', false);
   }
@@ -130,14 +128,11 @@ class TabBtn {
     const newName = event.target.value;
 
     if (this.#callbackCheckTabName instanceof Function) {
-      let inputThemes = this.#inputFieldName.theme;
-
       if (this.#callbackCheckTabName(this.name, newName)) {
-        inputThemes = inputThemes.filter((theme) => theme !== 'withError');
+        this.#inputFieldName.invalid = false;
       } else {
-        inputThemes.indexOf('withError') === -1 && inputThemes.push('withError');
+        this.#inputFieldName.invalid = true;
       }
-      this.#inputFieldName.theme = inputThemes;
     }
   }
 }
