@@ -5,19 +5,27 @@ const STATUS_EDIT_NAME = 'edit_name';
 const STATUS_EDIT_ON = 'edit_on';
 const STATUS_ACTIVE = 'active';
 
+/**
+ * @class Button of tab panel.
+ */
 class TabBtn {
   #htmlElement;
   #name;
   #tabNameHtml;
+  #callbackCheckTabName;
 
   #inputFieldName;
   #btnEdit;
   #btnCheck;
   #btnDelete;
   #btnLayer;
-
-  #callbackCheckTabName;
   
+  /**
+   * @constructs
+   * @param {Object} [options] Parameters of initialization.
+   * @param {string} [options.name='Без названия'] Name of the tab button.
+   * @param {Function} [options.callbackCheckTabName] Function for checking the name of the tab button.
+   */
   constructor(options) {
     const {
       name = 'Без названия',
@@ -60,6 +68,11 @@ class TabBtn {
     this.#tabNameHtml.setAttribute('title', newValue);
   }
 
+  /**
+   * Setting status of tab button.
+   * @param {string} status Possible values: edit_name, edit_on, active.
+   * @param {Boolean} [value] 
+   */
   setStatus(status, value = true) {
     switch (status) {
       case STATUS_EDIT_NAME:

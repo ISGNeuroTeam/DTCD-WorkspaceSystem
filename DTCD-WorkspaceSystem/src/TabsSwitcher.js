@@ -2,9 +2,14 @@ import './styles/TabsSwitcher.scss';
 import TabsSwitcherHtml from './templates/TabsSwitcher.html';
 import TabBtn from './TabBtn';
 
+/**
+ * @class Class for managers tab panels and buttons.
+ */
 class TabsSwitcher {
   #htmlElement;
   #editMode;
+  #tabsCollection = new Map();
+  #scrollBtnsInterval;
 
   #tabBtnsList;
   #tabBtnsListWrapper;
@@ -12,9 +17,12 @@ class TabsSwitcher {
   #tabsContainer;
   #scrollBtnPrev;
   #scrollBtnNext;
-  #tabsCollection = new Map();
-  #scrollBtnsInterval;
 
+  /**
+   * @constructs
+   * @param {Object} [options] Parameters of tab switcher.
+   * @param {Boolean} [options.editMode=false] Toggle edit mode. 
+   */
   constructor(options) {
     const {
       editMode = false,
@@ -69,6 +77,13 @@ class TabsSwitcher {
       : this.htmlElement.classList.remove('status_editOn');
   }
 
+  /**
+   * Creating new tab panel.
+   * @param {Object} [tabOptions] Parameters of tab panel.
+   * @param {string} [tabOptions.id] ID of tab panel.
+   * @param {string} [tabOptions.name] Tab name. 
+   * @returns {string} ID of new tab panel.
+   */
   addNewTab(tabOptions) {
     const {
       id,
