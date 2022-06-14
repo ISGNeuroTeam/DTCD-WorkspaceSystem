@@ -120,6 +120,18 @@ export class WorkspaceSystem extends SystemPlugin {
             callback: this.changeMode.bind(this),
           },
         },
+        {
+          component: 'subtitle',
+          propValue: 'Скрыть/отобразвить вкладки',
+        },
+        {
+          component: 'switch',
+          propName: 'visibleTabNavBar',
+          handler: {
+            event: 'change',
+            callback: this.handleToggleNavBarChange.bind(this),
+          },
+        },
         // {
         //   component: 'button',
         //   content: 'Добавить панель',
@@ -166,7 +178,9 @@ export class WorkspaceSystem extends SystemPlugin {
 
     element.innerHTML = '';
     this.#tabsSwitcherInstance && this.#tabsSwitcherInstance.destructor();
-    this.#tabsSwitcherInstance = new TabsSwitcher();
+    this.#tabsSwitcherInstance = new TabsSwitcher({
+      visibleNavBar: false,
+    });
     element.appendChild(this.#tabsSwitcherInstance.htmlElement);
     this.#tabsSwitcherInstance.htmlElement.addEventListener('tab-active', this.#handleTabsSwitcherActive);
     this.#tabsSwitcherInstance.htmlElement.addEventListener('tab-delete', this.#handleTabsSwitcherDelete);
@@ -211,13 +225,16 @@ export class WorkspaceSystem extends SystemPlugin {
         plugins.push({ guid, meta, config, position, undeletable });
       });
 
+    const tabPanelsConfig = this.#tabsSwitcherInstance.getConfig();
+
     return {
       id: this.#currentID,
       title: this.#currentTitle,
       column: this.#column,
       editMode: this.#editMode,
       plugins,
-      tabPanelsConfig: this.#tabsSwitcherInstance.getConfig(),
+      tabPanelsConfig,
+      visibleTabNavBar: tabPanelsConfig.visibleNavBar,
     };
   }
 
@@ -663,6 +680,12 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#logSystem.info(`Workspace edit mode turned ${this.#editMode ? 'on' : 'off'}`);
   }
 
+  handleToggleNavBarChange = (event) => {
+    if (this.#tabsSwitcherInstance) {
+      this.#tabsSwitcherInstance.visibleNavBar = event.currentTarget.checked;
+    }
+  }
+
   async getConfigurationList() {
     const response = await this.#interactionSystem.GETRequest('/mock_server/v1/workspace/object');
     return response.data;
@@ -781,6 +804,8 @@ export class WorkspaceSystem extends SystemPlugin {
       const tabId = this.#tabsSwitcherInstance.addNewTab();
       this.#tabsSwitcherInstance.activeTab(tabId);
     }
+
+    this.#tabsSwitcherInstance.visibleNavBar = this.#tabPanelsConfig.visibleNavBar;
   }
 
   #handleTabsSwitcherAdd = (event) => {

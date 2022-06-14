@@ -10,6 +10,7 @@ class TabsSwitcher {
   #editMode;
   #tabsCollection = new Map();
   #scrollBtnsInterval;
+  #visibleNavBar;
 
   #tabBtnsList;
   #tabBtnsListWrapper;
@@ -21,11 +22,13 @@ class TabsSwitcher {
   /**
    * @constructs
    * @param {Object} [options] Parameters of tab switcher.
-   * @param {Boolean} [options.editMode=false] Toggle edit mode. 
+   * @param {Boolean} [options.editMode=false] Toggle edit mode.
+   * @param {Boolean} [options.visibleNavBar=true] Toggle visibility panel with nav buttons.
    */
   constructor(options) {
     const {
       editMode = false,
+      visibleNavBar = true,
     } = options instanceof Object ? options : {};
 
     this.#htmlElement = document.createElement('div');
@@ -48,6 +51,7 @@ class TabsSwitcher {
     this.#tabsContainer = this.#htmlElement.querySelector('.TabItemsContainer-js');
 
     this.editMode = editMode;
+    this.visibleNavBar = visibleNavBar;
 
     this.#toggleVisibilityScrollBtns();
     this.#scrollBtnsInterval = setInterval(this.#toggleVisibilityScrollBtns, 200);
@@ -75,6 +79,18 @@ class TabsSwitcher {
     this.#editMode
       ? this.htmlElement.classList.add('status_editOn')
       : this.htmlElement.classList.remove('status_editOn');
+  }
+
+  get visibleNavBar() {
+    return this.#visibleNavBar;
+  }
+
+  set visibleNavBar (newValue) {
+    this.#visibleNavBar = Boolean(newValue);
+
+    this.#visibleNavBar
+      ? this.htmlElement.classList.remove('status_navBarHidden')
+      : this.htmlElement.classList.add('status_navBarHidden');
   }
 
   /**
@@ -188,6 +204,7 @@ class TabsSwitcher {
   getConfig () {
     const config = {
       editMode: this.editMode,
+      visibleNavBar: this.visibleNavBar,
       tabsOptions: [],
     };
     

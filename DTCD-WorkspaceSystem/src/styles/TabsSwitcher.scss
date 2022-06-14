@@ -105,4 +105,10 @@
       display: inline-flex;
     }
   }
+
+  &.status_navBarHidden {
+    .NavPanel {
+      display: none;
+    }
+  }
 }
