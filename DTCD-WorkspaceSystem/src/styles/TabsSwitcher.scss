@@ -47,6 +47,7 @@
     column-gap: var(--side-padding);
     background-color: var(--background_main);
     border-top: 1px solid var(--border);
+    z-index: 2040;
   }
 
   .ScrollBtn,
