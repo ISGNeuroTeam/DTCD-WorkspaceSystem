@@ -1,5 +1,6 @@
-import './styles/panel.css';
-import './styles/modal.css';
+import 'gridstack/dist/gridstack.min.css';
+import { GridStack } from 'gridstack';
+import 'gridstack/dist/h5/gridstack-dd-native';
 
 import {
   EventSystemAdapter,
@@ -7,17 +8,15 @@ import {
   InteractionSystemAdapter,
   LogSystemAdapter,
 } from './../../DTCD-SDK/index';
-
-import 'gridstack/dist/gridstack.min.css';
-import { GridStack } from 'gridstack';
-import 'gridstack/dist/h5/gridstack-dd-native';
-
+import { version } from './../package.json';
+import './styles/panel.css';
+import './styles/modal.css';
 import { toMountTemplates } from './utils/templates';
 import gridstackOptions from './utils/gridstackOptions';
 import emptyConfiguration from './utils/empty_configuration.json';
 import defaultConfiguration from './utils/default_configuration.json';
 
-import { version } from './../package.json';
+import TabsSwitcher from './TabsSwitcher';
 
 export class WorkspaceSystem extends SystemPlugin {
   // ---- PLUGIN PROPS ----
@@ -27,6 +26,7 @@ export class WorkspaceSystem extends SystemPlugin {
   #logSystem;
   #emptyConfiguration;
   #defaultConfiguration;
+  #tabPanelsConfig;
 
   // ---- STATE ----
   #panels;
@@ -35,10 +35,12 @@ export class WorkspaceSystem extends SystemPlugin {
   #column;
 
   // ---- INTERNAL'S ----
-  #grid;
+  #activeGrid;
+  #gridCollection;
   #editMode;
   #numberPanelIncrement;
   #modalInstance;
+  #tabsSwitcherInstance;
 
   static getRegistrationMeta() {
     return {
@@ -118,6 +120,18 @@ export class WorkspaceSystem extends SystemPlugin {
             callback: this.changeMode.bind(this),
           },
         },
+        {
+          component: 'subtitle',
+          propValue: 'Скрыть/отобразвить вкладки',
+        },
+        {
+          component: 'switch',
+          propName: 'visibleTabNavBar',
+          handler: {
+            event: 'change',
+            callback: this.handleToggleNavBarChange.bind(this),
+          },
+        },
         // {
         //   component: 'button',
         //   content: 'Добавить панель',
@@ -162,8 +176,15 @@ export class WorkspaceSystem extends SystemPlugin {
       return false;
     }
 
-    element.innerHTML = `<div class="grid-stack"></div>`;
-    this.#grid = GridStack.init(gridstackOptions);
+    element.innerHTML = '';
+    this.#tabsSwitcherInstance && this.#tabsSwitcherInstance.destructor();
+    this.#tabsSwitcherInstance = new TabsSwitcher({
+      visibleNavBar: false,
+    });
+    element.appendChild(this.#tabsSwitcherInstance.htmlElement);
+    this.#tabsSwitcherInstance.htmlElement.addEventListener('tab-active', this.#handleTabsSwitcherActive);
+    this.#tabsSwitcherInstance.htmlElement.addEventListener('tab-delete', this.#handleTabsSwitcherDelete);
+    this.#tabsSwitcherInstance.htmlElement.addEventListener('tab-add', this.#handleTabsSwitcherAdd);
 
     const workspaceID = history.state.workspaceID;
     this.setConfiguration(workspaceID);
@@ -195,11 +216,16 @@ export class WorkspaceSystem extends SystemPlugin {
             ? panel.instance.getPluginConfig()
             : null;
 
-        let position = panel?.widget.gridstackNode._orig;
-        let undeletable = panel.undeletable;
-
+        const {h, w, x, y} = panel?.widget.gridstackNode;
+        const position = {
+          h, w, x, y,
+          tabId: panel?.position.tabId,
+        };
+        const undeletable = panel.undeletable;
         plugins.push({ guid, meta, config, position, undeletable });
       });
+
+    const tabPanelsConfig = this.#tabsSwitcherInstance.getConfig();
 
     return {
       id: this.#currentID,
@@ -207,6 +233,8 @@ export class WorkspaceSystem extends SystemPlugin {
       column: this.#column,
       editMode: this.#editMode,
       plugins,
+      tabPanelsConfig,
+      visibleTabNavBar: tabPanelsConfig.visibleNavBar,
     };
   }
 
@@ -215,6 +243,22 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#logSystem.info(
       `Setting workspace configuration (id:${config?.id}, title:${config?.title})`
     );
+
+    // Tabs panels
+    config.tabPanelsConfig instanceof Object
+      ? this.#tabPanelsConfig = config.tabPanelsConfig
+      : this.#tabPanelsConfig = null;
+    this.#createTabsSwitcher();
+
+    // remember id of active tab panel
+    let activeTabId;
+    this.#gridCollection.forEach((gridData, key) => {
+      if (gridData.isActive){
+        activeTabId = key;
+        return;
+      }
+    });
+
     // ---- COLUMN ----
     if (typeof config.column != 'undefined') this.setColumn(config.column);
 
@@ -232,39 +276,42 @@ export class WorkspaceSystem extends SystemPlugin {
       switch (meta?.type) {
         case 'panel':
           if (['MenuPanel', 'ConfigEditorPanel'].includes(meta.name)) continue pluginsLoop;
-          const { w, h, x, y } = position;
+
           let widget;
           if (typeof meta.name !== 'undefined') {
             const pluginExists = this.getPlugin(meta.name, meta.version);
             if (pluginExists) {
               this.#logSystem.debug('Creating empty cell');
-              if (undeletable)
+
+              // активирование таба нужно для корректной отрисовки визуализаций
+              if (position?.tabId) {
+                this.#tabsSwitcherInstance.activeTab(position.tabId);
+              }
+
+              if (undeletable) {
                 widget = this.#createUndeletableCell({
                   name: meta.name,
                   version: meta.version,
-                  w,
-                  h,
-                  x,
-                  y,
+                  ...position,
                   autoposition: false,
                 });
-              else
+              }
+              else {
                 widget = this.createCell({
                   name: meta.name,
                   version: meta.version,
-                  w,
-                  h,
-                  x,
-                  y,
+                  ...position,
                   autoPosition: false,
                 });
+              }
             }
             const plugin = this.#panels.find(panel => panel.widget === widget).instance;
             const pluginGUID = this.getGUID(plugin);
             this.#logSystem.debug(`Mapping guid of ${meta.name} from ${guid} to ${pluginGUID}`);
             GUIDMap[guid] = pluginGUID;
           } else {
-            this.createEmptyCell(w, h, x, y, false);
+            const {w, h, x, y, tabId} = position;
+            this.createEmptyCell(w, h, x, y, tabId, false);
           }
           break;
         case 'core':
@@ -288,13 +335,17 @@ export class WorkspaceSystem extends SystemPlugin {
         await instance.setPluginConfig(config);
     }
 
+    // активируем таб, который должен быть активным после открытия рабочего стола.
+    this.#tabsSwitcherInstance.activeTab(activeTabId);
+
     // EVENT-SYSTEM-MAPPING
-    if (eventSystemConfig.hasOwnProperty('subscriptions'))
+    if (eventSystemConfig.hasOwnProperty('subscriptions')) {
       for (let sub of eventSystemConfig.subscriptions) {
         const { event, action } = sub;
         event.guid = GUIDMap[event.guid];
         action.guid = GUIDMap[action.guid];
       }
+    }
 
     await this.#eventSystem.setPluginConfig(eventSystemConfig);
     return true;
@@ -317,14 +368,18 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#panels.forEach(plugin => {
       const { meta, widget, instance } = plugin;
       if (meta?.type !== 'core') {
-        if (widget) this.#grid.removeWidget(widget);
+        if (widget) {
+          for (const gridData of this.#gridCollection) {
+            gridData[1].gridInstance.removeWidget(widget);
+          }
+        }
         if (instance) this.uninstallPluginByInstance(instance);
       }
     });
     this.#panels = [];
     this.#editMode = false;
     this.#logSystem.debug(`Clearing panels array`);
-    this.setColumn();
+    // this.setColumn();
   }
 
   async deleteConfiguration(id) {
@@ -397,13 +452,16 @@ export class WorkspaceSystem extends SystemPlugin {
     }
   }
 
-  #createUndeletableCell({ name, version, w, h, x, y, autoposition }) {
-    const widget = this.#grid.addWidget(
+  #createUndeletableCell({ name, version, w, h, x, y, tabId, autoposition }) {
+    let targetGrid = this.#gridCollection.get(tabId)?.gridInstance;
+    targetGrid = targetGrid ? targetGrid : this.#activeGrid;
+
+    const widget = targetGrid.addWidget(
       `<div class="grid-stack-item">
-      <div class="grid-stack-item-content handle-drag-of-panel">
-        <div id="panel-${name}"></div>
-      </div>
-    </div>`,
+        <div class="grid-stack-item-content handle-drag-of-panel">
+          <div id="panel-${name}"></div>
+        </div>
+      </div>`,
       { x, y, w, h, autoposition }
     );
     const instance = this.installPanel({ name, version, selector: `#panel-${name}` });
@@ -412,11 +470,22 @@ export class WorkspaceSystem extends SystemPlugin {
       if (!this.#editMode) this.#eventSystem.publishEvent('WorkspaceCellClicked', { guid });
     });
     const meta = this.getPlugin(name, version).getRegistrationMeta();
-    this.#panels.push({ meta, widget, instance, guid, undeletable: true });
+
+    this.#panels.push({
+      meta, widget, instance, guid,
+      undeletable: true,
+      position: {
+        tabId: this.#getGridIdByObject(targetGrid),
+      },
+    });
+
     return widget;
   }
 
-  createEmptyCell(w = 4, h = 4, x = 0, y = 0, autoPosition = true) {
+  createEmptyCell(w = 4, h = 4, x = 0, y = 0, tabId, autoPosition = true) {
+    let targetGrid = this.#gridCollection.get(tabId)?.gridInstance;
+    targetGrid = targetGrid ? targetGrid : this.#activeGrid;
+
     //TODO: Prettify next assignments
     w = Number.isInteger(w) ? w : 4;
     h = Number.isInteger(h) ? h : 4;
@@ -427,7 +496,7 @@ export class WorkspaceSystem extends SystemPlugin {
     const panelID = this.#numberPanelIncrement;
 
     // TODO: Replace on WEB-COMPONENT with style!
-    const widget = this.#grid.addWidget(
+    const widget = targetGrid.addWidget(
       `
       <div class="grid-stack-item">
         <div class="grid-stack-item-content">
@@ -447,10 +516,16 @@ export class WorkspaceSystem extends SystemPlugin {
           </div>
         </div>
       </div>
-    `,
+      `,
       { x, y, w, h, autoPosition, id: panelID }
     );
-    this.#panels.push({ widget, meta: { type: 'panel' } });
+    this.#panels.push({
+      widget,
+      meta: { type: 'panel' },
+      position: {
+        tabId: this.#getGridIdByObject(targetGrid),
+      },
+    });
 
     // Panel select
     const selectEl = document.createElement('select');
@@ -505,7 +580,7 @@ export class WorkspaceSystem extends SystemPlugin {
         this.#panels.findIndex(plg => plg.widget === widget),
         1
       );
-      this.#grid.removeWidget(widget);
+      targetGrid.removeWidget(widget);
       if (instance) this.uninstallPluginByInstance(instance);
       this.#logSystem.info(`Widget with id ${panelID} was removed from workspace`);
     });
@@ -515,12 +590,12 @@ export class WorkspaceSystem extends SystemPlugin {
     return widget;
   }
 
-  createCell({ name, version, w = 4, h = 4, x = 0, y = 0, autoPosition = true }) {
+  createCell({ name, version, w = 4, h = 4, x = 0, y = 0, tabId, autoPosition = true }) {
     this.#logSystem.debug(
       `Adding panel-plugin widget with name:'${name}', version:${version}, w:${w},h:${h},x:${x},y:${y}, autoPosition:${autoPosition}`
     );
     this.#logSystem.info(`Adding panel widget with name: '${name}', version: '${version}'`);
-    const widget = this.createEmptyCell(w, h, x, y, autoPosition);
+    const widget = this.createEmptyCell(w, h, x, y, tabId, autoPosition);
     const selectElement = widget.querySelector('select');
     const optionElements = selectElement.options;
     let options = [];
@@ -559,7 +634,9 @@ export class WorkspaceSystem extends SystemPlugin {
 
   compactAllPanels() {
     this.#logSystem.info(`Compacting cells on workspace`);
-    this.#grid.compact();
+    for (const gridData of this.#gridCollection) {
+      gridData[1].gridInstance.compact();
+    }
   }
 
   changeMode() {
@@ -582,12 +659,25 @@ export class WorkspaceSystem extends SystemPlugin {
     });
 
     const margin = this.#editMode ? '0px' : '2px';
-    this.#grid.batchUpdate();
-    this.#grid.margin(margin);
-    this.#grid.commit();
-    this.#grid.setStatic(this.#editMode);
+    for (const gridData of this.#gridCollection) {
+      gridData[1].gridInstance.batchUpdate();
+      gridData[1].gridInstance.margin(margin);
+      gridData[1].gridInstance.commit();
+      gridData[1].gridInstance.setStatic(this.#editMode);
+    }
     this.#editMode = !this.#editMode;
+
+    if (this.#tabsSwitcherInstance) {
+      this.#tabsSwitcherInstance.editMode = this.#editMode;
+    }
+
     this.#logSystem.info(`Workspace edit mode turned ${this.#editMode ? 'on' : 'off'}`);
+  }
+
+  handleToggleNavBarChange = (event) => {
+    if (this.#tabsSwitcherInstance) {
+      this.#tabsSwitcherInstance.visibleNavBar = event.currentTarget.checked;
+    }
   }
 
   async getConfigurationList() {
@@ -630,10 +720,13 @@ export class WorkspaceSystem extends SystemPlugin {
     let styleEl = head.querySelector('style#gridstack-custom-style');
     if (styleEl) head.removeChild(styleEl);
 
-    this.#grid.column(column);
-    this.#grid.el.querySelectorAll('.grid-stack-item').forEach(itemEl => {
-      itemEl.style.minWidth = `${100 / column}%`;
-    });
+    for (const gridData of this.#gridCollection) {
+      gridData[1].gridInstance.column(column);
+      gridData[1].gridInstance.el.querySelectorAll('.grid-stack-item').forEach(itemEl => {
+        itemEl.style.minWidth = `${100 / column}%`;
+      });
+    }
+
     styleEl = document.createElement('style');
     styleEl.setAttribute('id', 'gridstack-custom-style');
     styleEl.setAttribute('type', 'text/css');
@@ -694,5 +787,106 @@ export class WorkspaceSystem extends SystemPlugin {
       modal.remove();
       this.#modalInstance = null;
     }
+  }
+
+  #createTabsSwitcher () {
+    this.#gridCollection = new Map();
+
+    if (this.#tabPanelsConfig instanceof Object) {
+      for (let i = 0; i < this.#tabPanelsConfig.tabsOptions.length; i++) {
+        const tabOptions = this.#tabPanelsConfig.tabsOptions[i];
+        const tabId = this.#tabsSwitcherInstance.addNewTab(tabOptions);
+        
+        if (tabOptions.isActive) {
+          this.#tabsSwitcherInstance.activeTab(tabId);
+        }
+      }
+    } else {
+      const tabId = this.#tabsSwitcherInstance.addNewTab();
+      this.#tabsSwitcherInstance.activeTab(tabId);
+    }
+
+    this.#tabsSwitcherInstance.visibleNavBar = this.#tabPanelsConfig.visibleNavBar;
+  }
+
+  #handleTabsSwitcherAdd = (event) => {
+    const tabId = event.detail?.tabId;
+
+    if (!tabId) return;
+
+    const gridStackEl = document.createElement('div');
+          gridStackEl.className = 'grid-stack';
+    this.#tabsSwitcherInstance.getTab(tabId).tabPanel.appendChild(gridStackEl);
+    const newGrid = GridStack.init(gridstackOptions, gridStackEl);
+    
+    this.#gridCollection.set(tabId, {
+      isActive: false,
+      gridInstance: newGrid,
+    });
+  }
+
+  #handleTabsSwitcherActive = (event) => {
+    if (!this.#gridCollection) return;
+
+    const activeTabId = event.detail.tabId;
+
+    for (const gridItem of this.#gridCollection) {
+      if (gridItem[0] === activeTabId) {
+        gridItem[1].isActive = true;
+        this.#activeGrid = gridItem[1].gridInstance;
+      } else {
+        gridItem[1].isActive = false;
+      }
+    }
+  }
+
+  #handleTabsSwitcherDelete = (event) => {
+    if (!this.#gridCollection) return;
+
+    const deletingTabId = event.detail.tabId;
+    this.#logSystem.debug(`Deleting workspace tab panel with id '${deletingTabId}'.`);
+
+    const deletingGrid = this.#gridCollection.get(deletingTabId)?.gridInstance;
+    if (!deletingGrid) {
+      this.#logSystem.debug(`Deleting workspace tab panel with id '${deletingTabId}' not found.`);
+      return;
+    }
+
+    this.#panels = this.#panels.filter((plugin) => {
+      const { widget, instance, position } = plugin;
+      if (position.tabId === deletingTabId) {
+        widget && deletingGrid.removeWidget(widget);
+        // if (instance) this.uninstallPluginByInstance(instance);
+        return false;
+      } else {
+        return true;
+      }
+    });
+
+    // если удаляемый таб был активным и не единственным...
+    const isDeletedTabActive = this.#gridCollection.get(deletingTabId).isActive;
+    const isLastTab = this.#gridCollection.size === 1;
+    const resultCondition = isDeletedTabActive && !isLastTab;
+    if ( resultCondition ) {
+      // ...то находим следующий таб и активируем его.
+      let nextTabPanelId;
+      this.#gridCollection.forEach((value, key, map) => {
+        if (key === deletingTabId) return;
+        else nextTabPanelId = key;
+      });
+
+      this.#gridCollection.delete(deletingTabId);
+      this.#tabsSwitcherInstance.activeTab(nextTabPanelId);
+    } else {
+      // ...иначе просто удаляем сетку.
+      this.#gridCollection.delete(deletingTabId);
+    }
+  }
+
+  #getGridIdByObject (desiredGrid) {
+    for (const gridData of this.#gridCollection) {
+      if (gridData[1].gridInstance === desiredGrid) return gridData[0];
+    }
+    return null;
   }
 }

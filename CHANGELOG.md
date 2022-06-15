@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - redirect to 404 page if workspace configuration not found
+- tab panel in workspaces
 
 ## [0.5.0]
 

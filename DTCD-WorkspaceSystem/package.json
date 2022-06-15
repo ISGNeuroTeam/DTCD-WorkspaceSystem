@@ -26,7 +26,8 @@
     "jest": "^26.6.3",
     "rollup": "^2.67.2",
     "rollup-plugin-html": "^0.2.1",
-    "rollup-plugin-styles": "^3.11.0"
+    "rollup-plugin-styles": "^3.11.0",
+    "sass": "^1.51.0"
   },
   "dependencies": {
     "gridstack": "5.0.0"

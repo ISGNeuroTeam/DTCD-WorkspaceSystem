@@ -1,0 +1,127 @@
+.TabBtn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  column-gap: 10px;
+  padding: 6px 10px;
+  background-color: var(--border_12);
+  border-right: 1px solid var(--border);
+  color: var(--text_main);
+  min-height: 30px;
+
+  &,
+  * {
+    &,
+    &::after,
+    &::before {
+      box-sizing: border-box;
+    }
+  }
+
+  &:hover {
+    background-color: var(--button_primary_12);
+    color: var(--button_primary);
+  }
+  
+  .BtnLayer {
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+    background: none;
+    border: none;
+    box-shadow: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+  }
+
+  .InputField {
+    position: relative;
+    display: none;
+    z-index: 1;
+  }
+
+  .TabName {
+    display: inline-block;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    max-width: 200px;
+    line-height: 1;
+  }
+
+  .BtnIcon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: none;
+    box-shadow: none;
+    background: none;
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+    color: var(--text_secondary);
+    cursor: pointer;
+    position: relative;
+    z-index: 1;
+
+    &.type_edit {
+      display: none;
+
+      &:hover {
+        color: var(--button_primary);
+      }
+    }
+    &.type_delete {
+      display: none;
+
+      &:hover {
+        color: var(--danger);
+      }
+    }
+    &.type_check {
+      display: none;
+
+      &:hover {
+        color: var(--success);
+      }
+    }
+  }
+
+  &.status_active {
+    background-color: var(--button_primary_24);
+    color: var(--button_primary);
+    font-weight: 600;
+  }
+
+  &.status_editOn {
+    .BtnIcon {
+      &.type_edit,
+      &.type_delete {
+        display: inline-flex;
+      }
+    }
+  }
+
+  &.status_editName {
+    .TabName {
+      display: none;
+    }
+    .InputField {
+      display: block;
+    }
+
+    .BtnIcon {
+      &.type_check {
+        display: inline-flex;
+      }
+      &.type_edit {
+        display: none;
+      }
+    }
+  }
+}
