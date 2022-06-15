@@ -110,7 +110,7 @@ export class WorkspaceSystem extends SystemPlugin {
         },
         {
           component: 'subtitle',
-          propValue: 'Перемещение панелей',
+          propValue: 'Редактирование рабочего стола',
         },
         {
           component: 'switch',
