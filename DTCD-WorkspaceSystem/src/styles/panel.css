@@ -1,15 +1,6 @@
-body {
-  margin: 0;
-  background-color: var(--background_secondary);
-}
-
-.FontIcon {
-  color: var(--button_primary);
-}
-
 .grid-stack {
-  margin-bottom: 30px;
-  background-color: var(--background_main);
+  min-height: 100%;
+  background-color: var(--background_secondary);
 }
 
 .grid-stack-item-content {
