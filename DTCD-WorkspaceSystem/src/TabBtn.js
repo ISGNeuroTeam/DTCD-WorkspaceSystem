@@ -40,9 +40,6 @@ class TabBtn {
     this.#inputFieldName = this.#htmlElement.querySelector('.InputField-js');
     this.#inputFieldName.addEventListener('input', this.#handleNameFieldInput);
 
-    this.name = name;
-    this.#callbackCheckTabName = callbackCheckTabName;
-
     this.#btnEdit = this.#htmlElement.querySelector('.BtnIcon.type_edit-js');
     this.#btnCheck = this.#htmlElement.querySelector('.BtnIcon.type_check-js');
     this.#btnDelete = this.#htmlElement.querySelector('.BtnIcon.type_delete-js');
@@ -52,6 +49,9 @@ class TabBtn {
     this.#btnCheck.addEventListener('click', this.#handleBtnCheckClick);
     this.#btnDelete.addEventListener('click', this.#handleBtnDeleteClick);
     this.#btnLayer.addEventListener('click', this.#handleBtnLayerClick);
+
+    this.name = name;
+    this.#callbackCheckTabName = callbackCheckTabName;
   }
 
   get htmlElement() {
@@ -65,7 +65,7 @@ class TabBtn {
   set name (newValue) {
     this.#name = newValue;
     this.#tabNameHtml.textContent = newValue;
-    this.#tabNameHtml.setAttribute('title', newValue);
+    this.#btnLayer.setAttribute('title', newValue);
   }
 
   /**
