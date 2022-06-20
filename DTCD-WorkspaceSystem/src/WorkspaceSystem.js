@@ -560,21 +560,28 @@ export class WorkspaceSystem extends SystemPlugin {
     let instance;
     selectEl.onchange = evt => {
       const { name, version } = JSON.parse(selectEl.value);
+
       this.#logSystem.info(`Selected plugin '${name} ${version}' in empty cell with id ${panelID}`);
+
       const idCell = evt.target.parentElement.getAttribute('id');
       const workspaceCellID = idCell.split('-').pop();
       const meta = this.getPlugin(name, version).getRegistrationMeta();
+
       instance = this.installPanel({
         name: meta.name,
         version,
         selector: `#panel-${workspaceCellID}`,
       });
+
       const guid = this.getGUID(instance);
+
       widget.addEventListener('click', e => {
-        e.stopPropagation();
-        if (!this.#editMode) this.#eventSystem.publishEvent('WorkspaceCellClicked', { guid });
+        if (!this.#editMode)
+          this.#eventSystem.publishEvent('WorkspaceCellClicked', { guid });
       });
+
       let pluginInfo = this.#panels.find(panel => panel.widget === widget);
+
       Object.assign(pluginInfo, {
         instance,
         guid,

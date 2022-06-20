@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - size and title of TabBtn
+- click handler of widgets
 
 ## [0.6.0]
 
