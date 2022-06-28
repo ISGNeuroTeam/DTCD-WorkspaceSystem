@@ -193,6 +193,7 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#tabsSwitcherInstance.htmlElement.addEventListener('tab-add', this.#handleTabsSwitcherAdd);
 
     const workspaceID = history.state.workspaceID;
+    console.log('setting config');
     this.setConfiguration(workspaceID);
 
     return true;
@@ -390,6 +391,10 @@ export class WorkspaceSystem extends SystemPlugin {
     // this.setColumn();
   }
 
+  resetSystem() {
+    this.resetWorkspace();
+  }
+
   async deleteConfiguration(id) {
     try {
       this.#logSystem.debug(`Trying to delete workspace configuration with id:${id}`);
@@ -576,8 +581,7 @@ export class WorkspaceSystem extends SystemPlugin {
       const guid = this.getGUID(instance);
 
       widget.addEventListener('click', e => {
-        if (!this.#editMode)
-          this.#eventSystem.publishEvent('WorkspaceCellClicked', { guid });
+        if (!this.#editMode) this.#eventSystem.publishEvent('WorkspaceCellClicked', { guid });
       });
 
       let pluginInfo = this.#panels.find(panel => panel.widget === widget);
