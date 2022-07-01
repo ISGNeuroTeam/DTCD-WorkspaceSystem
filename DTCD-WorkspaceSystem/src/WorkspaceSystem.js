@@ -31,6 +31,7 @@ export class WorkspaceSystem extends SystemPlugin {
   // ---- STATE ----
   #panels;
   #currentTitle;
+  #currentPath;
   #currentID;
   #column;
 
@@ -273,6 +274,7 @@ export class WorkspaceSystem extends SystemPlugin {
 
     this.#currentTitle = config.title;
     this.#currentID = config.id;
+    this.#currentPath = config.path;
 
     // ---- PLUGINS ----
 
@@ -359,15 +361,20 @@ export class WorkspaceSystem extends SystemPlugin {
     return true;
   }
 
-  async downloadConfiguration(id) {
+  async downloadConfiguration(downloadPath) {
+    const delimIndex = downloadPath.search(/:id=/);
+    const id = delimIndex !== -1 ? downloadPath.slice(delimIndex + 4) : downloadPath;
+    const path = delimIndex !== -1 ? downloadPath.slice(0, delimIndex) : '';
+
     this.#logSystem.debug(`Trying to download configuration with id:${id}`);
     const { data } = await this.#interactionSystem.GETRequest(
-      `/mock_server/v1/workspace/object?id=${id}`
+      `/dtcd_workspaces/v1/workspace/object/${path}?id=${id}`
     );
     this.#logSystem.debug(`Parsing configuration from response`);
     const content = data.content;
     content['id'] = data.id;
     content['title'] = data.title;
+    content['path'] = path;
     return content;
   }
 
@@ -397,7 +404,7 @@ export class WorkspaceSystem extends SystemPlugin {
   async deleteConfiguration(id) {
     try {
       this.#logSystem.debug(`Trying to delete workspace configuration with id:${id}`);
-      await this.#interactionSystem.DELETERequest('/mock_server/v1/workspace/object', {
+      await this.#interactionSystem.DELETERequest('/dtcd_workspaces/v1/workspace/object/', {
         data: [id],
       });
       this.#logSystem.info(`Deleted workspace configuration with id:${id}`);
@@ -406,18 +413,22 @@ export class WorkspaceSystem extends SystemPlugin {
     }
   }
 
-  async createEmptyConfiguration(title) {
+  async createEmptyConfiguration(params = {}) {
+    const { title, description, color, icon, isFolder, path } = params;
+
     this.#logSystem.debug(`Trying to create new empty configuration with title:'${title}`);
-    let tempConf = JSON.parse(JSON.stringify(this.#emptyConfiguration));
-    tempConf.title = title;
+    const content = JSON.parse(JSON.stringify(this.#emptyConfiguration));
+    content.title = title;
+
+    const data = isFolder
+      ? { title, dir: null }
+      : { title, content, meta: { description, color, icon } };
+
+    const endpoint = '/dtcd_workspaces/v1/workspace/object/';
+
     try {
       this.#logSystem.debug(`Sending request to create configurations`);
-      await this.#interactionSystem.POSTRequest('/mock_server/v1/workspace/object', [
-        {
-          title: title,
-          content: tempConf,
-        },
-      ]);
+      await this.#interactionSystem.POSTRequest(endpoint + btoa(path), [data]);
       this.#logSystem.info(`Successfully created new configuration with title:'${title}'`);
     } catch (err) {
       this.#logSystem.error(
@@ -430,7 +441,7 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#logSystem.debug(`Trying to import configuration with title:'${configuration.title}`);
     try {
       this.#logSystem.debug(`Sending request to import configurations`);
-      await this.#interactionSystem.POSTRequest('/mock_server/v1/workspace/object', [
+      await this.#interactionSystem.POSTRequest('/dtcd_workspaces/v1/workspace/object/', [
         {
           title: configuration.title,
           content: configuration,
@@ -449,7 +460,7 @@ export class WorkspaceSystem extends SystemPlugin {
   async changeConfigurationTitle(id, title) {
     this.#logSystem.debug(`Trying to change configuration title with id:${id} to value:'${title}'`);
     try {
-      await this.#interactionSystem.PUTRequest('/mock_server/v1/workspace/object', [
+      await this.#interactionSystem.PUTRequest('/dtcd_workspaces/v1/workspace/object/', [
         {
           id,
           title,
@@ -519,9 +530,9 @@ export class WorkspaceSystem extends SystemPlugin {
             this.#editMode ? 'flex' : 'none'
           }">
             <div id="closePanelBtn-${panelID}" class="close-panel-button">
-              <span class="FontIcon name_closeBig size_lg"></span>           
+              <span class="FontIcon name_closeBig size_lg"></span>
             </div>
-            <span class="drag-panel-button FontIcon name_move size_lg"></span>  
+            <span class="drag-panel-button FontIcon name_move size_lg"></span>
           </div>
           <div class="gridstack-content-container${
             this.#editMode ? ' gridstack-panel-overlay' : ''
@@ -702,7 +713,7 @@ export class WorkspaceSystem extends SystemPlugin {
   };
 
   async getConfigurationList() {
-    const response = await this.#interactionSystem.GETRequest('/mock_server/v1/workspace/object');
+    const response = await this.#interactionSystem.GETRequest('/dtcd_workspaces/v1/workspace/object/');
     return response.data;
   }
 
@@ -720,7 +731,7 @@ export class WorkspaceSystem extends SystemPlugin {
 
   async saveConfiguration() {
     this.#logSystem.info('Saving current configuration');
-    this.#interactionSystem.PUTRequest('/mock_server/v1/workspace/object', [
+    this.#interactionSystem.PUTRequest(`/dtcd_workspaces/v1/workspace/object/${this.#currentPath}`, [
       {
         id: this.#currentID,
         title: this.#currentTitle,
