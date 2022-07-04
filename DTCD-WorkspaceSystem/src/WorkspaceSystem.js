@@ -622,7 +622,7 @@ export class WorkspaceSystem extends SystemPlugin {
     return widget;
   }
 
-  createCell({ name, version, w = 4, h = 4, x = 0, y = 0, tabId, autoPosition = true }) {
+  createCell({ name, version, w = 6, h = 8, x = 0, y = 0, tabId, autoPosition = true }) {
     this.#logSystem.debug(
       `Adding panel-plugin widget with name:'${name}', version:${version}, w:${w},h:${h},x:${x},y:${y}, autoPosition:${autoPosition}`
     );
