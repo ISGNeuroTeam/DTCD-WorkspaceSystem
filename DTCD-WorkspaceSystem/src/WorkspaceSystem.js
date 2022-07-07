@@ -253,21 +253,23 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#logSystem.info(
       `Setting workspace configuration (id:${config?.id}, title:${config?.title})`
     );
-
+    
     // Tabs panels
+    let activeTabId = this.#getTabIdUrlParam();
     config.tabPanelsConfig instanceof Object
       ? (this.#tabPanelsConfig = config.tabPanelsConfig)
       : (this.#tabPanelsConfig = null);
     this.#createTabsSwitcher();
 
-    // remember id of active tab panel
-    let activeTabId;
-    this.#gridCollection.forEach((gridData, key) => {
-      if (gridData.isActive) {
-        activeTabId = key;
-        return;
-      }
-    });
+    // remember id of active tab panel if tab id dont exist in url
+    if (!activeTabId) {
+      this.#gridCollection.forEach((gridData, key) => {
+        if (gridData.isActive) {
+          activeTabId = key;
+          return;
+        }
+      });
+    }
 
     // ---- COLUMN ----
     if (typeof config.column != 'undefined') this.setColumn(config.column);
@@ -861,6 +863,7 @@ export class WorkspaceSystem extends SystemPlugin {
     if (!this.#gridCollection) return;
 
     const activeTabId = event.detail.tabId;
+    if (!activeTabId) return;
 
     for (const gridItem of this.#gridCollection) {
       if (gridItem[0] === activeTabId) {
@@ -870,7 +873,27 @@ export class WorkspaceSystem extends SystemPlugin {
         gridItem[1].isActive = false;
       }
     }
+
+    this.#setTabIdUrlParam(activeTabId);
   };
+
+  #setTabIdUrlParam(tabId) {
+    if (!tabId) return;
+
+    const urlSearchParams = new URLSearchParams(window.location.search);
+          urlSearchParams.set('ws-tab-id', tabId);
+    
+    window.history.pushState(
+      {},
+      '',
+      window.location.origin + window.location.pathname + '?' + urlSearchParams.toString()
+    );
+  }
+
+  #getTabIdUrlParam() {
+    const urlSearchParams = new URLSearchParams(window.location.search);
+    return urlSearchParams.get('ws-tab-id');
+  }
 
   #handleTabsSwitcherDelete = event => {
     if (!this.#gridCollection) return;

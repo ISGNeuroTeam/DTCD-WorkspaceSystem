@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - resetSystem method in order to uninstall panels while leaving workspace
+- switching tab panels by URL
 
 ### Changed
 
