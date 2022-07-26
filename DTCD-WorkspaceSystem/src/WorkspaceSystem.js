@@ -110,24 +110,22 @@ export class WorkspaceSystem extends SystemPlugin {
           },
         },
         {
-          component: 'subtitle',
-          propValue: 'Редактирование рабочего стола',
-        },
-        {
           component: 'switch',
           propName: 'editMode',
+          attrs: {
+            label: 'Редактировать рабочий стол',
+          },
           handler: {
             event: 'input',
             callback: this.changeMode.bind(this),
           },
         },
         {
-          component: 'subtitle',
-          propValue: 'Скрыть/отобразвить вкладки',
-        },
-        {
           component: 'switch',
           propName: 'visibleTabNavBar',
+          attrs: {
+            label: 'Скрыть/отобразвить вкладки',
+          },
           handler: {
             event: 'change',
             callback: this.handleToggleNavBarChange.bind(this),
