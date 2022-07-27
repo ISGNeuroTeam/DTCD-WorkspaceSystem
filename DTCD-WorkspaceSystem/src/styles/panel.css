@@ -13,7 +13,7 @@
 
 .grid-stack-item-content:active,
 .grid-stack-item-content:hover {
-  border: 2px solid var(--button_primary);
+  border-color: var(--button_primary);
 }
 
 .gridstack-content-container {

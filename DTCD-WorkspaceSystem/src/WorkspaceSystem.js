@@ -30,6 +30,8 @@ export class WorkspaceSystem extends SystemPlugin {
 
   // ---- STATE ----
   #panels;
+  #panelStyles;
+  #wssStyleTag;
   #currentTitle;
   #currentPath;
   #currentID;
@@ -64,6 +66,9 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#emptyConfiguration = emptyConfiguration;
 
     this.#panels = [];
+    this.#panelStyles = {};
+    this.#wssStyleTag = document.createElement('style');
+    document.body.appendChild(this.#wssStyleTag);
     this.#editMode = false;
     this.#modalInstance = null;
 
@@ -87,6 +92,14 @@ export class WorkspaceSystem extends SystemPlugin {
   }
 
   getFormSettings() {
+    const optionsBorderSizes = [];
+
+    for (let i = 1; i <= 10; i++) {
+      optionsBorderSizes.push({
+        value: i + 'px', label: i + 'px'
+      });
+    }
+
     return {
       fields: [
         {
@@ -129,6 +142,55 @@ export class WorkspaceSystem extends SystemPlugin {
           handler: {
             event: 'change',
             callback: this.handleToggleNavBarChange.bind(this),
+          },
+        },
+        {
+          component: 'divider',
+        },
+        {
+          component: 'select',
+          propName: 'panelBorderWidth',
+          attrs: {
+            label: 'Толщина границы панелей',
+          },
+          handler: {
+            event: 'change',
+            callback: this.handleBorderWidthChange.bind(this),
+          },
+          options: optionsBorderSizes,
+        },
+        {
+          component: 'select',
+          propName: 'panelBorderStyle',
+          attrs: {
+            label: 'Стиль границы панелей',
+          },
+          handler: {
+            event: 'change',
+            callback: this.handleBorderStyleChange.bind(this),
+          },
+          options: [
+            { value: 'solid', label: 'Сплошная (solid)' },
+            { value: 'dashed', label: 'Прерывистая (dashed)' },
+            { value: 'dotted', label: 'Точечная (dotted)' },
+            { value: 'double', label: 'Двойная сплошная (double)' },
+            { value: 'groove', label: 'Бордюр (groove)' },
+            { value: 'hidden', label: 'Скрытая (hidden)' },
+            { value: 'ridge', label: 'Ребро (ridge)' },
+            { value: 'inset', label: 'inset (inset)' },
+            { value: 'outset', label: 'outset (outset)' },
+            { value: 'none', label: 'Отключить (none)' },
+          ],
+        },
+        {
+          component: 'colorpicker',
+          propName: 'panelBorderColor',
+          attrs: {
+            label: 'Цвет границы панелей',
+          },
+          handler: {
+            event: 'change',
+            callback: this.handleBorderColorChange.bind(this),
           },
         },
         // {
@@ -243,6 +305,9 @@ export class WorkspaceSystem extends SystemPlugin {
       plugins,
       tabPanelsConfig,
       visibleTabNavBar: tabPanelsConfig.visibleNavBar,
+      panelBorderWidth: this.#panelStyles['border-width'] || '',
+      panelBorderStyle: this.#panelStyles['border-style'] || '',
+      panelBorderColor: this.#panelStyles['border-color'] || '',
     };
   }
 
@@ -357,6 +422,10 @@ export class WorkspaceSystem extends SystemPlugin {
       }
     }
 
+    // settings panel styles
+    this.#panelStyles = config.panelStyles;
+    this.#setPanelStyles();
+
     await this.#eventSystem.setPluginConfig(eventSystemConfig);
     return true;
   }
@@ -393,6 +462,7 @@ export class WorkspaceSystem extends SystemPlugin {
     });
     this.#panels = [];
     this.#editMode = false;
+    this.#panelStyles = {};
     this.#logSystem.debug(`Clearing panels array`);
     // this.setColumn();
   }
@@ -672,32 +742,41 @@ export class WorkspaceSystem extends SystemPlugin {
   }
 
   changeMode() {
+    this.#editMode = !this.#editMode;
+
     const panelBorder = document.querySelectorAll('.grid-stack-item-content');
     panelBorder.forEach(content => {
-      content.style.border = this.#editMode
-        ? '2px solid var(--background_secondary)'
-        : '2px solid var(--button_primary)';
+      if (this.#editMode) {
+        if (this.#panelStyles['border-width']) {
+          content.style.border = `${this.#panelStyles['border-width']} solid var(--button_primary)`;
+        } else {
+          content.style.border = '2px solid var(--button_primary)';
+        }
+      } else {
+        content.style.border = '';
+      }
     });
 
     const panelHeaders = document.querySelectorAll('.gridstack-panel-header');
     panelHeaders.forEach(header => {
-      header.style.display = this.#editMode ? 'none' : 'flex';
+      header.style.display = this.#editMode ? '' : 'none';
     });
-    const panelContents = document.querySelectorAll('.gridstack-content-container');
 
     const overlayClass = 'gridstack-panel-overlay';
+    const panelContents = document.querySelectorAll('.gridstack-content-container');
     panelContents.forEach(content => {
-      this.#editMode ? content.classList.remove(overlayClass) : content.classList.add(overlayClass);
+      this.#editMode
+        ? content.classList.add(overlayClass)
+        : content.classList.remove(overlayClass);
     });
 
-    const margin = this.#editMode ? '0px' : '2px';
+    const margin = this.#editMode ? '2px' : '0px';
     for (const gridData of this.#gridCollection) {
       gridData[1].gridInstance.batchUpdate();
       gridData[1].gridInstance.margin(margin);
       gridData[1].gridInstance.commit();
-      gridData[1].gridInstance.setStatic(this.#editMode);
+      gridData[1].gridInstance.setStatic(!this.#editMode);
     }
-    this.#editMode = !this.#editMode;
 
     if (this.#tabsSwitcherInstance) {
       this.#tabsSwitcherInstance.editMode = this.#editMode;
@@ -711,6 +790,32 @@ export class WorkspaceSystem extends SystemPlugin {
       this.#tabsSwitcherInstance.visibleNavBar = event.currentTarget.checked;
     }
   };
+
+  handleBorderWidthChange = (event) => {
+    const size = event.target.value;
+    this.#panelStyles['border-width'] = size;
+    this.#setPanelStyles();
+  }
+
+  handleBorderStyleChange = (event) => {
+    const style = event.target.value;
+    this.#panelStyles['border-style'] = style;
+    this.#setPanelStyles();
+  }
+
+  handleBorderColorChange = (event) => {
+    const color = event.target.value;
+    this.#panelStyles['border-color'] = color;
+    this.#setPanelStyles();
+  }
+
+  #setPanelStyles() {
+    this.#wssStyleTag.textContent = `.grid-stack-item-content{
+      border-width: ${this.#panelStyles['border-width']};
+      border-style: ${this.#panelStyles['border-style']};
+      border-color: ${this.#panelStyles['border-color']};
+    }`;
+  }
 
   async getConfigurationList() {
     const response = await this.#interactionSystem.GETRequest('/dtcd_workspaces/v1/workspace/object/');
