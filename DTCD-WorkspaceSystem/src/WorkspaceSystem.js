@@ -66,11 +66,6 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#emptyConfiguration = emptyConfiguration;
 
     this.#panels = [];
-    this.#panelStyles = {
-      'border-width': '',
-      'border-style': '',
-      'border-color': '',
-    };
     this.#editMode = false;
     this.#modalInstance = null;
 
@@ -177,10 +172,9 @@ export class WorkspaceSystem extends SystemPlugin {
             { value: 'dotted', label: 'Точечная (dotted)' },
             { value: 'double', label: 'Двойная сплошная (double)' },
             { value: 'groove', label: 'Бордюр (groove)' },
-            { value: 'hidden', label: 'Скрытая (hidden)' },
             { value: 'ridge', label: 'Ребро (ridge)' },
-            { value: 'inset', label: 'inset (inset)' },
-            { value: 'outset', label: 'outset (outset)' },
+            { value: 'inset', label: 'Inset (inset)' },
+            { value: 'outset', label: 'Outset (outset)' },
             { value: 'none', label: 'Отключить (none)' },
           ],
         },
@@ -425,9 +419,11 @@ export class WorkspaceSystem extends SystemPlugin {
     }
 
     // settings panel styles
-    this.#panelStyles['border-width'] = config.panelBorderWidth || '';
-    this.#panelStyles['border-style'] = config.panelBorderStyle || '';
-    this.#panelStyles['border-color'] = config.panelBorderColor || '';
+    this.#panelStyles = {
+      'border-width': config.panelBorderWidth || '2px',
+      'border-style': config.panelBorderStyle || 'solid',
+      'border-color': config.panelBorderColor || 'var(--background_secondary)',
+    };
     this.#setPanelStyles();
 
     await this.#eventSystem.setPluginConfig(eventSystemConfig);
