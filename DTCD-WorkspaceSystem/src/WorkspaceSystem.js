@@ -505,7 +505,7 @@ export class WorkspaceSystem extends SystemPlugin {
 
     const panelID = this.#numberPanelIncrement;
 
-    if (!guid) guid = panelID;
+    if (!guid) guid = `${panelID}`;
 
     let targetGrid = this.#gridCollection.get(tabId)?.gridInstance;
     targetGrid = targetGrid ? targetGrid : this.#activeGrid;
