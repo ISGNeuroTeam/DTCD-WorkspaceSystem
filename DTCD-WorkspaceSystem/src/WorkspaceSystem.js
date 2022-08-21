@@ -2,12 +2,7 @@ import 'gridstack/dist/gridstack.min.css';
 import { GridStack } from 'gridstack';
 import 'gridstack/dist/h5/gridstack-dd-native';
 
-import {
-  EventSystemAdapter,
-  SystemPlugin,
-  InteractionSystemAdapter,
-  LogSystemAdapter,
-} from './../../DTCD-SDK/index';
+import { EventSystemAdapter, SystemPlugin, InteractionSystemAdapter, LogSystemAdapter } from './../../DTCD-SDK/index';
 import { version } from './../package.json';
 import './styles/panel.css';
 import './styles/modal.css';
@@ -17,6 +12,7 @@ import emptyConfiguration from './utils/empty_configuration.json';
 import defaultConfiguration from './utils/default_configuration.json';
 
 import TabsSwitcher from './TabsSwitcher';
+import utf8_to_base64 from './libs/utf8tobase64';
 
 export class WorkspaceSystem extends SystemPlugin {
   // ---- PLUGIN PROPS ----
@@ -93,7 +89,8 @@ export class WorkspaceSystem extends SystemPlugin {
 
     for (let i = 1; i <= 10; i++) {
       optionsBorderSizes.push({
-        value: i + 'px', label: i + 'px'
+        value: i + 'px',
+        label: i + 'px',
       });
     }
 
@@ -239,14 +236,8 @@ export class WorkspaceSystem extends SystemPlugin {
       visibleNavBar: false,
     });
     element.appendChild(this.#tabsSwitcherInstance.htmlElement);
-    this.#tabsSwitcherInstance.htmlElement.addEventListener(
-      'tab-active',
-      this.#handleTabsSwitcherActive
-    );
-    this.#tabsSwitcherInstance.htmlElement.addEventListener(
-      'tab-delete',
-      this.#handleTabsSwitcherDelete
-    );
+    this.#tabsSwitcherInstance.htmlElement.addEventListener('tab-active', this.#handleTabsSwitcherActive);
+    this.#tabsSwitcherInstance.htmlElement.addEventListener('tab-delete', this.#handleTabsSwitcherDelete);
     this.#tabsSwitcherInstance.htmlElement.addEventListener('tab-add', this.#handleTabsSwitcherAdd);
 
     const workspaceID = history.state.workspaceID;
@@ -261,10 +252,7 @@ export class WorkspaceSystem extends SystemPlugin {
       // ---- pluginInfo {guid, meta, config, position, undeletable}
       const guid = this.getGUID(system);
       const meta = system.constructor.getRegistrationMeta();
-      const config =
-        typeof system.getPluginConfig === 'function' && system !== this
-          ? system.getPluginConfig()
-          : null;
+      const config = typeof system.getPluginConfig === 'function' && system !== this ? system.getPluginConfig() : null;
 
       plugins.push({ guid, meta, config });
     });
@@ -274,10 +262,7 @@ export class WorkspaceSystem extends SystemPlugin {
       .forEach(panel => {
         const guid = panel.guid;
         const meta = panel.meta;
-        const config =
-          typeof panel.instance.getPluginConfig === 'function'
-            ? panel.instance.getPluginConfig()
-            : null;
+        const config = typeof panel.instance.getPluginConfig === 'function' ? panel.instance.getPluginConfig() : null;
 
         const { h, w, x, y } = panel?.widget.gridstackNode;
         const position = {
@@ -309,10 +294,8 @@ export class WorkspaceSystem extends SystemPlugin {
 
   async setPluginConfig(config = {}) {
     this.resetWorkspace();
-    this.#logSystem.info(
-      `Setting workspace configuration (id:${config?.id}, title:${config?.title})`
-    );
-    
+    this.#logSystem.info(`Setting workspace configuration (id:${config?.id}, title:${config?.title})`);
+
     // Tabs panels
     let activeTabId = this.#getTabIdUrlParam();
     config.tabPanelsConfig instanceof Object
@@ -402,8 +385,7 @@ export class WorkspaceSystem extends SystemPlugin {
       }
 
       const instance = this.getInstance(GUIDMap[guid]);
-      if (instance && instance !== this && instance.setPluginConfig && config)
-        await instance.setPluginConfig(config);
+      if (instance && instance !== this && instance.setPluginConfig && config) await instance.setPluginConfig(config);
     }
 
     // активируем таб, который должен быть активным после открытия рабочего стола.
@@ -436,9 +418,7 @@ export class WorkspaceSystem extends SystemPlugin {
     const path = delimIndex !== -1 ? downloadPath.slice(0, delimIndex) : '';
 
     this.#logSystem.debug(`Trying to download configuration with id:${id}`);
-    const { data } = await this.#interactionSystem.GETRequest(
-      `/dtcd_workspaces/v1/workspace/object/${path}?id=${id}`
-    );
+    const { data } = await this.#interactionSystem.GETRequest(`/dtcd_workspaces/v1/workspace/object/${path}?id=${id}`);
     this.#logSystem.debug(`Parsing configuration from response`);
     const content = data.content;
     content['id'] = data.id;
@@ -490,20 +470,16 @@ export class WorkspaceSystem extends SystemPlugin {
     const content = JSON.parse(JSON.stringify(this.#emptyConfiguration));
     content.title = title;
 
-    const data = isFolder
-      ? { title, dir: null }
-      : { title, content, meta: { description, color, icon } };
+    const data = isFolder ? { title, dir: null } : { title, content, meta: { description, color, icon } };
 
     const endpoint = '/dtcd_workspaces/v1/workspace/object/';
 
     try {
       this.#logSystem.debug(`Sending request to create configurations`);
-      await this.#interactionSystem.POSTRequest(endpoint + btoa(path), [data]);
+      await this.#interactionSystem.POSTRequest(endpoint + utf8_to_base64(path), [data]);
       this.#logSystem.info(`Successfully created new configuration with title:'${title}'`);
     } catch (err) {
-      this.#logSystem.error(
-        `Error occured while downloading workspace configuration: ${err.message}`
-      );
+      this.#logSystem.error(`Error occured while downloading workspace configuration: ${err.message}`);
     }
   }
 
@@ -517,13 +493,9 @@ export class WorkspaceSystem extends SystemPlugin {
           content: configuration,
         },
       ]);
-      this.#logSystem.info(
-        `Successfully imported configuration with title:'${configuration.title}'`
-      );
+      this.#logSystem.info(`Successfully imported configuration with title:'${configuration.title}'`);
     } catch (err) {
-      this.#logSystem.error(
-        `Error occured while importing workspace configuration: ${err.message}`
-      );
+      this.#logSystem.error(`Error occured while importing workspace configuration: ${err.message}`);
     }
   }
 
@@ -539,9 +511,7 @@ export class WorkspaceSystem extends SystemPlugin {
 
       this.#logSystem.info(`New title:'${title}' was set to configuration with id:${id}`);
     } catch (err) {
-      this.#logSystem.error(
-        `Error occured while downloading workspace configuration: ${err.message}`
-      );
+      this.#logSystem.error(`Error occured while downloading workspace configuration: ${err.message}`);
     }
   }
 
@@ -596,17 +566,13 @@ export class WorkspaceSystem extends SystemPlugin {
       `
       <div class="grid-stack-item">
         <div class="grid-stack-item-content">
-          <div class="handle-drag-of-panel gridstack-panel-header" style="display:${
-            this.#editMode ? 'flex' : 'none'
-          }">
+          <div class="handle-drag-of-panel gridstack-panel-header" style="display:${this.#editMode ? 'flex' : 'none'}">
             <div id="closePanelBtn-${panelID}" class="close-panel-button">
               <span class="FontIcon name_closeBig size_lg"></span>
             </div>
             <span class="drag-panel-button FontIcon name_move size_lg"></span>
           </div>
-          <div class="gridstack-content-container${
-            this.#editMode ? ' gridstack-panel-overlay' : ''
-          }">
+          <div class="gridstack-content-container${this.#editMode ? ' gridstack-panel-overlay' : ''}">
             <div id="panel-${panelID}">
             </div>
           </div>
@@ -633,10 +599,7 @@ export class WorkspaceSystem extends SystemPlugin {
       .forEach(plug => {
         const { type, title, name, version } = plug;
         if (type === 'panel') {
-          selectEl.options[nextOptionIndex] = new Option(
-            `${title} ${version}`,
-            JSON.stringify({ name, version })
-          );
+          selectEl.options[nextOptionIndex] = new Option(`${title} ${version}`, JSON.stringify({ name, version }));
           nextOptionIndex++;
         }
       });
@@ -765,9 +728,7 @@ export class WorkspaceSystem extends SystemPlugin {
     const overlayClass = 'gridstack-panel-overlay';
     const panelContents = document.querySelectorAll('.gridstack-content-container');
     panelContents.forEach(content => {
-      this.#editMode
-        ? content.classList.add(overlayClass)
-        : content.classList.remove(overlayClass);
+      this.#editMode ? content.classList.add(overlayClass) : content.classList.remove(overlayClass);
     });
 
     const margin = this.#editMode ? '2px' : '0px';
@@ -796,9 +757,7 @@ export class WorkspaceSystem extends SystemPlugin {
       return this.setPluginConfig(config);
     } catch (err) {
       this.getSystem('AppGUISystem', '0.1.0').goTo404();
-      this.#logSystem.error(
-        `Error occured while downloading workspace configuration: ${err.message}`
-      );
+      this.#logSystem.error(`Error occured while downloading workspace configuration: ${err.message}`);
     }
   }
 
@@ -879,9 +838,7 @@ export class WorkspaceSystem extends SystemPlugin {
         document.body.append(modalBackdrop);
         this.#modalInstance = new plugin('', '#mount-point', true);
       } catch (err) {
-        this.#logSystem.error(
-          `Can't create modal with panel '${panelName} ${version}' due to error: ${err}`
-        );
+        this.#logSystem.error(`Can't create modal with panel '${panelName} ${version}' due to error: ${err}`);
       }
     }
   }
@@ -952,8 +909,8 @@ export class WorkspaceSystem extends SystemPlugin {
     if (!tabId) return;
 
     const urlSearchParams = new URLSearchParams(window.location.search);
-          urlSearchParams.set('ws-tab-id', tabId);
-    
+    urlSearchParams.set('ws-tab-id', tabId);
+
     window.history.pushState(
       {},
       '',
@@ -1022,23 +979,23 @@ export class WorkspaceSystem extends SystemPlugin {
     }
   };
 
-  #handleBorderWidthChange = (event) => {
+  #handleBorderWidthChange = event => {
     const size = event.target.value;
     this.#panelStyles['border-width'] = size;
     this.#setPanelStyles();
-  }
+  };
 
-  #handleBorderStyleChange = (event) => {
+  #handleBorderStyleChange = event => {
     const style = event.target.value;
     this.#panelStyles['border-style'] = style;
     this.#setPanelStyles();
-  }
+  };
 
-  #handleBorderColorChange = (event) => {
+  #handleBorderColorChange = event => {
     const color = event.target.value;
     this.#panelStyles['border-color'] = color;
     this.#setPanelStyles();
-  }
+  };
 
   #setPanelStyles() {
     if (!this.#wssStyleTag) {
@@ -1052,13 +1009,13 @@ export class WorkspaceSystem extends SystemPlugin {
     }
 
     let borderStyles = '.grid-stack-item-content{';
-    if (this.#panelStyles['border-width']){
+    if (this.#panelStyles['border-width']) {
       borderStyles += `border-width: ${this.#panelStyles['border-width']};`;
     }
-    if (this.#panelStyles['border-style']){
+    if (this.#panelStyles['border-style']) {
       borderStyles += `border-style: ${this.#panelStyles['border-style']};`;
     }
-    if (this.#panelStyles['border-color']){
+    if (this.#panelStyles['border-color']) {
       borderStyles += `border-color: ${this.#panelStyles['border-color']};`;
     }
     borderStyles += '}';
