@@ -332,7 +332,6 @@ export class WorkspaceSystem extends SystemPlugin {
                 this.#tabsSwitcherInstance.activeTab(position.tabId);
               }
 
-              console.log(guid);
               widget = this.createCell({
                 name: meta.name,
                 version: meta.version,
