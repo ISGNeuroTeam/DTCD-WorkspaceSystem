@@ -6,10 +6,7 @@ import { EventSystemAdapter, SystemPlugin, InteractionSystemAdapter, LogSystemAd
 import { version } from './../package.json';
 import './styles/panel.css';
 import './styles/modal.css';
-import { toMountTemplates } from './utils/templates';
 import gridstackOptions from './utils/gridstackOptions';
-import emptyConfiguration from './utils/empty_configuration.json';
-import defaultConfiguration from './utils/default_configuration.json';
 
 import TabsSwitcher from './TabsSwitcher';
 import utf8_to_base64 from './libs/utf8tobase64';
@@ -20,8 +17,6 @@ export class WorkspaceSystem extends SystemPlugin {
   #eventSystem;
   #interactionSystem;
   #logSystem;
-  #emptyConfiguration;
-  #defaultConfiguration;
   #tabPanelsConfig;
 
   // ---- STATE ----
@@ -37,7 +32,6 @@ export class WorkspaceSystem extends SystemPlugin {
   #activeGrid;
   #gridCollection;
   #editMode;
-  #numberPanelIncrement;
   #modalInstance;
   #tabsSwitcherInstance;
 
@@ -58,14 +52,10 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#eventSystem.registerPluginInstance(this, ['WorkspaceCellClicked']);
     this.#interactionSystem = new InteractionSystemAdapter('0.4.0');
     this.#logSystem = new LogSystemAdapter('0.5.0', this.#guid, 'WorkspaceSystem');
-    this.#defaultConfiguration = defaultConfiguration;
-    this.#emptyConfiguration = emptyConfiguration;
 
     this.#panels = [];
     this.#editMode = false;
     this.#modalInstance = null;
-
-    this.#numberPanelIncrement = 1;
   }
 
   get currentWorkspaceTitle() {
@@ -186,14 +176,6 @@ export class WorkspaceSystem extends SystemPlugin {
             callback: this.#handleBorderColorChange.bind(this),
           },
         },
-        // {
-        //   component: 'button',
-        //   content: 'Добавить панель',
-        //   handler: {
-        //     event: 'click',
-        //     callback: this.createEmptyCell.bind(this),
-        //   },
-        // },
       ],
     };
   }
@@ -219,8 +201,6 @@ export class WorkspaceSystem extends SystemPlugin {
       this.#logSystem.debug('The element is not contained in the DOM');
       return false;
     }
-
-    this.#numberPanelIncrement = 1;
 
     element.innerHTML = '';
     this.#tabsSwitcherInstance && this.#tabsSwitcherInstance.destructor();
@@ -449,7 +429,10 @@ export class WorkspaceSystem extends SystemPlugin {
     const { title, description, color, icon, isFolder, path } = params;
 
     this.#logSystem.debug(`Trying to create new empty configuration with title:'${title}`);
-    const content = JSON.parse(JSON.stringify(this.#emptyConfiguration));
+    const content = {
+      column: 12,
+      plugins: [],
+    };
     content.title = title;
 
     const data = isFolder ? { title, dir: null } : { title, content, meta: { description, color, icon } };
@@ -497,15 +480,26 @@ export class WorkspaceSystem extends SystemPlugin {
     }
   }
 
+  #getPanelId(panelName) {
+    const panelInstances = this.#panels.filter(panel => panel.guid.includes(panelName));
+    const ids = panelInstances.map(panel => {
+      return parseInt(panel.guid.split('_').pop());
+    });
+
+    const maxID = Math.max(...ids);
+    return maxID !== -Infinity ? maxID + 1 : 1;
+  }
+
   createCell({ name, version, guid = null, w = 6, h = 8, x = 0, y = 0, tabId, autoPosition = true }) {
     this.#logSystem.debug(
       `Adding panel-plugin widget with name:'${name}', version:${version}, w:${w},h:${h},x:${x},y:${y}, autoPosition:${autoPosition}`
     );
     this.#logSystem.info(`Adding panel widget with name: '${name}', version: '${version}'`);
 
-    const panelID = this.#numberPanelIncrement;
-
-    if (!guid) guid = `${panelID}`;
+    if (!guid) {
+      const panelID = this.#getPanelId(name);
+      guid = `${name}_${panelID}`;
+    }
 
     let targetGrid = this.#gridCollection.get(tabId)?.gridInstance;
     targetGrid = targetGrid ? targetGrid : this.#activeGrid;
@@ -516,41 +510,33 @@ export class WorkspaceSystem extends SystemPlugin {
       <div class="grid-stack-item">
         <div class="grid-stack-item-content">
           <div class="handle-drag-of-panel gridstack-panel-header" style="display:${this.#editMode ? 'flex' : 'none'}">
-            <div id="closePanelBtn-${panelID}" class="close-panel-button">
+            <div id="closePanelBtn-${guid}" class="close-panel-button">
               <span class="FontIcon name_closeBig size_lg"></span>
             </div>
             <span class="drag-panel-button FontIcon name_move size_lg"></span>
           </div>
           <div class="gridstack-content-container${this.#editMode ? ' gridstack-panel-overlay' : ''}">
-            <div id="panel-${panelID}">
+            <div id="panel-${guid}">
             </div>
           </div>
         </div>
       </div>
       `,
-      { x, y, w, h, autoPosition, id: panelID }
+      { x, y, w, h, autoPosition, id: guid }
     );
 
     const panelInstance = this.installPanel({
       name,
       guid,
       version,
-      selector: `#panel-${panelID}`,
+      selector: `#panel-${guid}`,
     });
 
-    widget.addEventListener('click', e => {
+    widget.addEventListener('click', () => {
       if (!this.#editMode) this.#eventSystem.publishEvent('WorkspaceCellClicked', { guid });
     });
 
-    document.getElementById(`closePanelBtn-${panelID}`).addEventListener('click', () => {
-      this.#panels.splice(
-        this.#panels.findIndex(plg => plg.widget === widget),
-        1
-      );
-      targetGrid.removeWidget(widget);
-      this.uninstallPluginByInstance(panelInstance);
-      this.#logSystem.info(`Widget with id ${panelID} was removed from workspace`);
-    });
+    document.getElementById(`closePanelBtn-${guid}`).addEventListener('click', this.deleteCell.bind(this, guid));
 
     const meta = panelInstance.constructor.getRegistrationMeta();
 
@@ -564,21 +550,28 @@ export class WorkspaceSystem extends SystemPlugin {
       meta,
     });
 
-    this.#numberPanelIncrement++;
     return widget;
   }
 
-  deleteCell(cellID) {
-    this.#logSystem.debug(`Trying to delete cell from workspace with id: ${cellID}`);
-    const cellCloseBtn = document.querySelector(`#closePanelBtn-${cellID}`);
-    if (!cellCloseBtn) {
-      this.#logSystem.debug(`No cell element found on workspace with given id: ${cellID}`);
+  deleteCell(guid) {
+    this.#logSystem.debug(`Trying to delete cell from workspace with guid: ${guid}`);
+    const panel = this.#panels.find(panel => panel.guid === guid);
+    if (!panel) {
+      this.#logSystem.debug(`No cell element found on workspace with given guid: ${guid}`);
       return;
     }
-    const event = new Event('click');
-    this.#logSystem.debug(`Dispatching click event on cell's close button`);
-    cellCloseBtn.dispatchEvent(event);
-    this.#logSystem.info(`Deleted cell from workspace with id: ${cellID}`);
+
+    this.#panels.splice(
+      this.#panels.findIndex(plg => plg.guid === guid),
+      1
+    );
+
+    const targetGrid = this.#gridCollection.get(panel.position.tabId).gridInstance;
+    targetGrid.removeWidget(panel.widget);
+
+    this.uninstallPluginByGUID(guid);
+
+    this.#logSystem.info(`Deleted cell from workspace with guid: ${guid}`);
   }
 
   compactAllPanels() {
@@ -654,11 +647,6 @@ export class WorkspaceSystem extends SystemPlugin {
         content: this.getPluginConfig(),
       },
     ]);
-  }
-
-  setDefaultConfiguration() {
-    if (this.#editMode) this.changeMode();
-    this.setPluginConfig(this.#defaultConfiguration);
   }
 
   setColumn(newColumn) {
@@ -820,10 +808,10 @@ export class WorkspaceSystem extends SystemPlugin {
     }
 
     this.#panels = this.#panels.filter(plugin => {
-      const { widget, instance, position } = plugin;
+      const { widget, guid, position } = plugin;
       if (position.tabId === deletingTabId) {
         widget && deletingGrid.removeWidget(widget);
-        // if (instance) this.uninstallPluginByInstance(instance);
+        this.uninstallPluginByGUID(guid);
         return false;
       } else {
         return true;
