@@ -12,6 +12,7 @@ import emptyConfiguration from './utils/empty_configuration.json';
 import defaultConfiguration from './utils/default_configuration.json';
 
 import TabsSwitcher from './TabsSwitcher';
+import utf8_to_base64 from './libs/utf8tobase64';
 
 export class WorkspaceSystem extends SystemPlugin {
   // ---- PLUGIN PROPS ----
@@ -457,7 +458,7 @@ export class WorkspaceSystem extends SystemPlugin {
 
     try {
       this.#logSystem.debug(`Sending request to create configurations`);
-      await this.#interactionSystem.POSTRequest(endpoint + btoa(path), [data]);
+      await this.#interactionSystem.POSTRequest(endpoint + utf8_to_base64(path), [data]);
       this.#logSystem.info(`Successfully created new configuration with title:'${title}'`);
     } catch (err) {
       this.#logSystem.error(`Error occured while downloading workspace configuration: ${err.message}`);

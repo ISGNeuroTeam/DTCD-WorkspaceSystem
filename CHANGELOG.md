@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - id scope for panels
 - id restoration from workspace config in order not to brake custom actions
 
+## [0.8.1]
+
+### Fixed
+
+- convertion of workspce/folder names from utf8 to base64
+
 ## [0.8.0]
 
 ### Added
