@@ -470,7 +470,8 @@ export class WorkspaceSystem extends SystemPlugin {
     const content = JSON.parse(JSON.stringify(this.#emptyConfiguration));
     content.title = title;
 
-    const data = isFolder ? { title, dir: null } : { title, content, meta: { description, color, icon } };
+    const meta = isFolder ? { description } : { description, color, icon };
+    const data = isFolder ? { title, dir: null, meta } : { title, content, meta };
 
     const endpoint = '/dtcd_workspaces/v1/workspace/object/';
 
