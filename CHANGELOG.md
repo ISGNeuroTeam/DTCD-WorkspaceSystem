@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- convertion of workspce/folder names from utf8 to base64
+- convertion of workspace/folder names from utf8 to base64
 
 ## [0.8.0]
 
