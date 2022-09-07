@@ -12,11 +12,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - id scope for panels
 - id restoration from workspace config in order not to brake custom actions
 
+### Changed
+
+- SDK version to 0.1.2-develop-0133
+- redirect to tab
+
+### Fixed
+
+- multiple tab activations
+
+## [0.9.0]
+
+### Fixed
+
+- workspace folder meta data is not saved on creation
+
 ## [0.8.1]
 
 ### Fixed
 
-- convertion of workspce/folder names from utf8 to base64
+- convertion of workspace/folder names from utf8 to base64
 
 ## [0.8.0]
 

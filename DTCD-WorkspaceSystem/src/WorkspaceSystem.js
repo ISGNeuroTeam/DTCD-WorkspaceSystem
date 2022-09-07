@@ -2,7 +2,12 @@ import 'gridstack/dist/gridstack.min.css';
 import { GridStack } from 'gridstack';
 import 'gridstack/dist/h5/gridstack-dd-native';
 
-import { EventSystemAdapter, SystemPlugin, InteractionSystemAdapter, LogSystemAdapter } from './../../DTCD-SDK/index';
+import {
+  EventSystemAdapter,
+  SystemPlugin,
+  InteractionSystemAdapter,
+  LogSystemAdapter,
+} from './../../DTCD-SDK/index';
 import { version } from './../package.json';
 import './styles/panel.css';
 import './styles/modal.css';
@@ -435,7 +440,8 @@ export class WorkspaceSystem extends SystemPlugin {
     };
     content.title = title;
 
-    const data = isFolder ? { title, dir: null } : { title, content, meta: { description, color, icon } };
+    const meta = isFolder ? { description } : { description, color, icon };
+    const data = isFolder ? { title, dir: null, meta } : { title, content, meta };
 
     const endpoint = '/dtcd_workspaces/v1/workspace/object/';
 
@@ -783,11 +789,11 @@ export class WorkspaceSystem extends SystemPlugin {
     const urlSearchParams = new URLSearchParams(window.location.search);
     urlSearchParams.set('ws-tab-id', tabId);
 
-    window.history.pushState(
-      {},
-      '',
-      window.location.origin + window.location.pathname + '?' + urlSearchParams.toString()
-    );
+    Application.getSystem('RouteSystem', '0.3.0').navigate(
+      `${window.location.pathname}?${urlSearchParams.toString()}`,
+      true,
+      {workspaceID: this.currentWorkspaceID},
+    )
   }
 
   #getTabIdUrlParam() {
