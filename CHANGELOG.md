@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - id scope for panels
 - id restoration from workspace config in order not to brake custom actions
+- method `setVisible` which is called when the visibility of the panel changes
 
 ### Changed
 

@@ -781,6 +781,12 @@ export class WorkspaceSystem extends SystemPlugin {
     }
 
     this.#setTabIdUrlParam(activeTabId);
+
+    this.#panels.forEach((panel) => {
+      if (typeof panel.instance.setVisible === 'function') {
+        panel.instance.setVisible(activeTabId === panel?.position.tabId)
+      }
+    })
   };
 
   #setTabIdUrlParam(tabId) {
