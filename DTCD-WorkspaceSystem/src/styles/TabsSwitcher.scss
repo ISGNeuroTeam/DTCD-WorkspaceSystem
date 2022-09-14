@@ -37,6 +37,7 @@
   .TabBtnsList {
     display: flex;
     align-items: center;
+    overflow: hidden;
   }
   
   .NavPanel {
@@ -73,7 +74,6 @@
   }
 
   .ScrollBtn {
-    display: none;
     color: var(--button_primary);
 
     &:hover {

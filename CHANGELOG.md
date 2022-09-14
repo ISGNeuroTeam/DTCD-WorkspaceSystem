@@ -12,11 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - id scope for panels
 - id restoration from workspace config in order not to brake custom actions
 - method `setVisible` which is called when the visibility of the panel changes
+- Added drag and drop to tabs
 
 ### Changed
 
 - SDK version to 0.1.2-develop-0133
 - redirect to tab
+- tabs panel rewriting to vue
 
 ### Fixed
 
