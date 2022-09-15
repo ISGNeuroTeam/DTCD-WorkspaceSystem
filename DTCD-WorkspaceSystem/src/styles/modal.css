@@ -7,11 +7,12 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 5;
+  z-index: 2060;
+  font-family: 'Proxima Nova';
 }
 
 .modal {
-  background: #ffffff;
+  background: var(--background_main);
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
   height: 90vh;
   width: 90%;
