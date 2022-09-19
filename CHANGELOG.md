@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0]
+
+### Added
+
+- id scope for panels
+- id restoration from workspace config in order not to brake custom actions
+- method `setVisible` which is called when the visibility of the panel changes
+
+### Changed
+
+- SDK version to 0.2.0-master-0002
+- redirect to tab
+
+### Fixed
+
+- multiple tab activations
+
 ## [0.9.0]
 
 ### Fixed

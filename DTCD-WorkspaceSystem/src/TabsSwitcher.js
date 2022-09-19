@@ -34,7 +34,7 @@ class TabsSwitcher {
     this.#htmlElement = document.createElement('div');
     this.#htmlElement.classList.add('TabsSwitcher');
     this.#htmlElement.innerHTML = TabsSwitcherHtml;
-    
+
     this.#addTabBtn = this.#htmlElement.querySelector('.AddBtn-js');
     this.#addTabBtn.addEventListener('click', this.#handleAddTabBtnClick);
 
@@ -97,7 +97,7 @@ class TabsSwitcher {
    * Creating new tab panel.
    * @param {Object} [tabOptions] Parameters of tab panel.
    * @param {string} [tabOptions.id] ID of tab panel.
-   * @param {string} [tabOptions.name] Tab name. 
+   * @param {string} [tabOptions.name] Tab name.
    * @returns {string} ID of new tab panel.
    */
   addNewTab(tabOptions) {
@@ -207,7 +207,7 @@ class TabsSwitcher {
       visibleNavBar: this.visibleNavBar,
       tabsOptions: [],
     };
-    
+
     for (let tab of this.#tabsCollection) {
       config.tabsOptions.push({
         id: tab[0],
@@ -227,7 +227,7 @@ class TabsSwitcher {
   #checkTabName = (oldValue, newName) => {
     // название не пустое.
     if (!newName) return false;
-    
+
     // проверка на повтор названия таба.
     let checkResult = true;
     this.#tabsCollection.forEach((tabItem) => {
