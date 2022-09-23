@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+### Fixed
+
+- displaying of fonts and variables
+- modal window positioning
+
+## [0.10.0]
+
 ### Added
 
 - id scope for panels
@@ -15,14 +22,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- SDK version to 0.1.2-develop-0133
+- SDK version to 0.2.0-master-0002
 - redirect to tab
 
 ### Fixed
 
 - multiple tab activations
-- displaying of fonts and variables
-- modal window positioning
 
 ## [0.9.0]
 
