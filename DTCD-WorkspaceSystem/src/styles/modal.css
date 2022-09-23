@@ -20,4 +20,6 @@
   flex-direction: column;
   z-index: 30;
   position: relative;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
