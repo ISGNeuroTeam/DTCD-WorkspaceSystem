@@ -7,7 +7,9 @@ import {
   SystemPlugin,
   InteractionSystemAdapter,
   LogSystemAdapter,
+  StyleSystemAdapter,
 } from './../../DTCD-SDK/index';
+
 import { version } from './../package.json';
 import './styles/panel.css';
 import './styles/modal.css';
@@ -40,6 +42,7 @@ export class WorkspaceSystem extends SystemPlugin {
   #editMode;
   #modalInstance;
   #tabsSwitcherInstance;
+  #styleSystem;
 
   #tabsCollection = [];
   #vueComponent;
@@ -61,6 +64,7 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#eventSystem.registerPluginInstance(this, ['WorkspaceCellClicked']);
     this.#interactionSystem = new InteractionSystemAdapter('0.4.0');
     this.#logSystem = new LogSystemAdapter('0.5.0', this.#guid, 'WorkspaceSystem');
+    this.#styleSystem = new StyleSystemAdapter('0.5.0');
 
     this.#panels = [];
     this.#editMode = false;
@@ -739,6 +743,7 @@ export class WorkspaceSystem extends SystemPlugin {
         const plugin = this.getPlugin(panelName, version);
         document.body.append(modalBackdrop);
         this.#modalInstance = new plugin('', '#mount-point', true);
+        this.#styleSystem.setVariablesToElement(modalBackdrop, this.#styleSystem.getCurrentTheme());
       } catch (err) {
         this.#logSystem.error(`Can't create modal with panel '${panelName} ${version}' due to error: ${err}`);
       }
