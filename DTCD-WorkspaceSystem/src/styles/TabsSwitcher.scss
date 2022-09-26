@@ -37,7 +37,6 @@
   .TabBtnsList {
     display: flex;
     align-items: center;
-    overflow: hidden;
   }
   
   .NavPanel {
@@ -65,7 +64,6 @@
   }
   
   .AddBtn {
-    display: none;
     color: var(--text_secondary);
     
     &:hover {

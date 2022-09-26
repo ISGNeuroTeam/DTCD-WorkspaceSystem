@@ -6,21 +6,23 @@
   >
     <button
       v-show="scrollButton"
-      class="ScrollBtn type_prev type_prev-js"
-      :class="{withScroll: scrollButton}"
+      class="ScrollBtn type_prev"
+      :disabled="scrollLeft === 0"
       @click="scroll(false)"
     >
       <span class="FontIcon name_chevronDuoDown size_lg rotate_90"/>
     </button>
 
-    <div class="TabBtnsListWrapper TabBtnsListWrapper-js">
+    <div
+      ref="tabList"
+      class="TabBtnsListWrapper"
+    >
       <draggable
         v-if="tabList.length"
         v-model="tabsCollection"
-        ref="tabList"
-        :disabled="edit"
+        :disabled="!edit"
         groop="tabs"
-        class="TabBtnsList TabBtnsList-js"
+        class="TabBtnsList"
       >
         <div
           v-for="({id, name, isActive, editName}, index) in tabList"
@@ -34,22 +36,21 @@
           }"
           @click="setActiveTab(id)"
         >
-          <span class="TabName TabName-js">{{ name }}</span>
+          <span class="TabName">{{ name }}</span>
 
-          <button class="BtnLayer BtnLayer-js" type="button"></button>
+          <button class="BtnLayer" type="button"></button>
 
           <base-input
             :value="tabName"
-            class="InputField InputField-js"
-            :style="{border: invalid ? '1px solid red' : ''}"
+            class="InputField"
             ref="input"
             size="small"
             @input="tabName = $event.target.value"
-            @focus="invalid = false"
+            @focus="resetError(index)"
           ></base-input>
 
           <button
-            class="BtnIcon type_edit type_edit-js"
+            class="BtnIcon type_edit"
             type="button"
             title="Редактировать название вкладки"
             @click="changeName(index, name)"
@@ -57,7 +58,7 @@
             <span class="FontIcon name_edit"/>
           </button>
           <button
-            class="BtnIcon type_check type_check-js"
+            class="BtnIcon type_check"
             type="button"
             title="Сохранить название вкладки"
             @click="saveName(index)"
@@ -65,7 +66,7 @@
             <span class="FontIcon name_checkBig"/>
           </button>
           <button
-            class="BtnIcon type_delete type_delete-js"
+            class="BtnIcon type_delete"
             type="button"
             title="Удалить вкладку"
             @click.stop="removeTab(id, index)"
@@ -77,8 +78,9 @@
     </div>
 
     <button
+      v-show="edit"
       type="button"
-      class="AddBtn-js"
+      class="AddBtn"
       title="Добавить новую вкладку"
       @click="addNewTab"
     >
@@ -87,10 +89,8 @@
 
     <button
       v-show="scrollButton"
-      class="ScrollBtn type_next type_next-js"
-      :class="{
-        withScroll: scrollButton,
-      }"
+      class="ScrollBtn type_next"
+      :disabled="(clientWidth + scrollLeft) > scrollWidth"
       @click="scroll(true)"
     >
       <span class="FontIcon name_chevronDuoDown size_lg rotate_270"/>
@@ -101,7 +101,7 @@
 <script>
 import draggable from 'vuedraggable';
 export default {
-  name: "TabsSwtcherComponent",
+  name: "TabsPanelComponent",
   components: {
     draggable,
   },
@@ -113,7 +113,9 @@ export default {
       tabsSwitcherInstance: $root.tabsSwitcherInstance,
       tabName: '',
       scrollButton: false,
-      invalid: false,
+      scrollWidth: null,
+      clientWidth: null,
+      scrollLeft: null,
     }
   },
   computed: {
@@ -141,6 +143,14 @@ export default {
       return config;
     },
   },
+  updated() {
+    if (this.$refs && this.$refs.tabList) {
+      this.clientWidth = this.$refs.tabPanel.clientWidth;
+      this.scrollWidth = this.$refs.tabList.scrollWidth;
+      this.scrollLeft = this.$refs.tabList.scrollLeft;
+      this.scrollButton = this.clientWidth < this.scrollWidth;
+    }
+  },
   methods: {
     addNewTab(tabOptions) {
       const {
@@ -159,9 +169,7 @@ export default {
 
       this.tabsSwitcherInstance.addNewTab(tabId, this.tabsCollection);
       if (this.$refs.tabPanel) {
-        const { scrollWidth } = this.$refs.tabList.$el;
-        const { clientWidth } = this.$refs.tabPanel;
-        this.scrollButton = clientWidth - 100 < scrollWidth;
+        this.scrollButton = this.clientWidth < this.scrollWidth;
       }
       return tabId;
     },
@@ -200,16 +208,22 @@ export default {
     saveName(index) {
       const checkTabName = this.tabsCollection.find((tab, i) => tab.name === this.tabName && i !== index);
       if (checkTabName) {
-        this.invalid = true;
+        this.$refs.input[index].invalid = true;
         return;
       }
       this.tabsCollection[index].editName = false;
       this.tabsCollection[index].name = this.tabName;
     },
+    resetError(index) {
+      this.$refs.input[index].invalid = false;
+    },
     scroll(toRight) {
-      this.$refs.tabList.$el.scrollLeft += toRight
-        ? (this.$refs.tabPanel.clientWidth * 0.8)
-        : -(this.$refs.tabPanel.clientWidth * 0.8);
+      this.$refs.tabList.scrollLeft += toRight
+          ? (this.$refs.tabPanel.clientWidth * 0.8)
+          : -(this.$refs.tabPanel.clientWidth * 0.8);
+      this.scrollWidth = this.$refs.tabList.scrollWidth;
+      this.scrollLeft = this.$refs.tabList.scrollLeft;
+      this.clientWidth = this.$refs.tabPanel.clientWidth;
     },
   },
 }
