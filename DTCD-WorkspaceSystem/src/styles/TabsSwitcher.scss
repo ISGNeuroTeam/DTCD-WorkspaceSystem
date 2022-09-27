@@ -64,7 +64,6 @@
   }
   
   .AddBtn {
-    display: none;
     color: var(--text_secondary);
     
     &:hover {
@@ -73,7 +72,6 @@
   }
 
   .ScrollBtn {
-    display: none;
     color: var(--button_primary);
 
     &:hover {

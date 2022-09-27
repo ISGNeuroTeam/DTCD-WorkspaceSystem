@@ -17,6 +17,7 @@ import gridstackOptions from './utils/gridstackOptions';
 
 import TabsSwitcher from './TabsSwitcher';
 import utf8_to_base64 from './libs/utf8tobase64';
+import TabsPanelComponent from "./TabsPanelComponent";
 
 export class WorkspaceSystem extends SystemPlugin {
   // ---- PLUGIN PROPS ----
@@ -42,6 +43,9 @@ export class WorkspaceSystem extends SystemPlugin {
   #modalInstance;
   #tabsSwitcherInstance;
   #styleSystem;
+
+  #tabsCollection = [];
+  #vueComponent;
 
   static getRegistrationMeta() {
     return {
@@ -211,11 +215,31 @@ export class WorkspaceSystem extends SystemPlugin {
       return false;
     }
 
+    const { default: VueJS } = this.getDependence('Vue');
+
     element.innerHTML = '';
-    this.#tabsSwitcherInstance && this.#tabsSwitcherInstance.destructor();
+
     this.#tabsSwitcherInstance = new TabsSwitcher({
-      visibleNavBar: false,
+      tabsCollection: this.#tabsCollection,
     });
+
+    const data = {
+      guid: this.#guid,
+      interactionSystem: this.#interactionSystem,
+      eventSystem: this.#eventSystem,
+      plugin: this,
+      tabsCollection: this.#tabsCollection,
+      editMode: this.#editMode,
+      visibleNavBar: false,
+      tabsSwitcherInstance: this.#tabsSwitcherInstance,
+    };
+    const panel = new VueJS({
+      data: () => data,
+      render: h => h(TabsPanelComponent),
+    }).$mount();
+
+    this.#vueComponent = panel.$children[0];
+    this.#tabsSwitcherInstance.htmlElement.appendChild(this.#vueComponent.$el);
     element.appendChild(this.#tabsSwitcherInstance.htmlElement);
     this.#tabsSwitcherInstance.htmlElement.addEventListener('tab-active', this.#handleTabsSwitcherActive);
     this.#tabsSwitcherInstance.htmlElement.addEventListener('tab-delete', this.#handleTabsSwitcherDelete);
@@ -257,7 +281,7 @@ export class WorkspaceSystem extends SystemPlugin {
         plugins.push({ guid, meta, config, position, undeletable });
       });
 
-    const tabPanelsConfig = this.#tabsSwitcherInstance.getConfig();
+    const tabPanelsConfig = this.#vueComponent.getConfig;
 
     return {
       id: this.#currentID,
@@ -318,8 +342,8 @@ export class WorkspaceSystem extends SystemPlugin {
               this.#logSystem.debug('Creating empty cell');
 
               // активирование таба нужно для корректной отрисовки визуализаций
-              if (position?.tabId) {
-                this.#tabsSwitcherInstance.activeTab(position.tabId);
+              if (position?.tabId && !position.isActive) {
+                this.#vueComponent.setActiveTab(position.tabId);
               }
 
               widget = this.createCell({
@@ -360,7 +384,7 @@ export class WorkspaceSystem extends SystemPlugin {
     }
 
     // активируем таб, который должен быть активным после открытия рабочего стола.
-    this.#tabsSwitcherInstance.activeTab(activeTabId);
+    this.#vueComponent.setActiveTab(activeTabId);
 
     // EVENT-SYSTEM-MAPPING
     if (eventSystemConfig.hasOwnProperty('subscriptions')) {
@@ -626,8 +650,8 @@ export class WorkspaceSystem extends SystemPlugin {
       gridData[1].gridInstance.setStatic(!this.#editMode);
     }
 
-    if (this.#tabsSwitcherInstance) {
-      this.#tabsSwitcherInstance.editMode = this.#editMode;
+    if (this.#vueComponent) {
+      this.#vueComponent.editMode = this.#editMode;
     }
 
     this.#logSystem.info(`Workspace edit mode turned ${this.#editMode ? 'on' : 'off'}`);
@@ -736,21 +760,22 @@ export class WorkspaceSystem extends SystemPlugin {
 
   #createTabsSwitcher() {
     this.#gridCollection = new Map();
+    this.#tabsCollection = [];
 
     if (this.#tabPanelsConfig instanceof Object) {
       for (let i = 0; i < this.#tabPanelsConfig.tabsOptions.length; i++) {
         const tabOptions = this.#tabPanelsConfig.tabsOptions[i];
-        const tabId = this.#tabsSwitcherInstance.addNewTab(tabOptions);
+        const tabId = this.#vueComponent.addNewTab(tabOptions);
 
         if (tabOptions.isActive) {
-          this.#tabsSwitcherInstance.activeTab(tabId);
+          this.#vueComponent.setActiveTab(tabId);
         }
       }
-      this.#tabsSwitcherInstance.visibleNavBar = this.#tabPanelsConfig.visibleNavBar;
+      this.#vueComponent.visibleNavBar = this.#tabPanelsConfig.visibleNavBar;
     } else {
-      const tabId = this.#tabsSwitcherInstance.addNewTab();
-      this.#tabsSwitcherInstance.activeTab(tabId);
-      this.#tabsSwitcherInstance.visibleNavBar = false;
+      const tabId = this.#vueComponent.addNewTab({id: this.#getTabIdUrlParam()});
+      this.#vueComponent.setActiveTab(tabId);
+      this.#vueComponent.visibleNavBar = false;
     }
   }
 
@@ -761,7 +786,7 @@ export class WorkspaceSystem extends SystemPlugin {
 
     const gridStackEl = document.createElement('div');
     gridStackEl.className = 'grid-stack';
-    this.#tabsSwitcherInstance.getTab(tabId).tabPanel.appendChild(gridStackEl);
+    this.#vueComponent.getTab(tabId).tabPanel.appendChild(gridStackEl);
     const newGrid = GridStack.init(gridstackOptions, gridStackEl);
 
     this.#gridCollection.set(tabId, {
@@ -848,7 +873,7 @@ export class WorkspaceSystem extends SystemPlugin {
       });
 
       this.#gridCollection.delete(deletingTabId);
-      this.#tabsSwitcherInstance.activeTab(nextTabPanelId);
+      this.#vueComponent.setActiveTab(nextTabPanelId);
     } else {
       // ...иначе просто удаляем сетку.
       this.#gridCollection.delete(deletingTabId);
@@ -863,8 +888,8 @@ export class WorkspaceSystem extends SystemPlugin {
   }
 
   #handleToggleNavBarChange = event => {
-    if (this.#tabsSwitcherInstance) {
-      this.#tabsSwitcherInstance.visibleNavBar = event.currentTarget.checked;
+    if (this.#vueComponent) {
+      this.#vueComponent.visibleNavBar = event.currentTarget.checked;
     }
   };
 

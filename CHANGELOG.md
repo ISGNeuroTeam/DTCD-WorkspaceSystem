@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+### Added
+
+- Added drag and drop to tabs
+
+### Changed
+
+- tabs panel rewriting to vue
+
 ### Fixed
 
 - displaying of fonts and variables
