@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - displaying of fonts and variables
 - modal window positioning
 - visibility of resizable icon
+- visibility of panels on the desktop
 
 ## [0.10.0]
 
