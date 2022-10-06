@@ -4,6 +4,8 @@ import resolve from '@rollup/plugin-node-resolve';
 import babel from '@rollup/plugin-babel';
 import json from '@rollup/plugin-json';
 import html from 'rollup-plugin-html';
+import vue from 'rollup-plugin-vue';
+import replace from '@rollup/plugin-replace';
 
 import { version } from './package.json';
 
@@ -16,11 +18,25 @@ const fileDest = watch
   : `./build/${pluginName}.js`;
 
 const plugins = [
-  resolve(),
+  resolve({
+    jsnext: true,
+    preferBuiltins: true,
+    browser: true,
+    dedupe: ['vue'],
+    extensions: ['.mjs', '.js', '.json', '.node', '.vue'],
+  }),
   babel({ babelHelpers: 'bundled' }),
   commonjs(),
   html({ include: '**/*.html' }),
+  vue({
+    preprocessStyles: true,
+  }),
   styles({ mode: 'inject' }),
+  replace({
+    preventAssignment: true,
+    'process.env.NODE_ENV': JSON.stringify('production'),
+    'process.env.VUE_ENV': JSON.stringify('browser'),
+  }),
   json(),
 ];
 
