@@ -1,3 +1,14 @@
+## [0.11.1]
+
+### Added
+
+- drag and drop to tabs
+
+### Fixed
+
+- modal window positioning
+- visibility of resizable icon
+
 # [0.10.0]
 
 ## Added
