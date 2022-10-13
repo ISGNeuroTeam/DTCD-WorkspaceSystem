@@ -787,7 +787,11 @@ export class WorkspaceSystem extends SystemPlugin {
     const gridStackEl = document.createElement('div');
     gridStackEl.className = 'grid-stack';
     this.#vueComponent.getTab(tabId).tabPanel.appendChild(gridStackEl);
-    const newGrid = GridStack.init(gridstackOptions, gridStackEl);
+
+    const gridstackChangedOpts = this.#editMode
+                                  ? {...gridstackOptions, staticGrid: false}
+                                  : gridstackOptions;
+    const newGrid = GridStack.init(gridstackChangedOpts, gridStackEl);
 
     this.#gridCollection.set(tabId, {
       isActive: false,
