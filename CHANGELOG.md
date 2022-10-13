@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [UNRELEASED]
+
+### Fixed
+
+- resize and drag panels bug in new tab panel
+
 ## [0.11.1]
 
 ### Added
@@ -20,7 +26,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - displaying of fonts and variables
 - modal window positioning
 - visibility of resizable icon
-- resize and drag panels bug in new tab panel
 
 ## [0.10.0]
 
