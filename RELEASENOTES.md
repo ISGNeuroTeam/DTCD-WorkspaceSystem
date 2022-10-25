@@ -1,10 +1,17 @@
-## [0.11.1]
+# [0.12.0]
 
-### Added
+## Fixed
+
+- resize and drag panels bug in new tab panel
+- visibility of panels on the desktop
+
+# [0.11.1]
+
+## Added
 
 - drag and drop to tabs
 
-### Fixed
+## Fixed
 
 - modal window positioning
 - visibility of resizable icon
