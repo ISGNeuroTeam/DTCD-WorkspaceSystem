@@ -812,6 +812,65 @@ export class WorkspaceSystem extends SystemPlugin {
     }
   }
 
+  createURLDashboardState() {
+    this.#logSystem.debug('Start creating URL with plugin states.');
+
+    try {
+      const state = JSON.stringify(this.#collectStatesFromPlugins());
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.set('dashboard-state', state);
+  
+      return newUrl;
+    } catch (error) {
+      this.#logSystem.error('Error creating URL with plugin states: ' + error.message);
+      throw error;
+    }
+  }
+
+  recoveryPluginStateFromUrl(url) {
+    this.#logSystem.debug('Start dashboard state recovery from URL.');
+    
+    try {
+      const urlSearchParams = new URL(
+        typeof url === 'string' ? url : window.location.href
+      ).searchParams;
+      const getParametr = urlSearchParams.get('dashboard-state');
+      if (!getParametr) return;
+  
+      const dashboardState = JSON.parse(getParametr);
+      for (const key in dashboardState) {
+        if (!Object.hasOwnProperty.call(dashboardState, key)) continue;
+        
+        try {
+          this.#logSystem.debug(`Start plugin state recovery of '${key}' from URL.`);
+          if (typeof Application.autocomplete[key]?.setState === 'function') {
+            Application.autocomplete[key].setState(dashboardState[key]);
+          }
+        } catch (error) {
+          this.#logSystem.error(`Error plugin state recovery of '${key}' from URL.`);
+          console.error(error);
+        }
+      }
+    } catch (error) {
+      this.#logSystem.error('Error recovery dashboard state from URL: ' + error.message);
+      throw error;
+    }
+
+    this.#logSystem.info('Ended dashboard state recovery from URL.');
+  }
+
+  #collectStatesFromPlugins() {
+    const pluginsState = {};
+
+    this.#panels.forEach((panel) => {
+      if (typeof panel.instance?.getState === 'function') {
+        pluginsState[panel.guid] = panel.instance.getState();
+      }
+    });
+
+    return pluginsState;
+  }
+
   #createTabsSwitcher() {
     this.#gridCollection = new Map();
     this.#tabsCollection = [];
