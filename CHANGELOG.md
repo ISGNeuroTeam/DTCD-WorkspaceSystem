@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - error and success notifications
+- recovery dashboard state from URL
 
 ## [0.12.0]
 
