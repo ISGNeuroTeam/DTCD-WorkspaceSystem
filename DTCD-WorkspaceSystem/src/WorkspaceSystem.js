@@ -853,10 +853,28 @@ export class WorkspaceSystem extends SystemPlugin {
       }
     } catch (error) {
       this.#logSystem.error('Error recovery dashboard state from URL: ' + error.message);
+      this.#notificationSystem && this.#notificationSystem.create(
+        'Error.',
+        'Ошибка восстановления состояния рабочего стола из URL.',
+        {
+          floatMode: true,
+          floatTime: 5,
+          type: 'error',
+        }
+      );
       throw error;
     }
 
     this.#logSystem.info('Ended dashboard state recovery from URL.');
+    this.#notificationSystem && this.#notificationSystem.create(
+      'Выполнено.',
+      'Данные рабочего стола успешно восстановлены из URL.',
+      {
+        floatMode: true,
+        floatTime: 5,
+        type: 'success',
+      }
+    );
   }
 
   #collectStatesFromPlugins() {
