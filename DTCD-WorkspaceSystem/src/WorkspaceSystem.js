@@ -830,6 +830,10 @@ export class WorkspaceSystem extends SystemPlugin {
     }
   }
 
+  /**
+   * Recovery dashboard state from URL.
+   * @param {String} [url] URL with search parameter 'dashboard-state'
+   */
   recoveryPluginStateFromUrl(url) {
     this.#logSystem.debug('Start dashboard state recovery from URL.');
     
