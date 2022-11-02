@@ -256,7 +256,10 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#tabsSwitcherInstance.htmlElement.addEventListener('tab-add', this.#handleTabsSwitcherAdd);
 
     const workspaceID = history.state.workspaceID;
-    this.setConfiguration(workspaceID);
+    this.setConfiguration(workspaceID)
+        .then(() => {
+          this.recoveryPluginStateFromUrl();
+        });
 
     return true;
   }
