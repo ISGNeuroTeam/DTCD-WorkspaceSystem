@@ -1,3 +1,9 @@
+# [0.13.0]
+
+## Added
+
+- error and success notifications
+
 # [0.12.0]
 
 ## Fixed

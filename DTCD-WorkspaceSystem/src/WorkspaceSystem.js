@@ -8,16 +8,16 @@ import {
   InteractionSystemAdapter,
   LogSystemAdapter,
   StyleSystemAdapter,
+  NotificationSystemAdapter,
 } from './../../DTCD-SDK/index';
-
 import { version } from './../package.json';
+
 import './styles/panel.css';
 import './styles/modal.css';
 import gridstackOptions from './utils/gridstackOptions';
-
 import TabsSwitcher from './TabsSwitcher';
 import utf8_to_base64 from './libs/utf8tobase64';
-import TabsPanelComponent from "./TabsPanelComponent";
+import TabsPanelComponent from './TabsPanelComponent';
 
 export class WorkspaceSystem extends SystemPlugin {
   // ---- PLUGIN PROPS ----
@@ -25,6 +25,7 @@ export class WorkspaceSystem extends SystemPlugin {
   #eventSystem;
   #interactionSystem;
   #logSystem;
+  #notificationSystem;
   #tabPanelsConfig;
 
   // ---- STATE ----
@@ -205,6 +206,15 @@ export class WorkspaceSystem extends SystemPlugin {
   }
 
   mountDashboardContainer(element) {
+    if (!this.#notificationSystem) {
+      try {
+        this.#notificationSystem = new NotificationSystemAdapter('0.1.1');
+      } catch (error) {
+        this.#logSystem.error('Failed to get NotificationSystem in WorkspaceSystem.');
+        console.error(error);
+      }
+    }
+
     if (!(element instanceof HTMLElement)) {
       this.#logSystem.debug('The element is not an HTMLElement');
       return false;
@@ -667,20 +677,54 @@ export class WorkspaceSystem extends SystemPlugin {
       const config = await this.downloadConfiguration(id);
       return this.setPluginConfig(config);
     } catch (err) {
-      this.getSystem('AppGUISystem', '0.1.0').goTo404();
       this.#logSystem.error(`Error occured while downloading workspace configuration: ${err.message}`);
+      const errorMsg = 'Произошла ошибка в процессе загрузки и установки данных рабочего стола.';
+      this.#notificationSystem && this.#notificationSystem.create(
+        'Ошибка на рабочем столе.',
+        errorMsg,
+        {
+          floatMode: true,
+          floatTime: 5,
+          type: 'error',
+        }
+      );
+      this.getSystem('AppGUISystem', '0.1.0').goTo404();
     }
   }
 
   async saveConfiguration() {
     this.#logSystem.info('Saving current configuration');
-    this.#interactionSystem.PUTRequest(`/dtcd_workspaces/v1/workspace/object/${this.#currentPath}`, [
-      {
-        id: this.#currentID,
-        title: this.#currentTitle,
-        content: this.getPluginConfig(),
-      },
-    ]);
+
+    try {
+      await this.#interactionSystem.PUTRequest(`/dtcd_workspaces/v1/workspace/object/${this.#currentPath}`, [
+        {
+          id: this.#currentID,
+          title: this.#currentTitle,
+          content: this.getPluginConfig(),
+        },
+      ]);
+  
+      this.#notificationSystem && this.#notificationSystem.create(
+        'Готово!',
+        'Настройки рабочего стола сохранены.',
+        {
+          floatMode: true,
+          floatTime: 5,
+          type: 'success',
+        }
+      );
+    } catch (error) {
+      this.#notificationSystem && this.#notificationSystem.create(
+        'Ошибка на рабочем столе.',
+        'Произошла ошибка в процессе сохранения данных рабочего стола.',
+        {
+          floatMode: true,
+          floatTime: 5,
+          type: 'error',
+        }
+      );
+      throw error;
+    }
   }
 
   setColumn(newColumn) {
@@ -746,6 +790,16 @@ export class WorkspaceSystem extends SystemPlugin {
         this.#styleSystem.setVariablesToElement(modalBackdrop, this.#styleSystem.getCurrentTheme());
       } catch (err) {
         this.#logSystem.error(`Can't create modal with panel '${panelName} ${version}' due to error: ${err}`);
+        const errorMsg = `Не удалось создать модальное окно с панелью '${panelName} (${version})'. Ошибка: ${err}`;
+        this.#notificationSystem && this.#notificationSystem.create(
+          'Ошибка на рабочем столе.',
+          errorMsg,
+          {
+            floatMode: true,
+            floatTime: 5,
+            type: 'error',
+          }
+        );
       }
     }
   }
