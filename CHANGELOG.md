@@ -10,7 +10,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - length limit in tab title
-- maxlength in tab input field
 
 ## [0.13.0]
 
