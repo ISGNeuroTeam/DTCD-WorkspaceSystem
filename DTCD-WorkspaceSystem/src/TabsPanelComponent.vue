@@ -36,7 +36,7 @@
           }"
           @click="setActiveTab(id)"
         >
-          <span class="TabName">{{ name }}</span>
+          <span class="TabName">{{ name | truncate( 21, '...') }}</span>
 
           <button class="BtnLayer" type="button"></button>
 
@@ -47,6 +47,7 @@
             size="small"
             @input="tabName = $event.target.value"
             @focus="resetError(index)"
+            maxlength="21"
           ></base-input>
 
           <button
@@ -224,6 +225,15 @@ export default {
       this.scrollWidth = this.$refs.tabList.scrollWidth;
       this.scrollLeft = this.$refs.tabList.scrollLeft;
       this.clientWidth = this.$refs.tabPanel.clientWidth;
+    },
+  },
+  filters: {
+    truncate: function (text, length, suffix) {
+      if (text.length > length) {
+        return text.substring(0, length) + suffix;
+      } else {
+        return text;
+      }
     },
   },
 }
