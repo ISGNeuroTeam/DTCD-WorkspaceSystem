@@ -11,10 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - length limit in tab title
 
-### Fixed
-
-- initialization of desktop tabs using a crutch
-
 ## [0.13.0]
 
 ### Added

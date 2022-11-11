@@ -818,10 +818,6 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#gridCollection = new Map();
     this.#tabsCollection = [];
 
-    // костыль для правильной инициализации табов
-    this.#vueComponent.tabsCollection = this.#tabsCollection;
-    this.#tabsSwitcherInstance.clearTabItemsContainer();
-
     if (this.#tabPanelsConfig instanceof Object) {
       for (let i = 0; i < this.#tabPanelsConfig.tabsOptions.length; i++) {
         const tabOptions = this.#tabPanelsConfig.tabsOptions[i];
