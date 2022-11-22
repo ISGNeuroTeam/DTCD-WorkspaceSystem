@@ -247,10 +247,11 @@ export class WorkspaceSystem extends SystemPlugin {
       data: () => data,
       render: h => h(TabsPanelComponent),
     }).$mount();
-
     this.#vueComponent = panel.$children[0];
+
     this.#tabsSwitcherInstance.htmlElement.appendChild(this.#vueComponent.$el);
     element.appendChild(this.#tabsSwitcherInstance.htmlElement);
+    
     this.#tabsSwitcherInstance.htmlElement.addEventListener('tab-active', this.#handleTabsSwitcherActive);
     this.#tabsSwitcherInstance.htmlElement.addEventListener('tab-delete', this.#handleTabsSwitcherDelete);
     this.#tabsSwitcherInstance.htmlElement.addEventListener('tab-add', this.#handleTabsSwitcherAdd);
@@ -677,6 +678,7 @@ export class WorkspaceSystem extends SystemPlugin {
       const config = await this.downloadConfiguration(id);
       return this.setPluginConfig(config);
     } catch (err) {
+      console.error(err);
       this.#logSystem.error(`Error occured while downloading workspace configuration: ${err.message}`);
       const errorMsg = 'Произошла ошибка в процессе загрузки и установки данных рабочего стола.';
       this.#notificationSystem && this.#notificationSystem.create(
