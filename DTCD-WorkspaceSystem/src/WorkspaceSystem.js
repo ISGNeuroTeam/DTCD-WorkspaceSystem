@@ -135,7 +135,7 @@ export class WorkspaceSystem extends SystemPlugin {
           component: 'switch',
           propName: 'visibleTabNavBar',
           attrs: {
-            label: 'Скрыть/отобразвить вкладки',
+            label: 'Скрыть/отобразить вкладки',
           },
           handler: {
             event: 'change',
