@@ -1,3 +1,9 @@
+# [0.15.0]
+
+## Changed
+
+- misspell in switch
+
 # [0.14.0]
 
 ## Added
