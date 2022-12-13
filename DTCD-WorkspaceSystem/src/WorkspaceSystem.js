@@ -12,8 +12,8 @@ import {
 } from './../../DTCD-SDK/index';
 import { version } from './../package.json';
 
-import './styles/panel.css';
-import './styles/modal.css';
+import './styles/panel.scss';
+import './styles/modal.scss';
 import gridstackOptions from './utils/gridstackOptions';
 import TabsSwitcher from './TabsSwitcher';
 import utf8_to_base64 from './libs/utf8tobase64';
@@ -554,15 +554,28 @@ export class WorkspaceSystem extends SystemPlugin {
       `
       <div class="grid-stack-item">
         <div class="grid-stack-item-content">
-          <div class="handle-drag-of-panel gridstack-panel-header" style="display:${this.#editMode ? 'flex' : 'none'}">
-            <div id="closePanelBtn-${guid}" class="close-panel-button">
+          <div
+            class="handle-drag-of-panel gridstack-panel-header"
+            style="display:${this.#editMode ? 'flex' : 'none'}"
+          >
+            <button
+              class="close-panel-button"
+              type="button"
+              title="Удалить панель"
+              id="closePanelBtn-${guid}"
+            >
               <span class="FontIcon name_closeBig size_lg"></span>
-            </div>
-            <span class="drag-panel-button FontIcon name_move size_lg"></span>
+            </button>
+            <button
+              class="drag-panel-button"
+              type="button"
+              title="Переместить панель"
+            >
+              <span class="FontIcon name_move size_lg"></span>
+            </button>
           </div>
           <div class="gridstack-content-container${this.#editMode ? ' gridstack-panel-overlay' : ''}">
-            <div id="panel-${guid}">
-            </div>
+            <div id="panel-${guid}"></div>
           </div>
         </div>
       </div>

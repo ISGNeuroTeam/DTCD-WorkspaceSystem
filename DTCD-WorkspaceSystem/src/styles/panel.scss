@@ -9,39 +9,41 @@
   border: 2px solid var(--background_secondary);
   transition: 0.3s;
   background-color: var(--background_main);
-}
+  
+  &:active,
+  &:hover {
+    border-color: var(--button_primary);
+  }
 
-.grid-stack-item-content:active,
-.grid-stack-item-content:hover {
-  border-color: var(--button_primary);
+  & > .gridstack-panel-overlay {
+    overflow-y: hidden;
+    overflow-x: hidden;
+    
+    &:before {
+      content: '';
+      display: block;
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 100%;
+      z-index: 8;
+      background-color: var(--button_primary_12);
+      opacity: 0.7;
+    }
+  }
 }
 
 .gridstack-content-container {
   height: 100%;
 }
 
-.grid-stack-item-content > .gridstack-panel-overlay {
-  overflow-y: hidden;
-  overflow-x: hidden;
-}
-
-.gridstack-panel-overlay:before {
-  content: '';
-  display: block;
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 100%;
-  width: 100%;
-  z-index: 8;
-  background-color: var(--button_primary_12);
-  opacity: 0.7;
-}
-
 .gridstack-panel-header {
   display: flex;
   justify-content: flex-end;
   align-items: center;
+  gap: 5px;
+  padding: 10px;
   position: absolute;
   z-index: 9;
   width: 100%;
@@ -63,33 +65,40 @@
   padding: 0 15px;
   font-size: 14px;
   background-color: hsla(212, 44%, 51%, 0.418);
+
+  &:after {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 50px;
+    height: 100%;
+    line-height: 38px;
+    content: '∨';
+    text-align: center;
+    color: #714bb9;
+    font-size: 24px;
+    border-left: 1px solid #3c1c78;
+    z-index: -1;
+  }
 }
-.default-select-panel:after {
-  position: absolute;
-  right: 0;
-  top: 0;
-  width: 50px;
-  height: 100%;
-  line-height: 38px;
-  content: '∨';
-  text-align: center;
-  color: #714bb9;
-  font-size: 24px;
-  border-left: 1px solid #3c1c78;
-  z-index: -1;
+
+.close-panel-button,
+.drag-panel-button {
+  &,
+  &:hover,
+  &:active {
+    background: none;
+    border: 0;
+    box-shadow: none;
+    padding: 0;
+  }
 }
 
 .close-panel-button {
-  position: absolute;
-  top: 10px;
-  right: 40px;
-  color: var(--button_primary);
+  color: var(--danger);
 }
 
 .drag-panel-button {
-  position: absolute;
-  top: 10px;
-  right: 10px;
   color: var(--button_primary);
 }
 
