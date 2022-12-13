@@ -559,6 +559,13 @@ export class WorkspaceSystem extends SystemPlugin {
             style="display:${this.#editMode ? 'flex' : 'none'}"
           >
             <button
+              class="fix-panel-button"
+              type="button"
+              title="Зафиксировать панель"
+            >
+              <span class="FontIcon name_location size_lg"></span>
+            </button>
+            <button
               class="close-panel-button"
               type="button"
               title="Удалить панель"
@@ -594,7 +601,16 @@ export class WorkspaceSystem extends SystemPlugin {
       if (!this.#editMode) this.#eventSystem.publishEvent('WorkspaceCellClicked', { guid });
     });
 
-    document.getElementById(`closePanelBtn-${guid}`).addEventListener('click', this.deleteCell.bind(this, guid));
+    widget.querySelector(`#closePanelBtn-${guid}`).addEventListener('click', this.deleteCell.bind(this, guid));
+
+    widget.querySelector('.fix-panel-button').addEventListener('click', () => {
+      console.log('fix');
+      targetGrid.update(widget, {
+        // noMove: true,
+        // noResize: true,
+        locked: true,
+      });
+    });
 
     const meta = panelInstance.constructor.getRegistrationMeta();
 

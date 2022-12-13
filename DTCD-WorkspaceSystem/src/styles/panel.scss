@@ -82,6 +82,7 @@
   }
 }
 
+.fix-panel-button,
 .close-panel-button,
 .drag-panel-button {
   &,
@@ -98,6 +99,7 @@
   color: var(--danger);
 }
 
+.fix-panel-button,
 .drag-panel-button {
   color: var(--button_primary);
 }
