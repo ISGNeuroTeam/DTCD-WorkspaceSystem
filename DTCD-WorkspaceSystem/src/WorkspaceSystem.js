@@ -289,7 +289,9 @@ export class WorkspaceSystem extends SystemPlugin {
           tabId: panel?.position.tabId,
         };
         const undeletable = panel.undeletable;
-        plugins.push({ guid, meta, config, position, undeletable });
+        const toFixPanel = panel.toFixPanel;
+
+        plugins.push({ guid, meta, config, position, undeletable, toFixPanel });
       });
 
     const tabPanelsConfig = this.#vueComponent.getConfig;
@@ -343,7 +345,7 @@ export class WorkspaceSystem extends SystemPlugin {
     // ---- installing-plugins-from-config ----
     const GUIDMap = {};
     pluginsLoop: for (let plugin of config.plugins) {
-      let { meta, config, position = {}, guid } = plugin;
+      let { meta, config, position = {}, guid, toFixPanel } = plugin;
       switch (meta?.type) {
         case 'panel':
           let widget;
@@ -363,6 +365,7 @@ export class WorkspaceSystem extends SystemPlugin {
                 guid,
                 ...position,
                 autoPosition: false,
+                toFixPanel,
               });
             }
             const plugin = this.#panels.find(panel => panel.widget === widget).instance;
@@ -535,7 +538,7 @@ export class WorkspaceSystem extends SystemPlugin {
     return maxID !== -Infinity ? maxID + 1 : 1;
   }
 
-  createCell({ name, version, guid = null, w = 6, h = 8, x = 0, y = 0, tabId, autoPosition = true }) {
+  createCell({ name, version, guid = null, w = 6, h = 8, x = 0, y = 0, tabId, autoPosition = true, toFixPanel }) {
     this.#logSystem.debug(
       `Adding panel-plugin widget with name:'${name}', version:${version}, w:${w},h:${h},x:${x},y:${y}, autoPosition:${autoPosition}`
     );
@@ -545,6 +548,8 @@ export class WorkspaceSystem extends SystemPlugin {
       const panelID = this.#getPanelId(name);
       guid = `${name}_${panelID}`;
     }
+
+    toFixPanel = Boolean(toFixPanel);
 
     let targetGrid = this.#gridCollection.get(tabId)?.gridInstance;
     targetGrid = targetGrid ? targetGrid : this.#activeGrid;
@@ -562,6 +567,7 @@ export class WorkspaceSystem extends SystemPlugin {
               class="fix-panel-button"
               type="button"
               title="Зафиксировать панель"
+              id="fixPanelBtn-${guid}"
             >
               <span class="FontIcon name_location size_lg"></span>
             </button>
@@ -587,7 +593,7 @@ export class WorkspaceSystem extends SystemPlugin {
         </div>
       </div>
       `,
-      { x, y, w, h, autoPosition, id: guid }
+      { x, y, w, h, autoPosition, id: guid, locked: toFixPanel, noMove: toFixPanel }
     );
 
     const panelInstance = this.installPanel({
@@ -602,15 +608,7 @@ export class WorkspaceSystem extends SystemPlugin {
     });
 
     widget.querySelector(`#closePanelBtn-${guid}`).addEventListener('click', this.deleteCell.bind(this, guid));
-
-    widget.querySelector('.fix-panel-button').addEventListener('click', () => {
-      console.log('fix');
-      targetGrid.update(widget, {
-        // noMove: true,
-        // noResize: true,
-        locked: true,
-      });
-    });
+    widget.querySelector(`#fixPanelBtn-${guid}`).addEventListener('click', this.toggleFixPanel.bind(this, guid));
 
     const meta = panelInstance.constructor.getRegistrationMeta();
 
@@ -622,6 +620,7 @@ export class WorkspaceSystem extends SystemPlugin {
       instance: panelInstance,
       guid,
       meta,
+      toFixPanel,
     });
 
     return widget;
@@ -646,6 +645,28 @@ export class WorkspaceSystem extends SystemPlugin {
     this.uninstallPluginByGUID(guid);
 
     this.#logSystem.info(`Deleted cell from workspace with guid: ${guid}`);
+  }
+
+  toggleFixPanel(guid) {
+    // this.#logSystem.debug(`Trying to delete cell from workspace with guid: ${guid}`);
+    const panel = this.#panels.find(panel => panel.guid === guid);
+    if (!panel) {
+      // this.#logSystem.debug(`No cell element found on workspace with given guid: ${guid}`);
+      return;
+    }
+
+    panel.toFixPanel = !Boolean(panel.toFixPanel);
+    const targetGrid = this.#gridCollection.get(panel.position.tabId).gridInstance;
+    targetGrid.update(
+      panel.widget,
+      {
+        noMove: panel.toFixPanel,
+        // noResize: panel.toFixPanel,
+        locked: panel.toFixPanel,
+      }
+    );
+
+    // this.#logSystem.info(`Deleted cell from workspace with guid: ${guid}`);
   }
 
   compactAllPanels() {

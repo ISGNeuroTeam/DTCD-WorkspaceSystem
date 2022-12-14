@@ -4,6 +4,15 @@
   overflow-x: hidden;
 }
 
+.grid-stack-item {
+  &.ui-draggable-disabled {
+    .drag-panel-button {
+      cursor: not-allowed;
+      filter: grayscale(1);
+    }
+  }
+}
+
 .grid-stack-item-content {
   position: relative;
   border: 2px solid var(--background_secondary);
@@ -34,10 +43,6 @@
   }
 }
 
-.gridstack-content-container {
-  height: 100%;
-}
-
 .gridstack-panel-header {
   display: flex;
   justify-content: flex-end;
@@ -48,6 +53,34 @@
   z-index: 9;
   width: 100%;
   height: 44px;
+}
+
+.fix-panel-button,
+.close-panel-button,
+.drag-panel-button {
+  cursor: pointer;
+  
+  &,
+  &:hover,
+  &:active {
+    background: none;
+    border: 0;
+    box-shadow: none;
+    padding: 0;
+  }
+}
+
+.close-panel-button {
+  color: var(--danger);
+}
+
+.fix-panel-button,
+.drag-panel-button {
+  color: var(--button_primary);
+}
+
+.gridstack-content-container {
+  height: 100%;
 }
 
 .default-select-panel {
@@ -82,35 +115,6 @@
   }
 }
 
-.fix-panel-button,
-.close-panel-button,
-.drag-panel-button {
-  &,
-  &:hover,
-  &:active {
-    background: none;
-    border: 0;
-    box-shadow: none;
-    padding: 0;
-  }
-}
-
-.close-panel-button {
-  color: var(--danger);
-}
-
-.fix-panel-button,
-.drag-panel-button {
-  color: var(--button_primary);
-}
-
-/* .handle-drag-of-panel {
-  cursor: grab;
-} */
-
-.handle-drag-of-panel > * {
-  cursor: pointer;
-}
 .ui-resizable-handle {
   z-index: 9 !important;
 }
