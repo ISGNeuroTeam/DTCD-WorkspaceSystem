@@ -409,6 +409,10 @@ export class WorkspaceSystem extends SystemPlugin {
       }
     }
 
+    this.#panels.forEach((panel) => {
+      if (panel.toFixPanel) this.#createGridGap(panel.guid);
+    });
+
     // settings panel styles
     this.#panelStyles = {
       'border-width': config.panelBorderWidth || '2px',
@@ -554,46 +558,9 @@ export class WorkspaceSystem extends SystemPlugin {
     let targetGrid = this.#gridCollection.get(tabId)?.gridInstance;
     targetGrid = targetGrid ? targetGrid : this.#activeGrid;
 
-    // TODO: Replace on WEB-COMPONENT with style!
-    const widget = targetGrid.addWidget(
-      `
-      <div class="grid-stack-item">
-        <div class="grid-stack-item-content">
-          <div
-            class="handle-drag-of-panel gridstack-panel-header"
-            style="display:${this.#editMode ? 'flex' : 'none'}"
-          >
-            <button
-              class="fix-panel-button"
-              type="button"
-              title="Зафиксировать панель"
-              id="fixPanelBtn-${guid}"
-            >
-              <span class="FontIcon name_location size_lg"></span>
-            </button>
-            <button
-              class="close-panel-button"
-              type="button"
-              title="Удалить панель"
-              id="closePanelBtn-${guid}"
-            >
-              <span class="FontIcon name_closeBig size_lg"></span>
-            </button>
-            <button
-              class="drag-panel-button"
-              type="button"
-              title="Переместить панель"
-            >
-              <span class="FontIcon name_move size_lg"></span>
-            </button>
-          </div>
-          <div class="gridstack-content-container${this.#editMode ? ' gridstack-panel-overlay' : ''}">
-            <div id="panel-${guid}"></div>
-          </div>
-        </div>
-      </div>
-      `,
-      { x, y, w, h, autoPosition, id: guid, locked: toFixPanel, noMove: toFixPanel }
+    const widget = this.#createWidget(
+      targetGrid,
+      { x, y, w, h, autoPosition, guid, toFixPanel }
     );
 
     const panelInstance = this.installPanel({
@@ -602,13 +569,6 @@ export class WorkspaceSystem extends SystemPlugin {
       version,
       selector: `#panel-${guid}`,
     });
-
-    widget.addEventListener('click', () => {
-      if (!this.#editMode) this.#eventSystem.publishEvent('WorkspaceCellClicked', { guid });
-    });
-
-    widget.querySelector(`#closePanelBtn-${guid}`).addEventListener('click', this.deleteCell.bind(this, guid));
-    widget.querySelector(`#fixPanelBtn-${guid}`).addEventListener('click', this.toggleFixPanel.bind(this, guid));
 
     const meta = panelInstance.constructor.getRegistrationMeta();
 
@@ -623,6 +583,12 @@ export class WorkspaceSystem extends SystemPlugin {
       toFixPanel,
     });
 
+    // отключил этот код, так как при инициализации рабочего стола
+    // панели в сетках устанавливаются не так, как их сохранили.
+    // if (toFixPanel) {
+    //   this.#createGridGap(guid);
+    // }
+
     return widget;
   }
 
@@ -634,24 +600,25 @@ export class WorkspaceSystem extends SystemPlugin {
       return;
     }
 
-    this.#panels.splice(
-      this.#panels.findIndex(plg => plg.guid === guid),
-      1
-    );
-
+    if (panel.toFixPanel) this.#deleteGridGap(panel.guid);
     const targetGrid = this.#gridCollection.get(panel.position.tabId).gridInstance;
     targetGrid.removeWidget(panel.widget);
 
     this.uninstallPluginByGUID(guid);
 
+    this.#panels.splice(
+      this.#panels.findIndex(plg => plg.guid === guid),
+      1
+    );
+
     this.#logSystem.info(`Deleted cell from workspace with guid: ${guid}`);
   }
 
   toggleFixPanel(guid) {
-    // this.#logSystem.debug(`Trying to delete cell from workspace with guid: ${guid}`);
+    this.#logSystem.debug(`Start to fix cell on workspace with guid: ${guid}`);
     const panel = this.#panels.find(panel => panel.guid === guid);
     if (!panel) {
-      // this.#logSystem.debug(`No cell element found on workspace with given guid: ${guid}`);
+      this.#logSystem.debug(`No cell element found on workspace with given guid: ${guid}`);
       return;
     }
 
@@ -661,12 +628,15 @@ export class WorkspaceSystem extends SystemPlugin {
       panel.widget,
       {
         noMove: panel.toFixPanel,
-        // noResize: panel.toFixPanel,
+        noResize: panel.toFixPanel,
         locked: panel.toFixPanel,
       }
     );
+    
+    if (panel.toFixPanel) this.#createGridGap(guid);
+    else this.#deleteGridGap(guid);
 
-    // this.#logSystem.info(`Deleted cell from workspace with guid: ${guid}`);
+    this.#logSystem.info(`Cell fixed on workspace with guid: ${guid}`);
   }
 
   compactAllPanels() {
@@ -1045,5 +1015,121 @@ export class WorkspaceSystem extends SystemPlugin {
     borderStyles += '}';
 
     this.#wssStyleTag.textContent = borderStyles;
+  }
+
+  #createGridGap(guid) {
+    const panel = this.#panels.find(panel => panel.guid === guid);
+    if (!panel) {
+      this.#logSystem.debug(`No cell element found on workspace with given guid: ${guid}`);
+      return;
+    }
+    const tabId = panel.position.tabId;
+    const { h, w, x, y } = panel?.widget.gridstackNode;
+
+    this.#gridCollection.forEach((gridData, key) => {
+      if (key === tabId) return;
+
+      let isExistGridItem = false;
+      gridData.gridInstance.getGridItems().forEach((gridItem) => {
+        // find doubles grid items
+        if (gridItem.getAttribute('gs-id') === guid) {
+          isExistGridItem = true;
+          return;
+        }
+      });
+
+      if (!isExistGridItem) {
+        this.#createWidget(
+          gridData.gridInstance,
+          { x, y, w, h, autoPosition: false, guid, toFixPanel: true, empty: true,}
+        );
+      }
+    });
+  }
+
+  #deleteGridGap(guid) {
+    const panel = this.#panels.find(panel => panel.guid === guid);
+    if (!panel) {
+      this.#logSystem.debug(`No cell element found on workspace with given guid: ${guid}`);
+      return;
+    }
+
+    this.#gridCollection.forEach((gridData, key) => {
+      gridData.gridInstance.getGridItems().forEach((gridItem) => {
+        if (gridItem.getAttribute('gs-id') === guid) {
+          if (gridItem.hasAttribute('data-empty-item')) {
+            gridData.gridInstance.removeWidget(gridItem);
+            return;
+          }
+        }
+      });
+    });
+  }
+
+  #createWidget(targetGrid, gridItemOptions) {
+    const {
+      guid = null,
+      id = guid,
+      w = 6,
+      h = 8,
+      x = 0,
+      y = 0,
+      autoPosition = true,
+      toFixPanel,
+      empty,
+    } = gridItemOptions;
+
+    const widget = targetGrid.addWidget(
+      `
+      <div class="grid-stack-item"${empty ? ' data-empty-item' : ''}>
+        <div class="grid-stack-item-content">
+          <div
+            class="handle-drag-of-panel gridstack-panel-header"
+            style="display:${this.#editMode ? 'flex' : 'none'}"
+          >
+            <button
+              class="fix-panel-button"
+              type="button"
+              title="Зафиксировать панель"
+            >
+              <span class="FontIcon name_location size_lg"></span>
+            </button>
+            <button
+              class="close-panel-button"
+              type="button"
+              title="Удалить панель"
+            >
+              <span class="FontIcon name_closeBig size_lg"></span>
+            </button>
+            <button
+              class="drag-panel-button"
+              type="button"
+              title="Переместить панель"
+            >
+              <span class="FontIcon name_move size_lg"></span>
+            </button>
+          </div>
+          <div class="gridstack-content-container${this.#editMode ? ' gridstack-panel-overlay' : ''}">
+            <div id="panel-${guid}"></div>
+          </div>
+        </div>
+      </div>
+      `,
+      {
+        x, y, w, h, autoPosition, id,
+        locked: toFixPanel, noMove: toFixPanel, noResize: toFixPanel,
+      }
+    );
+
+    widget.addEventListener('click', () => {
+      if (!this.#editMode) this.#eventSystem.publishEvent('WorkspaceCellClicked', { guid });
+    });
+
+    widget.querySelector('.close-panel-button')
+          .addEventListener('click', this.deleteCell.bind(this, guid));
+    widget.querySelector('.fix-panel-button')
+          .addEventListener('click', this.toggleFixPanel.bind(this, guid));
+
+    return widget;
   }
 }
