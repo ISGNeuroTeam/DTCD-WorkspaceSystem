@@ -875,7 +875,7 @@ export class WorkspaceSystem extends SystemPlugin {
     });
   };
 
-  #handleTabsSwitcherActive = event => {
+  #handleTabsSwitcherActive = (event) => {
     if (!this.#gridCollection) return;
 
     const activeTabId = event.detail.tabId;
@@ -893,6 +893,9 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#setTabIdUrlParam(activeTabId);
 
     this.#panels.forEach((panel) => {
+      if (panel.toFixPanel) {
+        this.#changeFixedPanelPosition(panel);
+      }
       if (typeof panel.instance.setVisible === 'function') {
         panel.instance.setVisible(activeTabId === panel?.position.tabId)
       }
@@ -1110,7 +1113,7 @@ export class WorkspaceSystem extends SystemPlugin {
             </button>
           </div>
           <div class="gridstack-content-container${this.#editMode ? ' gridstack-panel-overlay' : ''}">
-            <div id="panel-${guid}"></div>
+            ${empty ? '' : `<div id="panel-${guid}"></div>`}
           </div>
         </div>
       </div>
@@ -1131,5 +1134,25 @@ export class WorkspaceSystem extends SystemPlugin {
           .addEventListener('click', this.toggleFixPanel.bind(this, guid));
 
     return widget;
+  }
+
+  #changeFixedPanelPosition(panel) {
+    const htmlOfPanelInstance = panel.widget.querySelector('.gridstack-content-container > *');
+    if (!htmlOfPanelInstance || !htmlOfPanelInstance instanceof HTMLElement) {
+      this.#logSystem.debug('HTML element of panel not found.');
+      return;
+    }
+
+    panel.widget.setAttribute('data-empty-item', '');
+
+    this.#activeGrid.getGridItems().forEach((gridCell) => {
+      if (gridCell.getAttribute('gs-id') === panel.guid) {
+        gridCell.querySelector('.gridstack-content-container').append(htmlOfPanelInstance);
+        gridCell.removeAttribute('data-empty-item');
+        panel.position.tabId = this.#getGridIdByObject(this.#activeGrid);
+        panel.widget = gridCell;
+        return;
+      }
+    });
   }
 }
