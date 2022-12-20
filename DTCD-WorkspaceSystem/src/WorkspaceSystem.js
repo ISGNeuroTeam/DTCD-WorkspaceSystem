@@ -1014,16 +1014,16 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#gridCollection.forEach((gridData, key) => {
       if (key === tabId) return;
 
-      let isExistGridItem = false;
-      gridData.gridInstance.getGridItems().forEach((gridItem) => {
+      let isExistGridCell = false;
+      gridData.gridInstance.getGridItems().forEach((gridCell) => {
         // find doubles grid items
-        if (gridItem.getAttribute('gs-id') === guid) {
-          isExistGridItem = true;
+        if (gridCell.getAttribute('gs-id') === guid) {
+          isExistGridCell = true;
           return;
         }
       });
 
-      if (!isExistGridItem) {
+      if (!isExistGridCell) {
         this.#createWidget(
           gridData.gridInstance,
           { x, y, w, h, autoPosition: false, guid, toFixPanel: true, empty: true,}
@@ -1040,10 +1040,10 @@ export class WorkspaceSystem extends SystemPlugin {
     }
 
     this.#gridCollection.forEach((gridData, key) => {
-      gridData.gridInstance.getGridItems().forEach((gridItem) => {
-        if (gridItem.getAttribute('gs-id') === guid) {
-          if (gridItem.hasAttribute('data-empty-item')) {
-            gridData.gridInstance.removeWidget(gridItem);
+      gridData.gridInstance.getGridItems().forEach((gridCell) => {
+        if (gridCell.getAttribute('gs-id') === guid) {
+          if (gridCell.hasAttribute('data-empty-item')) {
+            gridData.gridInstance.removeWidget(gridCell);
             return;
           }
         }
