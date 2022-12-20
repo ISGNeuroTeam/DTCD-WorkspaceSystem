@@ -649,28 +649,10 @@ export class WorkspaceSystem extends SystemPlugin {
   changeMode() {
     this.#editMode = !this.#editMode;
 
-    const panelBorder = document.querySelectorAll('.grid-stack-item-content');
-    panelBorder.forEach(content => {
-      if (this.#editMode) {
-        if (this.#panelStyles['border-width']) {
-          content.style.border = `${this.#panelStyles['border-width']} solid var(--button_primary)`;
-        } else {
-          content.style.border = '2px solid var(--button_primary)';
-        }
-      } else {
-        content.style.border = '';
-      }
-    });
-
-    const panelHeaders = document.querySelectorAll('.gridstack-panel-header');
-    panelHeaders.forEach(header => {
-      header.style.display = this.#editMode ? '' : 'none';
-    });
-
-    const overlayClass = 'gridstack-panel-overlay';
-    const panelContents = document.querySelectorAll('.gridstack-content-container');
-    panelContents.forEach(content => {
-      this.#editMode ? content.classList.add(overlayClass) : content.classList.remove(overlayClass);
+    const panelBorder = document.querySelectorAll('.grid-stack-item');
+    panelBorder.forEach((gridCell) => {
+      if (this.#editMode) gridCell.classList.add('grid-stack-item_editing');
+      else gridCell.classList.remove('grid-stack-item_editing');
     });
 
     const margin = this.#editMode ? '2px' : '0px';
@@ -1084,12 +1066,12 @@ export class WorkspaceSystem extends SystemPlugin {
 
     const widget = targetGrid.addWidget(
       `
-      <div class="grid-stack-item"${empty ? ' data-empty-item' : ''}>
+      <div
+        class="grid-stack-item${this.#editMode ? ' grid-stack-item_editing' : ''}"
+        ${empty ? ' data-empty-item' : ''}
+      >
         <div class="grid-stack-item-content">
-          <div
-            class="handle-drag-of-panel gridstack-panel-header"
-            style="display:${this.#editMode ? 'flex' : 'none'}"
-          >
+          <div class="handle-drag-of-panel gridstack-panel-header">
             <button
               class="fix-panel-button"
               type="button"
@@ -1112,7 +1094,7 @@ export class WorkspaceSystem extends SystemPlugin {
               <span class="FontIcon name_move size_lg"></span>
             </button>
           </div>
-          <div class="gridstack-content-container${this.#editMode ? ' gridstack-panel-overlay' : ''}">
+          <div class="gridstack-content-container">
             ${empty ? '' : `<div id="panel-${guid}"></div>`}
           </div>
         </div>
