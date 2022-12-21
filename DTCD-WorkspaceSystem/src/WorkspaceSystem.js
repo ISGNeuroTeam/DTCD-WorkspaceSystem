@@ -410,7 +410,7 @@ export class WorkspaceSystem extends SystemPlugin {
     }
 
     this.#panels.forEach((panel) => {
-      if (panel.toFixPanel) this.#createGridGap(panel.guid);
+      if (panel.toFixPanel) this.#createGridCellClones(panel.guid);
     });
 
     // settings panel styles
@@ -586,7 +586,7 @@ export class WorkspaceSystem extends SystemPlugin {
     // отключил этот код, так как при инициализации рабочего стола
     // панели в сетках устанавливаются не так, как их сохранили.
     // if (toFixPanel) {
-    //   this.#createGridGap(guid);
+    //   this.#createGridCellClones(guid);
     // }
 
     return widget;
@@ -600,7 +600,7 @@ export class WorkspaceSystem extends SystemPlugin {
       return;
     }
 
-    if (panel.toFixPanel) this.#deleteGridGap(panel.guid);
+    if (panel.toFixPanel) this.#deleteGridCellClones(panel.guid);
     const targetGrid = this.#gridCollection.get(panel.position.tabId).gridInstance;
     targetGrid.removeWidget(panel.widget);
 
@@ -615,7 +615,8 @@ export class WorkspaceSystem extends SystemPlugin {
   }
 
   toggleFixPanel(guid) {
-    this.#logSystem.debug(`Start to fix cell on workspace with guid: ${guid}`);
+    this.#logSystem.debug(`Start toggle fixation of cell on workspace with guid: ${guid}`);
+
     const panel = this.#panels.find(panel => panel.guid === guid);
     if (!panel) {
       this.#logSystem.debug(`No cell element found on workspace with given guid: ${guid}`);
@@ -633,10 +634,10 @@ export class WorkspaceSystem extends SystemPlugin {
       }
     );
     
-    if (panel.toFixPanel) this.#createGridGap(guid);
-    else this.#deleteGridGap(guid);
+    if (panel.toFixPanel) this.#createGridCellClones(guid);
+    else this.#deleteGridCellClones(guid);
 
-    this.#logSystem.info(`Cell fixed on workspace with guid: ${guid}`);
+    this.#logSystem.info(`End toggle fixation of cell on workspace with guid: ${guid}`);
   }
 
   compactAllPanels() {
@@ -1002,7 +1003,9 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#wssStyleTag.textContent = borderStyles;
   }
 
-  #createGridGap(guid) {
+  #createGridCellClones(guid) {
+    this.#logSystem.debug(`Start of creation grid cell clones for panel ${guid}.`);
+
     const panel = this.#panels.find(panel => panel.guid === guid);
     if (!panel) {
       this.#logSystem.debug(`No cell element found on workspace with given guid: ${guid}`);
@@ -1026,13 +1029,17 @@ export class WorkspaceSystem extends SystemPlugin {
       if (!isExistGridCell) {
         this.#createWidget(
           gridData.gridInstance,
-          { x, y, w, h, autoPosition: false, guid, toFixPanel: true, empty: true,}
+          { x, y, w, h, autoPosition: false, guid, toFixPanel: true, empty: true, }
         );
       }
     });
+
+    this.#logSystem.info(`End of creation grid cell clones for panel ${guid}.`);
   }
 
-  #deleteGridGap(guid) {
+  #deleteGridCellClones(guid) {
+    this.#logSystem.debug(`Start of deleting grid cell clones for panel ${guid}.`);
+
     const panel = this.#panels.find(panel => panel.guid === guid);
     if (!panel) {
       this.#logSystem.debug(`No cell element found on workspace with given guid: ${guid}`);
@@ -1049,9 +1056,13 @@ export class WorkspaceSystem extends SystemPlugin {
         }
       });
     });
+
+    this.#logSystem.info(`End of deleting grid cell clones for panel ${guid}.`);
   }
 
   #createWidget(targetGrid, gridItemOptions) {
+    this.#logSystem.debug(`Start of creation grid item cell.`);
+
     const {
       guid = null,
       id = guid,
@@ -1115,10 +1126,13 @@ export class WorkspaceSystem extends SystemPlugin {
     widget.querySelector('.fix-panel-button')
           .addEventListener('click', this.toggleFixPanel.bind(this, guid));
 
+    this.#logSystem.info(`End of creation grid item cell.`);
     return widget;
   }
 
   #changeFixedPanelPosition(panel) {
+    this.#logSystem.debug(`Start to replace fixed panel (guid: ${panel.guid}).`);
+    
     const htmlOfPanelInstance = panel.widget.querySelector('.gridstack-content-container > *');
     if (!htmlOfPanelInstance || !htmlOfPanelInstance instanceof HTMLElement) {
       this.#logSystem.debug('HTML element of panel not found.');
@@ -1136,5 +1150,7 @@ export class WorkspaceSystem extends SystemPlugin {
         return;
       }
     });
+
+    this.#logSystem.info(`End to replace fixed panel (guid: ${panel.guid}).`);
   }
 }
