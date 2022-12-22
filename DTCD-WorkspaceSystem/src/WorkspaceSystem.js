@@ -856,6 +856,10 @@ export class WorkspaceSystem extends SystemPlugin {
       isActive: false,
       gridInstance: newGrid,
     });
+
+    this.#panels.forEach((panel) => {
+      if (panel.toFixPanel) this.#createGridCellClones(panel.guid);
+    });
   };
 
   #handleTabsSwitcherActive = (event) => {
@@ -903,7 +907,7 @@ export class WorkspaceSystem extends SystemPlugin {
     return urlSearchParams.get('ws-tab-id');
   }
 
-  #handleTabsSwitcherDelete = event => {
+  #handleTabsSwitcherDelete = (event) => {
     if (!this.#gridCollection) return;
 
     const deletingTabId = event.detail.tabId;
@@ -918,7 +922,10 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#panels = this.#panels.filter(plugin => {
       const { widget, guid, position } = plugin;
       if (position.tabId === deletingTabId) {
-        widget && deletingGrid.removeWidget(widget);
+        if (widget) {
+          this.#deleteGridCellClones(guid);
+          deletingGrid.removeWidget(widget);
+        }
         this.uninstallPluginByGUID(guid);
         return false;
       } else {
