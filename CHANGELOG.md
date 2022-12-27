@@ -9,7 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- plugin panel fixation when switching tabs
 - recovery dashboard state from URL
+
+## [0.15.0]
+
+### Changed
+
+- misspell in switch
+
+## [0.14.0]
+
+### Added
+
+- length limit in tab title
 
 ## [0.13.0]
 

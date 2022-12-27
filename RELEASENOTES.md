@@ -1,3 +1,15 @@
+# [0.15.0]
+
+## Changed
+
+- misspell in switch
+
+# [0.14.0]
+
+## Added
+
+- length limit in tab title
+
 # [0.13.0]
 
 ## Added

@@ -41,12 +41,14 @@ class TabsSwitcher {
    */
   addNewTab(tabId, collection) {
     this.#tabsCollection = collection;
+
     const newTabItem = document.createElement('div');
-    newTabItem.classList.add('TabItem');
-    newTabItem.setAttribute('data-tab-id', tabId);
+          newTabItem.classList.add('TabItem');
+          newTabItem.setAttribute('data-tab-id', tabId);
     this.#tabsContainer.appendChild(newTabItem);
+
     const element = this.#tabsCollection.find((tab) => tab.id === tabId);
-    element.tabPanel = newTabItem;
+          element.tabPanel = newTabItem;
 
     this.#htmlElement.dispatchEvent(new CustomEvent('tab-add', {
       bubbles: true,
@@ -83,6 +85,10 @@ class TabsSwitcher {
         tabId: tabId,
       },
     }));
+  }
+
+  clearTabItemsContainer() {
+    this.#tabsContainer.innerHTML = '';
   }
 }
 
