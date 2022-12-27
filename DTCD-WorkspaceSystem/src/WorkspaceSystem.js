@@ -257,7 +257,10 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#tabsSwitcherInstance.htmlElement.addEventListener('tab-add', this.#handleTabsSwitcherAdd);
 
     const workspaceID = history.state.workspaceID;
-    this.setConfiguration(workspaceID);
+    this.setConfiguration(workspaceID)
+        .then(() => {
+          this.recoveryPluginStateFromUrl();
+        });
 
     return true;
   }
@@ -815,6 +818,119 @@ export class WorkspaceSystem extends SystemPlugin {
       modal.remove();
       this.#modalInstance = null;
     }
+  }
+
+  /**
+   * Send all plugin states on workspace.
+   * @returns {Promise<string>} Promise containing a link of the dashboard with stateID
+   */
+  async getURLDashboardState() {
+    this.#logSystem.debug('Start creating URL with plugin states.');
+
+    try {
+      const state = this.#collectStatesFromPlugins();
+      const response = await this.#interactionSystem.POSTRequest(
+        'dtcd_storage_system_backend/v1/state',
+        {
+          applicationName: 'DataCAD',
+          workspaceID: this.#currentID,
+          state,
+        }
+      );
+      response.then((result) => {
+        const {
+          stateID,
+        } = JSON.parse(result);
+  
+        if (stateID) {
+          const {
+            origin,
+            pathname,
+          } = window.location;
+          return origin + pathname + `?stateID="${stateID}"`;
+        }
+      });
+    } catch (error) {
+      this.#logSystem.error('Error creating URL with plugin states: ' + error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Recovery dashboard state from URL.
+   * @param {String} [url] URL with search parameter 'stateID'
+   */
+  recoveryPluginStateFromUrl(url) {
+    this.#logSystem.debug('Start dashboard state recovery from URL.');
+    
+    try {
+      const urlSearchParams = new URL(
+        typeof url === 'string' ? url : window.location.href
+      ).searchParams;
+      const stateID = urlSearchParams.get('stateID');
+      if (!stateID) return;
+  
+      const response = this.#interactionSystem.POSTRequest(
+        'dtcd_storage_system_backend/v1/state',
+        {
+          applicationName: 'DataCAD',
+          stateID,
+        },
+      );
+      response.then((result) => {
+        const dashboardState = JSON.parse(result).state;
+        for (const key in dashboardState) {
+          if (!Object.hasOwnProperty.call(dashboardState, key)) continue;
+          
+          try {
+            this.#logSystem.debug(`Start plugin state recovery of '${key}' from URL.`);
+            if (typeof Application.autocomplete[key]?.setState === 'function') {
+              Application.autocomplete[key].setState(dashboardState[key]);
+            }
+          } catch (error) {
+            this.#logSystem.error(`Error plugin state recovery of '${key}' from URL.`);
+            console.error(error);
+          }
+        }
+      }).catch((error) => {
+        throw error;
+      });
+    } catch (error) {
+      this.#logSystem.error('Error recovery dashboard state from URL: ' + error.message);
+      this.#notificationSystem && this.#notificationSystem.create(
+        'Error.',
+        'Ошибка восстановления состояния рабочего стола из URL.',
+        {
+          floatMode: true,
+          floatTime: 5,
+          type: 'error',
+        }
+      );
+      throw error;
+    }
+
+    this.#logSystem.info('Ended dashboard state recovery from URL.');
+    this.#notificationSystem && this.#notificationSystem.create(
+      'Выполнено.',
+      'Данные рабочего стола успешно восстановлены из URL.',
+      {
+        floatMode: true,
+        floatTime: 5,
+        type: 'success',
+      }
+    );
+  }
+
+  #collectStatesFromPlugins() {
+    const pluginsState = {};
+
+    this.#panels.forEach((panel) => {
+      if (typeof panel.instance?.getState === 'function') {
+        pluginsState[panel.guid] = panel.instance.getState();
+      }
+    });
+
+    return pluginsState;
   }
 
   #createTabsSwitcher() {
