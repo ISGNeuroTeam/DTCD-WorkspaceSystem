@@ -402,6 +402,8 @@ export class WorkspaceSystem extends SystemPlugin {
 
     // активируем таб, который должен быть активным после открытия рабочего стола.
     this.#vueComponent.setActiveTab(activeTabId);
+    
+    this.#hideTabsPanel();
 
     // EVENT-SYSTEM-MAPPING
     if (eventSystemConfig.hasOwnProperty('subscriptions')) {
@@ -919,6 +921,18 @@ export class WorkspaceSystem extends SystemPlugin {
         type: 'success',
       }
     );
+  }
+
+  #hideTabsPanel() {
+    this.#interactionSystem.GETRequest('dtcd_utils/v1/user?photo_quality=low')
+      .then((response) => {
+        const groups = response.data.groups;
+        if (!groups.length) return;
+        
+        for (let i = 0; i < groups.length; i++) {
+          this.#vueComponent.toggleVisibleTabByName(groups[i].name);
+        }
+      });
   }
 
   #collectStatesFromPlugins() {
