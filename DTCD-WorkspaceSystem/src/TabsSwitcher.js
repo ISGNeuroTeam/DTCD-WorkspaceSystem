@@ -34,6 +34,10 @@ class TabsSwitcher {
     return this.#htmlElement;
   }
 
+  get tabsCollection() {
+    return this.#tabsCollection;
+  }
+
   /**
    * Creating new tab panel.
    * @param {string} [tabId] ID of tab panel.
