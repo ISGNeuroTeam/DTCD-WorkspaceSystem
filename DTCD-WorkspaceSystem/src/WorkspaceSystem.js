@@ -64,7 +64,8 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#eventSystem = new EventSystemAdapter('0.4.0', guid);
     this.#eventSystem.registerPluginInstance(this, [
       'WorkspaceCellClicked',
-      'WorkspaceTabSelected'
+      'WorkspaceTabSelectedProgrammly',
+      'WorkspaceTabClicked',
     ]);
     this.#interactionSystem = new InteractionSystemAdapter('0.4.0');
     this.#logSystem = new LogSystemAdapter('0.5.0', this.#guid, 'WorkspaceSystem');
@@ -243,6 +244,7 @@ export class WorkspaceSystem extends SystemPlugin {
     const data = {
       guid: this.#guid,
       interactionSystem: this.#interactionSystem,
+      logSystem: this.#logSystem,
       eventSystem: this.#eventSystem,
       plugin: this,
       tabsCollection: this.#tabsCollection,
@@ -1296,6 +1298,6 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#vueComponent.setActiveTab(tabID);
 
     this.#logSystem.debug(`Tab selected: ${tabID}`);
-    this.#eventSystem.publishEvent('WorkspaceTabSelected', tab);
+    this.#eventSystem.publishEvent('WorkspaceTabSelectedProgrammly', tab);
   }
 }

@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - recovery dashboard state from URL
 - new `setActiveTab()` public method
 - new `WorkspaceTabSelected` event
+- new `WorkspaceTabClicked` event
+
+### Changed
+
+- rename `WorkspaceTabSelected` event to `WorkspaceTabSelectedProgrammly`
 
 ## [0.15.0]
 
