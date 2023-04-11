@@ -367,9 +367,9 @@ export class WorkspaceSystem extends SystemPlugin {
               this.#logSystem.debug('Creating empty cell');
 
               // активирование таба нужно для корректной отрисовки визуализаций
-              if (position?.tabId && !position.isActive) {
-                this.#vueComponent.setActiveTab(position.tabId);
-              }
+              // if (position?.tabId && !position.isActive) {
+              //   this.#vueComponent.setActiveTab(position.tabId);
+              // }
 
               widget = this.createCell({
                 name: meta.name,
