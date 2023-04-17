@@ -37,6 +37,7 @@ export class WorkspaceSystem extends SystemPlugin {
   #currentID;
   #column;
   #typeInit;
+  #hiddenPanelPlugins;
 
   // ---- INTERNAL'S ----
   #activeGrid;
@@ -81,6 +82,7 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#editMode = false;
     this.#modalInstance = null;
     this.#typeInit = WorkspaceSystem.INIT_TYPES[0];
+    this.#hiddenPanelPlugins = [];
   }
 
   get currentWorkspaceTitle() {
@@ -341,6 +343,12 @@ export class WorkspaceSystem extends SystemPlugin {
         plugins.push({ guid, meta, config, position, undeletable, toFixPanel });
       });
 
+    // панели, которые не были созданы
+    this.#hiddenPanelPlugins
+      .forEach(panel => {
+        if (panel) plugins.push(panel);
+      });
+
     const tabPanelsConfig = this.#vueComponent.getConfig;
 
     return {
@@ -394,11 +402,27 @@ export class WorkspaceSystem extends SystemPlugin {
     // ---- installing-plugins-from-config ----
     const GUIDMap = {};
     pluginsLoop: for (let plugin of config.plugins) {
-      let { meta, config, position = {}, guid, toFixPanel } = plugin;
+      const {
+        meta,
+        config,
+        position = {},
+        guid,
+        toFixPanel,
+      } = plugin;
+
       switch (meta?.type) {
         case 'panel':
           let widget;
           if (typeof meta.name !== 'undefined') {
+
+            if (this.typeInit === 'TYPE-2') {
+              const isPanelOnActiveTab = position?.tabId === activeTabId;
+              if (!toFixPanel && !isPanelOnActiveTab) {
+                this.#hiddenPanelPlugins.push(plugin);
+                continue pluginsLoop;
+              }
+            }
+
             const pluginExists = this.getPlugin(meta.name, meta.version);
             if (pluginExists) {
               this.#logSystem.debug('Creating empty cell');
@@ -417,8 +441,9 @@ export class WorkspaceSystem extends SystemPlugin {
                 toFixPanel,
               });
             }
-            const plugin = this.#panels.find(panel => panel.widget === widget).instance;
-            const pluginGUID = this.getGUID(plugin);
+            
+            const pluginInstance = this.#panels.find(panel => panel.widget === widget).instance;
+            const pluginGUID = this.getGUID(pluginInstance);
             this.#logSystem.debug(`Mapping guid of ${meta.name} from ${guid} to ${pluginGUID}`);
             GUIDMap[guid] = pluginGUID;
           } else {
@@ -443,7 +468,9 @@ export class WorkspaceSystem extends SystemPlugin {
       }
 
       const instance = this.getInstance(GUIDMap[guid]);
-      if (instance && instance !== this && instance.setPluginConfig && config) await instance.setPluginConfig(config);
+      if (instance && instance !== this && instance.setPluginConfig && config) {
+        await instance.setPluginConfig(config);
+      }
     }
 
     // активируем таб, который должен быть активным после открытия рабочего стола.
@@ -457,6 +484,7 @@ export class WorkspaceSystem extends SystemPlugin {
         action.guid = GUIDMap[action.guid];
       }
     }
+    this.#eventSystem.setPluginConfig(eventSystemConfig);
 
     this.#panels.forEach((panel) => {
       if (panel.toFixPanel) this.#createGridCellClones(panel.guid);
@@ -470,7 +498,6 @@ export class WorkspaceSystem extends SystemPlugin {
     };
     this.#setPanelStyles();
 
-    await this.#eventSystem.setPluginConfig(eventSystemConfig);
     return true;
   }
 
@@ -1041,6 +1068,10 @@ export class WorkspaceSystem extends SystemPlugin {
 
     this.#setTabIdUrlParam(activeTabId);
 
+    if (this.typeInit === 'TYPE-2') {
+      this.#createPanelsInActiveTab(activeTabId);
+    }
+
     this.#panels.forEach((panel) => {
       if (panel.toFixPanel) {
         this.#changeFixedPanelPosition(panel);
@@ -1050,6 +1081,46 @@ export class WorkspaceSystem extends SystemPlugin {
       }
     })
   };
+
+  #createPanelsInActiveTab(activeTabId) {
+    for (let i = 0; i < this.#hiddenPanelPlugins.length; i++) {
+      const plugin = this.#hiddenPanelPlugins[i];
+      if (!plugin) continue;
+
+      const {
+        meta,
+        config,
+        position = {},
+        guid,
+        toFixPanel,
+      } = plugin;
+
+      if (position.tabId !== activeTabId) continue;
+
+      switch (meta?.type) {
+        case 'panel':
+          let widget;
+          if (typeof meta.name !== 'undefined') {
+            const pluginExists = this.getPlugin(meta.name, meta.version);
+            if (pluginExists) {
+              this.#logSystem.debug('Creating empty cell');
+
+              widget = this.createCell({
+                name: meta.name,
+                version: meta.version,
+                guid,
+                ...position,
+                autoPosition: false,
+                toFixPanel,
+              });
+            }
+          }
+          break;
+      }
+
+      this.#hiddenPanelPlugins[i] = null;
+    }
+  }
 
   #setTabIdUrlParam(tabId) {
     if (!tabId) return;
