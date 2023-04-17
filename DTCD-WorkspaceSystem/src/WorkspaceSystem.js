@@ -36,6 +36,7 @@ export class WorkspaceSystem extends SystemPlugin {
   #currentPath;
   #currentID;
   #column;
+  #typeInit;
 
   // ---- INTERNAL'S ----
   #activeGrid;
@@ -58,6 +59,11 @@ export class WorkspaceSystem extends SystemPlugin {
     };
   }
 
+  static INIT_TYPES = [
+    'TYPE-1',
+    'TYPE-2',
+  ];
+
   constructor(guid) {
     super();
     this.#guid = guid;
@@ -74,6 +80,7 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#panels = [];
     this.#editMode = false;
     this.#modalInstance = null;
+    this.#typeInit = WorkspaceSystem.INIT_TYPES[0];
   }
 
   get currentWorkspaceTitle() {
@@ -94,6 +101,16 @@ export class WorkspaceSystem extends SystemPlugin {
 
   get tabsCollection() {
     return this.#tabsSwitcherInstance?.tabsCollection;
+  }
+
+  get typeInit() {
+    return this.#typeInit;
+  }
+
+  set typeInit(newValue) {
+    this.#typeInit = WorkspaceSystem.INIT_TYPES.includes(newValue)
+                    ? newValue
+                    : WorkspaceSystem.INIT_TYPES[0];
   }
 
   getFormSettings() {
@@ -198,6 +215,24 @@ export class WorkspaceSystem extends SystemPlugin {
             callback: this.#handleBorderColorChange.bind(this),
           },
         },
+        {
+          component: 'divider',
+        },
+        {
+          component: 'select',
+          propName: 'typeInit',
+          attrs: {
+            label: 'Варианты открытия рабочего стола',
+          },
+          handler: {
+            event: 'change',
+            callback: this.#handleTypeInitChange.bind(this),
+          },
+          options: [
+            { value: 'TYPE-1', label: 'Окрыватются сразу все вкладки' },
+            { value: 'TYPE-2', label: 'Открывается только активная' },
+          ],
+        }
       ],
     };
   }
@@ -313,6 +348,7 @@ export class WorkspaceSystem extends SystemPlugin {
       title: this.#currentTitle,
       column: this.#column,
       editMode: this.#editMode,
+      typeInit: this.typeInit,
       plugins,
       tabPanelsConfig,
       visibleTabNavBar: tabPanelsConfig.visibleNavBar,
@@ -349,6 +385,7 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#currentTitle = config.title;
     this.#currentID = config.id;
     this.#currentPath = config.path;
+    this.typeInit = config.typeInit;
 
     // ---- PLUGINS ----
 
@@ -1133,6 +1170,11 @@ export class WorkspaceSystem extends SystemPlugin {
     borderStyles += '}';
 
     this.#wssStyleTag.textContent = borderStyles;
+  }
+
+  #handleTypeInitChange = (event) => {
+    const { value } = event.target;
+    this.typeInit = value;
   }
 
   #createGridCellClones(guid) {
