@@ -35,7 +35,7 @@
             status_editName: editName
           }"
           v-show="!hide"
-          @click="setActiveTab(id)"
+          @click="tabClickHandler(id)"
         >
           <span class="TabName">{{ name | truncate( 21, '...') }}</span>
 
@@ -113,6 +113,9 @@ export default {
       editMode: $root.editMode,
       visibleNavBar: $root.visibleNavBar,
       tabsSwitcherInstance: $root.tabsSwitcherInstance,
+      logSystem: $root.logSystem,
+      eventSystem: $root.eventSystem,
+      currentTab: '',
       tabName: '',
       scrollButton: false,
       scrollWidth: null,
@@ -176,12 +179,25 @@ export default {
       }
       return tabId;
     },
+
+    tabClickHandler(id) {
+      const clickedTab = this.getTab(id);
+
+      this.eventSystem.publishEvent('WorkspaceTabClicked', clickedTab);
+      this.logSystem.debug(`Clicked "${id}" workspace tab`);
+
+      if (id !== this.currentTab) this.setActiveTab(id);
+    },
+
     setActiveTab(tabId) {
       this.tabsCollection.forEach((tab) => {
         tab.isActive = tab.id === tabId;
       });
       this.tabsSwitcherInstance.activeTab(tabId);
+      this.currentTab = tabId;
+      this.logSystem.debug(`Activated "${tabId}" workspace tab`);
     },
+
     removeTab(tabId, index) {
       if (!tabId || this.tabsCollection.length === 1) {
         return;
@@ -195,6 +211,7 @@ export default {
       }
 
     },
+
     getTab(tabId) {
       if (!tabId) {
         return;
@@ -223,10 +240,12 @@ export default {
     getIdNewTab() {
       return `wss-tab-${Math.ceil(Math.random() * 10000)}`;
     },
+
     changeName(index, name) {
       this.tabsCollection[index].editName = true;
       this.tabName = name;
     },
+
     saveName(index) {
       const checkTabName = this.tabsCollection.find((tab, i) => tab.name === this.tabName && i !== index);
       if (checkTabName) {
@@ -236,9 +255,11 @@ export default {
       this.tabsCollection[index].editName = false;
       this.tabsCollection[index].name = this.tabName;
     },
+
     resetError(index) {
       this.$refs.input[index].invalid = false;
     },
+
     scroll(toRight) {
       this.$refs.tabList.scrollLeft += toRight
           ? (this.$refs.tabPanel.clientWidth * 0.8)

@@ -12,6 +12,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - plugin panel fixation when switching tabs
 - recovery dashboard state from URL
 - permissions of display tab panels
+- new `setActiveTab()` public method
+- new `WorkspaceTabSelected` event
+- new `WorkspaceTabClicked` event
+- role moled for tabs
+
+### Changed
+
+- rename `WorkspaceTabSelected` event to `WorkspaceTabSelectedProgrammly`
+
+### Removed
+
+- tabs activation during workspace initialization
 
 ## [0.15.0]
 

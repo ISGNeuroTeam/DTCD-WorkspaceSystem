@@ -62,7 +62,11 @@ export class WorkspaceSystem extends SystemPlugin {
     super();
     this.#guid = guid;
     this.#eventSystem = new EventSystemAdapter('0.4.0', guid);
-    this.#eventSystem.registerPluginInstance(this, ['WorkspaceCellClicked']);
+    this.#eventSystem.registerPluginInstance(this, [
+      'WorkspaceCellClicked',
+      'WorkspaceTabSelectedProgrammly',
+      'WorkspaceTabClicked',
+    ]);
     this.#interactionSystem = new InteractionSystemAdapter('0.4.0');
     this.#logSystem = new LogSystemAdapter('0.5.0', this.#guid, 'WorkspaceSystem');
     this.#styleSystem = new StyleSystemAdapter('0.5.0');
@@ -86,6 +90,10 @@ export class WorkspaceSystem extends SystemPlugin {
 
   get currentWorkspaceColumn() {
     return this.#column;
+  }
+
+  get tabsCollection() {
+    return this.#tabsSwitcherInstance?.tabsCollection;
   }
 
   getFormSettings() {
@@ -236,6 +244,7 @@ export class WorkspaceSystem extends SystemPlugin {
     const data = {
       guid: this.#guid,
       interactionSystem: this.#interactionSystem,
+      logSystem: this.#logSystem,
       eventSystem: this.#eventSystem,
       plugin: this,
       tabsCollection: this.#tabsCollection,
@@ -251,7 +260,7 @@ export class WorkspaceSystem extends SystemPlugin {
 
     this.#tabsSwitcherInstance.htmlElement.appendChild(this.#vueComponent.$el);
     element.appendChild(this.#tabsSwitcherInstance.htmlElement);
-    
+
     this.#tabsSwitcherInstance.htmlElement.addEventListener('tab-active', this.#handleTabsSwitcherActive);
     this.#tabsSwitcherInstance.htmlElement.addEventListener('tab-delete', this.#handleTabsSwitcherDelete);
     this.#tabsSwitcherInstance.htmlElement.addEventListener('tab-add', this.#handleTabsSwitcherAdd);
@@ -358,9 +367,9 @@ export class WorkspaceSystem extends SystemPlugin {
               this.#logSystem.debug('Creating empty cell');
 
               // активирование таба нужно для корректной отрисовки визуализаций
-              if (position?.tabId && !position.isActive) {
-                this.#vueComponent.setActiveTab(position.tabId);
-              }
+              // if (position?.tabId && !position.isActive) {
+              //   this.#vueComponent.setActiveTab(position.tabId);
+              // }
 
               widget = this.createCell({
                 name: meta.name,
@@ -638,7 +647,7 @@ export class WorkspaceSystem extends SystemPlugin {
         locked: panel.toFixPanel,
       }
     );
-    
+
     if (panel.toFixPanel) this.#createGridCellClones(guid);
     else this.#deleteGridCellClones(guid);
 
@@ -713,7 +722,7 @@ export class WorkspaceSystem extends SystemPlugin {
           content: this.getPluginConfig(),
         },
       ]);
-  
+
       this.#notificationSystem && this.#notificationSystem.create(
         'Готово!',
         'Настройки рабочего стола сохранены.',
@@ -843,7 +852,7 @@ export class WorkspaceSystem extends SystemPlugin {
         const {
           stateID,
         } = JSON.parse(result);
-  
+
         if (stateID) {
           const {
             origin,
@@ -864,14 +873,14 @@ export class WorkspaceSystem extends SystemPlugin {
    */
   recoveryPluginStateFromUrl(url) {
     this.#logSystem.debug('Start dashboard state recovery from URL.');
-    
+
     try {
       const urlSearchParams = new URL(
         typeof url === 'string' ? url : window.location.href
       ).searchParams;
       const stateID = urlSearchParams.get('stateID');
       if (!stateID) return;
-  
+
       const response = this.#interactionSystem.POSTRequest(
         'dtcd_storage_system_backend/v1/state',
         {
@@ -883,7 +892,7 @@ export class WorkspaceSystem extends SystemPlugin {
         const dashboardState = JSON.parse(result).state;
         for (const key in dashboardState) {
           if (!Object.hasOwnProperty.call(dashboardState, key)) continue;
-          
+
           try {
             this.#logSystem.debug(`Start plugin state recovery of '${key}' from URL.`);
             if (typeof Application.autocomplete[key]?.setState === 'function') {
@@ -1269,7 +1278,7 @@ export class WorkspaceSystem extends SystemPlugin {
 
   #changeFixedPanelPosition(panel) {
     this.#logSystem.debug(`Start to replace fixed panel (guid: ${panel.guid}).`);
-    
+
     const htmlOfPanelInstance = panel.widget.querySelector('.gridstack-content-container > *');
     if (!htmlOfPanelInstance || !htmlOfPanelInstance instanceof HTMLElement) {
       this.#logSystem.debug('HTML element of panel not found.');
@@ -1289,5 +1298,20 @@ export class WorkspaceSystem extends SystemPlugin {
     });
 
     this.#logSystem.info(`End to replace fixed panel (guid: ${panel.guid}).`);
+  }
+
+  setActiveTab(tabID) {
+    this.#logSystem.debug(`Trying to select tab: ${tabID}`);
+
+    const tab = this.tabsCollection.find(tab => tabID === tab.id);
+
+    if (!tab) {
+      return this.#logSystem.debug(`Tab with ID ${tabID} not found`);;
+    }
+
+    this.#vueComponent.setActiveTab(tabID);
+
+    this.#logSystem.debug(`Tab selected: ${tabID}`);
+    this.#eventSystem.publishEvent('WorkspaceTabSelectedProgrammly', tab);
   }
 }
