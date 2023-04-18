@@ -469,7 +469,7 @@ export class WorkspaceSystem extends SystemPlugin {
 
       const instance = this.getInstance(GUIDMap[guid]);
       if (instance && instance !== this && instance.setPluginConfig && config) {
-        await instance.setPluginConfig(config);
+        instance.setPluginConfig(config);
       }
     }
 
@@ -1118,7 +1118,7 @@ export class WorkspaceSystem extends SystemPlugin {
 
       const instance = this.getInstance(guid);
       if (instance && instance !== this && instance.setPluginConfig && config) {
-        await instance.setPluginConfig(config);
+        instance.setPluginConfig(config);
       }
 
       this.#hiddenPanelPlugins[i] = null;
