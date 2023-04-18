@@ -25,7 +25,7 @@
         class="TabBtnsList"
       >
         <div
-          v-for="({id, name, isActive, editName}, index) in tabList"
+          v-for="({id, name, isActive, editName, hide}, index) in tabList"
           :key="id"
           :data-tab-id="id"
           class="TabBtn"
@@ -34,6 +34,7 @@
             status_editOn: edit,
             status_editName: editName
           }"
+          v-show="!hide"
           @click="tabClickHandler(id)"
         >
           <span class="TabName">{{ name | truncate( 21, '...') }}</span>
@@ -169,6 +170,7 @@ export default {
         name: name ? name : tabId,
         isActive: false,
         editName: false,
+        hide: false,
       });
 
       this.tabsSwitcherInstance.addNewTab(tabId, this.tabsCollection);
@@ -216,7 +218,25 @@ export default {
       }
       return this.tabsCollection.find((tab) => tab.id === tabId);
     },
+    toggleVisibleTabByName(tabName) {
+      let isTabHiddenActive = false;
+      this.tabsCollection.forEach((tab) => {
+        if (tab.name === tabName) {
+          tab.hide = !tab.hide;
+          isTabHiddenActive = tab.isActive;
+        }
+      });
 
+      if (isTabHiddenActive) {
+        for (let i = 0; i < this.tabsCollection.length; i++) {
+          const tab = this.tabsCollection[i];
+          if (!tab.hide) {
+            this.setActiveTab(tab.id);
+            break;
+          } 
+        }
+      }
+    },
     getIdNewTab() {
       return `wss-tab-${Math.ceil(Math.random() * 10000)}`;
     },
