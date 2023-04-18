@@ -1082,7 +1082,7 @@ export class WorkspaceSystem extends SystemPlugin {
     })
   };
 
-  #createPanelsInActiveTab(activeTabId) {
+  async #createPanelsInActiveTab(activeTabId) {
     for (let i = 0; i < this.#hiddenPanelPlugins.length; i++) {
       const plugin = this.#hiddenPanelPlugins[i];
       if (!plugin) continue;
@@ -1103,8 +1103,6 @@ export class WorkspaceSystem extends SystemPlugin {
           if (typeof meta.name !== 'undefined') {
             const pluginExists = this.getPlugin(meta.name, meta.version);
             if (pluginExists) {
-              this.#logSystem.debug('Creating empty cell');
-
               widget = this.createCell({
                 name: meta.name,
                 version: meta.version,
@@ -1116,6 +1114,11 @@ export class WorkspaceSystem extends SystemPlugin {
             }
           }
           break;
+      }
+
+      const instance = this.getInstance(guid);
+      if (instance && instance !== this && instance.setPluginConfig && config) {
+        await instance.setPluginConfig(config);
       }
 
       this.#hiddenPanelPlugins[i] = null;
