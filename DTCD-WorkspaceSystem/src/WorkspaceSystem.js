@@ -36,6 +36,8 @@ export class WorkspaceSystem extends SystemPlugin {
   #currentPath;
   #currentID;
   #column;
+  #typeInit;
+  #hiddenPanelPlugins;
 
   // ---- INTERNAL'S ----
   #activeGrid;
@@ -58,6 +60,11 @@ export class WorkspaceSystem extends SystemPlugin {
     };
   }
 
+  static INIT_TYPES = [
+    'TYPE-1',
+    'TYPE-2',
+  ];
+
   constructor(guid) {
     super();
     this.#guid = guid;
@@ -74,6 +81,8 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#panels = [];
     this.#editMode = false;
     this.#modalInstance = null;
+    this.#typeInit = WorkspaceSystem.INIT_TYPES[0];
+    this.#hiddenPanelPlugins = [];
   }
 
   get currentWorkspaceTitle() {
@@ -94,6 +103,16 @@ export class WorkspaceSystem extends SystemPlugin {
 
   get tabsCollection() {
     return this.#tabsSwitcherInstance?.tabsCollection;
+  }
+
+  get typeInit() {
+    return this.#typeInit;
+  }
+
+  set typeInit(newValue) {
+    this.#typeInit = WorkspaceSystem.INIT_TYPES.includes(newValue)
+                    ? newValue
+                    : WorkspaceSystem.INIT_TYPES[0];
   }
 
   getFormSettings() {
@@ -198,6 +217,24 @@ export class WorkspaceSystem extends SystemPlugin {
             callback: this.#handleBorderColorChange.bind(this),
           },
         },
+        {
+          component: 'divider',
+        },
+        {
+          component: 'select',
+          propName: 'typeInit',
+          attrs: {
+            label: 'Варианты открытия рабочего стола',
+          },
+          handler: {
+            event: 'change',
+            callback: this.#handleTypeInitChange.bind(this),
+          },
+          options: [
+            { value: 'TYPE-1', label: 'Окрыватются сразу все вкладки' },
+            { value: 'TYPE-2', label: 'Открывается только активная' },
+          ],
+        }
       ],
     };
   }
@@ -306,6 +343,12 @@ export class WorkspaceSystem extends SystemPlugin {
         plugins.push({ guid, meta, config, position, undeletable, toFixPanel });
       });
 
+    // панели, которые не были созданы
+    this.#hiddenPanelPlugins
+      .forEach(panel => {
+        if (panel) plugins.push(panel);
+      });
+
     const tabPanelsConfig = this.#vueComponent.getConfig;
 
     return {
@@ -313,6 +356,7 @@ export class WorkspaceSystem extends SystemPlugin {
       title: this.#currentTitle,
       column: this.#column,
       editMode: this.#editMode,
+      typeInit: this.typeInit,
       plugins,
       tabPanelsConfig,
       visibleTabNavBar: tabPanelsConfig.visibleNavBar,
@@ -349,6 +393,7 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#currentTitle = config.title;
     this.#currentID = config.id;
     this.#currentPath = config.path;
+    this.typeInit = config.typeInit;
 
     // ---- PLUGINS ----
 
@@ -357,11 +402,27 @@ export class WorkspaceSystem extends SystemPlugin {
     // ---- installing-plugins-from-config ----
     const GUIDMap = {};
     pluginsLoop: for (let plugin of config.plugins) {
-      let { meta, config, position = {}, guid, toFixPanel } = plugin;
+      const {
+        meta,
+        config,
+        position = {},
+        guid,
+        toFixPanel,
+      } = plugin;
+
       switch (meta?.type) {
         case 'panel':
           let widget;
           if (typeof meta.name !== 'undefined') {
+
+            if (this.typeInit === 'TYPE-2') {
+              const isPanelOnActiveTab = position?.tabId === activeTabId;
+              if (!toFixPanel && !isPanelOnActiveTab) {
+                this.#hiddenPanelPlugins.push(plugin);
+                continue pluginsLoop;
+              }
+            }
+
             const pluginExists = this.getPlugin(meta.name, meta.version);
             if (pluginExists) {
               this.#logSystem.debug('Creating empty cell');
@@ -380,8 +441,9 @@ export class WorkspaceSystem extends SystemPlugin {
                 toFixPanel,
               });
             }
-            const plugin = this.#panels.find(panel => panel.widget === widget).instance;
-            const pluginGUID = this.getGUID(plugin);
+            
+            const pluginInstance = this.#panels.find(panel => panel.widget === widget).instance;
+            const pluginGUID = this.getGUID(pluginInstance);
             this.#logSystem.debug(`Mapping guid of ${meta.name} from ${guid} to ${pluginGUID}`);
             GUIDMap[guid] = pluginGUID;
           } else {
@@ -406,7 +468,9 @@ export class WorkspaceSystem extends SystemPlugin {
       }
 
       const instance = this.getInstance(GUIDMap[guid]);
-      if (instance && instance !== this && instance.setPluginConfig && config) await instance.setPluginConfig(config);
+      if (instance && instance !== this && instance.setPluginConfig && config) {
+        instance.setPluginConfig(config);
+      }
     }
 
     // активируем таб, который должен быть активным после открытия рабочего стола.
@@ -420,6 +484,7 @@ export class WorkspaceSystem extends SystemPlugin {
         action.guid = GUIDMap[action.guid];
       }
     }
+    this.#eventSystem.setPluginConfig(eventSystemConfig);
 
     this.#panels.forEach((panel) => {
       if (panel.toFixPanel) this.#createGridCellClones(panel.guid);
@@ -433,7 +498,6 @@ export class WorkspaceSystem extends SystemPlugin {
     };
     this.#setPanelStyles();
 
-    await this.#eventSystem.setPluginConfig(eventSystemConfig);
     return true;
   }
 
@@ -1004,6 +1068,10 @@ export class WorkspaceSystem extends SystemPlugin {
 
     this.#setTabIdUrlParam(activeTabId);
 
+    if (this.typeInit === 'TYPE-2') {
+      this.#createPanelsInActiveTab(activeTabId);
+    }
+
     this.#panels.forEach((panel) => {
       if (panel.toFixPanel) {
         this.#changeFixedPanelPosition(panel);
@@ -1013,6 +1081,49 @@ export class WorkspaceSystem extends SystemPlugin {
       }
     })
   };
+
+  async #createPanelsInActiveTab(activeTabId) {
+    for (let i = 0; i < this.#hiddenPanelPlugins.length; i++) {
+      const plugin = this.#hiddenPanelPlugins[i];
+      if (!plugin) continue;
+
+      const {
+        meta,
+        config,
+        position = {},
+        guid,
+        toFixPanel,
+      } = plugin;
+
+      if (position.tabId !== activeTabId) continue;
+
+      switch (meta?.type) {
+        case 'panel':
+          let widget;
+          if (typeof meta.name !== 'undefined') {
+            const pluginExists = this.getPlugin(meta.name, meta.version);
+            if (pluginExists) {
+              widget = this.createCell({
+                name: meta.name,
+                version: meta.version,
+                guid,
+                ...position,
+                autoPosition: false,
+                toFixPanel,
+              });
+            }
+          }
+          break;
+      }
+
+      const instance = this.getInstance(guid);
+      if (instance && instance !== this && instance.setPluginConfig && config) {
+        instance.setPluginConfig(config);
+      }
+
+      this.#hiddenPanelPlugins[i] = null;
+    }
+  }
 
   #setTabIdUrlParam(tabId) {
     if (!tabId) return;
@@ -1133,6 +1244,11 @@ export class WorkspaceSystem extends SystemPlugin {
     borderStyles += '}';
 
     this.#wssStyleTag.textContent = borderStyles;
+  }
+
+  #handleTypeInitChange = (event) => {
+    const { value } = event.target;
+    this.typeInit = value;
   }
 
   #createGridCellClones(guid) {

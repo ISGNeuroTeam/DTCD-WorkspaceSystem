@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - new `setActiveTab()` public method
 - new `WorkspaceTabSelected` event
 - new `WorkspaceTabClicked` event
+- selection of panel initialization script
 
 ### Changed
 
@@ -22,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - tabs activation during workspace initialization
+- `await` during panels initialization
 
 ## [0.15.0]
 
