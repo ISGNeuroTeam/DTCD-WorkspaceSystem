@@ -68,6 +68,14 @@
             <span class="FontIcon name_checkBig"/>
           </button>
           <button
+            class="BtnIcon name_copy"
+            type="button"
+            title="Скопировать"
+            @click="copyTab(id, name)"
+          >
+            <span class="FontIcon name_copy"/>
+          </button>
+          <button
             class="BtnIcon type_delete"
             type="button"
             title="Удалить вкладку"
@@ -267,6 +275,18 @@ export default {
       this.scrollWidth = this.$refs.tabList.scrollWidth;
       this.scrollLeft = this.$refs.tabList.scrollLeft;
       this.clientWidth = this.$refs.tabPanel.clientWidth;
+    },
+    copyTab(id, name) {
+      const tabId = this.getIdNewTab();
+      const numberName = this.tabsCollection.filter((item) => item.name === name || item.name?.includes(name)).length;
+      this.tabList = ({
+        id: tabId,
+        name: name+'-copy-'+numberName,
+        isActive: false,
+        editName: false,
+      });
+
+      this.tabsSwitcherInstance.copyTab(tabId, id, this.tabsCollection);
     },
   },
   filters: {
