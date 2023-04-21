@@ -301,6 +301,7 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#tabsSwitcherInstance.htmlElement.addEventListener('tab-active', this.#handleTabsSwitcherActive);
     this.#tabsSwitcherInstance.htmlElement.addEventListener('tab-delete', this.#handleTabsSwitcherDelete);
     this.#tabsSwitcherInstance.htmlElement.addEventListener('tab-add', this.#handleTabsSwitcherAdd);
+    this.#tabsSwitcherInstance.htmlElement.addEventListener('tab-copy', this.#handleTabsSwitcherCopy);
 
     const workspaceID = history.state.workspaceID;
     this.setConfiguration(workspaceID)
@@ -1062,6 +1063,72 @@ export class WorkspaceSystem extends SystemPlugin {
 
     this.#panels.forEach((panel) => {
       if (panel.toFixPanel) this.#createGridCellClones(panel.guid);
+    });
+  };
+
+  #handleTabsSwitcherCopy = event => {
+    const tabId = event.detail?.tabId;
+    const collection = event.detail?.collection;
+    const id = event.detail?.id;
+    const plugins = this.getPluginConfig().plugins;
+
+    collection.forEach((tab) => {
+      // Формирования списка плагинов
+      const targetPlugins =  plugins.reduce((acc, plugin) => {
+        if (plugin.meta?.type === 'panel') {
+          if (plugin?.position?.tabId === tab?.id && plugin?.position?.tabId === id) {
+
+            acc.push(plugin)
+          }
+        }
+        return acc
+      },[]);
+
+      // инифиализация плагинов на новой вкладке
+      const pluginsGuid = targetPlugins.reduce((acc, plugin) => {
+        const {name, version} = plugin.meta
+        const {h, w, x, y} = plugin.position
+        const autoPosition = false
+        const toFixPanel = false
+        const widget = this.createCell({ name, version, guid:null, w, h, x, y, tabId, autoPosition, toFixPanel });
+        const currentPlugin = Application.autocomplete[widget.getAttribute('gs-id')];
+        if (plugin.config) {
+          currentPlugin.setPluginConfig(plugin.config);
+        }
+        acc.push({
+          originPlugin: plugin.guid,
+          targetPlugin: widget.getAttribute('gs-id'),
+        })
+        return acc
+      }, []);
+
+      pluginsGuid.forEach((guid) => {
+        const subscriptions = this.#eventSystem.subscriptions.filter((item) => item.event.guid === guid.originPlugin && item.subscriptionName !== undefined)
+         if (subscriptions.length > 0) {
+           subscriptions.forEach((event) => {
+             let eventGuid, actionGuid = null;
+             if (event.subscriptionName) {
+               eventGuid = pluginsGuid.find((cellGuid) => cellGuid.originPlugin === event.event.guid);
+               if (event.action.guid) {
+                 actionGuid = pluginsGuid.find((cellGuid) => cellGuid.originPlugin === event.action.guid);
+               } else {
+                 actionGuid = event.action.guid;
+               }
+               if (!actionGuid?.targetPlugin) {
+                 this.#eventSystem.registerCustomAction(event.action.name+'-'+tabId, event.action.callback)
+               }
+               this.#eventSystem.subscribe({
+                 eventGUID: eventGuid.targetPlugin,
+                 eventName: event.event.name,
+                 actionGUID: actionGuid?.targetPlugin ? actionGuid?.targetPlugin : 'Пользовательское событие',
+                 actionName: actionGuid?.targetPlugin ? event.action.name : event.action.name+'-'+tabId,
+                 eventArgs: event.action.args,
+                 subscriptionName: event.subscriptionName+'-'+tabId,
+               });
+             }
+           })
+         }
+      });
     });
   };
 
