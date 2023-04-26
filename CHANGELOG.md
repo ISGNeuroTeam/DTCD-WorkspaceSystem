@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - new `WorkspaceTabClicked` event
 - selection of panel initialization script 
 - added tab cloning
+- subscribtion for displaying of workspace title when it's opened
 
 ### Changed
 

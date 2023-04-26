@@ -73,6 +73,7 @@ export class WorkspaceSystem extends SystemPlugin {
       'WorkspaceCellClicked',
       'WorkspaceTabSelectedProgrammly',
       'WorkspaceTabClicked',
+      'WorkspaceTitleLoaded',
     ]);
     this.#interactionSystem = new InteractionSystemAdapter('0.4.0');
     this.#logSystem = new LogSystemAdapter('0.5.0', this.#guid, 'WorkspaceSystem');
@@ -302,6 +303,7 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#tabsSwitcherInstance.htmlElement.addEventListener('tab-delete', this.#handleTabsSwitcherDelete);
     this.#tabsSwitcherInstance.htmlElement.addEventListener('tab-add', this.#handleTabsSwitcherAdd);
     this.#tabsSwitcherInstance.htmlElement.addEventListener('tab-copy', this.#handleTabsSwitcherCopy);
+    this.#eventSystem.subscribe(this.#guid, 'WorkspaceTitleLoaded', 'HeaderPanel_top', 'showTitle');
 
     const workspaceID = history.state.workspaceID;
     this.setConfiguration(workspaceID)
@@ -395,6 +397,8 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#currentID = config.id;
     this.#currentPath = config.path;
     this.typeInit = config.typeInit;
+
+    this.#eventSystem.publishEvent('WorkspaceTitleLoaded', this.#currentTitle);
 
     // ---- PLUGINS ----
 
