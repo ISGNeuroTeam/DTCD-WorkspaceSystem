@@ -1103,31 +1103,28 @@ export class WorkspaceSystem extends SystemPlugin {
       }, []);
 
       pluginsGuid.forEach((guid) => {
-        const subscriptions = this.#eventSystem.subscriptions.filter((item) => item.event.guid === guid.originPlugin && item.subscriptionName !== undefined)
-         if (subscriptions.length > 0) {
-           subscriptions.forEach((event) => {
-             let eventGuid, actionGuid = null;
-             if (event.subscriptionName) {
-               eventGuid = pluginsGuid.find((cellGuid) => cellGuid.originPlugin === event.event.guid);
-               if (event.action.guid) {
-                 actionGuid = pluginsGuid.find((cellGuid) => cellGuid.originPlugin === event.action.guid);
-               } else {
-                 actionGuid = event.action.guid;
-               }
-               if (!actionGuid?.targetPlugin) {
-                 this.#eventSystem.registerCustomAction(event.action.name+'-'+tabId, event.action.callback)
-               }
-               this.#eventSystem.subscribe({
-                 eventGUID: eventGuid.targetPlugin,
-                 eventName: event.event.name,
-                 actionGUID: actionGuid?.targetPlugin ? actionGuid?.targetPlugin : 'Пользовательское событие',
-                 actionName: actionGuid?.targetPlugin ? event.action.name : event.action.name+'-'+tabId,
-                 eventArgs: event.action.args,
-                 subscriptionName: event.subscriptionName+'-'+tabId,
-               });
-             }
-           })
-         }
+        const subscriptions = this.#eventSystem.subscriptions.filter((item) => item.event.guid === guid.originPlugin)
+        if (subscriptions.length > 0) {
+          subscriptions.forEach((event) => {
+            let eventGuid, actionGuid = null;
+            eventGuid = pluginsGuid.find((cellGuid) => cellGuid.originPlugin === event.event.guid);
+            if (event.action.guid) {
+              actionGuid = pluginsGuid.find((cellGuid) => cellGuid.originPlugin === event.action.guid);
+            } else {
+              actionGuid = event.action.guid;
+            }
+            if (!actionGuid?.targetPlugin) {
+              this.#eventSystem.registerCustomAction(event.action.name+'-'+tabId, event.action.callback)
+            }
+            const { eventGUID, eventName, actionGUID, actionName } = {
+              eventGUID: eventGuid.targetPlugin,
+              eventName: event.event.name,
+              actionGUID: actionGuid?.targetPlugin ? actionGuid?.targetPlugin : '-',
+              actionName: actionGuid?.targetPlugin ? event.action.name : event.action.name+'-'+tabId,
+            }
+            this.#eventSystem.subscribe(eventGUID, eventName, actionGUID, actionName);
+          })
+        }
       });
     });
   };
