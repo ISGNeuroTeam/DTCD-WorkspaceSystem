@@ -27,6 +27,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - tabs activation during workspace initialization
 - `await` during panels initialization
 
+### Fixed
+
+- fixed copying events from tabs
+
 ## [0.15.0]
 
 ### Changed
