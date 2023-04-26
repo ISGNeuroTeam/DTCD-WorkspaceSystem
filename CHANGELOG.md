@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - new `WorkspaceTabClicked` event
 - selection of panel initialization script 
 - added tab cloning
+- role model for workspaces
 
 ### Changed
 
