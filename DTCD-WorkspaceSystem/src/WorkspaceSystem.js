@@ -508,9 +508,22 @@ export class WorkspaceSystem extends SystemPlugin {
     const id = delimIndex !== -1 ? downloadPath.slice(delimIndex + 4) : downloadPath;
     const path = delimIndex !== -1 ? downloadPath.slice(0, delimIndex) : '';
 
+    const groups = await this.#interactionSystem.GETRequest('dtcd_utils/v1/user?photo_quality=low')
+    .then((response) => {
+      const groups = response.data.groups;
+      if (!groups.length) return[];
+      return groups
+    });
+    const groupsForWorkSpaces = groups.filter(group => group.name.includes('workspace.')).map((item) => item.name.split('.')[1])
+
     this.#logSystem.debug(`Trying to download configuration with id:${id}`);
     const { data } = await this.#interactionSystem.GETRequest(`/dtcd_workspaces/v1/workspace/object/${path}?id=${id}`);
     this.#logSystem.debug(`Parsing configuration from response`);
+
+    if (groupsForWorkSpaces.includes(data.title)) {
+      Application.getSystem('RouteSystem', '0.3.0').navigate('/workspaces')
+    }
+
     const content = data.content;
     content['id'] = data.id;
     content['title'] = data.title;
