@@ -510,7 +510,9 @@ export class WorkspaceSystem extends SystemPlugin {
 
   async downloadConfiguration(downloadPath) {
     const delimIndex = downloadPath.search(/:id=/);
-    const id = delimIndex !== -1 ? downloadPath.slice(delimIndex + 4) : downloadPath;
+    const id = delimIndex !== -1
+      ? downloadPath.split('?id=')[0].slice(delimIndex + 4)
+      : downloadPath.split('?id=')[0];
     const path = delimIndex !== -1 ? downloadPath.slice(0, delimIndex) : '';
 
     const groups = await this.#interactionSystem.GETRequest('dtcd_utils/v1/user?photo_quality=low')
@@ -1226,14 +1228,17 @@ export class WorkspaceSystem extends SystemPlugin {
   #setTabIdUrlParam(tabId) {
     if (!tabId) return;
 
-    const urlSearchParams = new URLSearchParams(window.location.search);
-    urlSearchParams.set('ws-tab-id', tabId);
-
-    Application.getSystem('RouteSystem', '0.3.0').navigate(
-      `${window.location.pathname}?${urlSearchParams.toString()}`,
-      true,
-      {workspaceID: this.currentWorkspaceID},
-    )
+    if (this.currentWorkspaceID) {
+      const urlSearchParams = new URLSearchParams(window.location.search);
+      urlSearchParams.set('ws-tab-id', tabId);
+      const currentWorkspaceSlug = window.location.pathname
+      .replace('/workspaces/','').split('?')[0]
+      Application.getSystem('RouteSystem', '0.3.0').navigate(
+        `${window.location.pathname}?${urlSearchParams.toString()}`,
+        true,
+        {workspaceID: currentWorkspaceSlug},
+      )
+    }
   }
 
   #getTabIdUrlParam() {

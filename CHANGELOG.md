@@ -29,6 +29,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - tabs activation during workspace initialization
 - `await` during panels initialization
 
+### Fixed 
+
+- fix redirection data for workspaces in folders on tab change
+- remove fetch data on tab change
+
 ## [0.15.0]
 
 ### Changed
