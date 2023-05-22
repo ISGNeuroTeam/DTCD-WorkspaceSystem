@@ -518,7 +518,7 @@ export class WorkspaceSystem extends SystemPlugin {
     const groups = await this.#interactionSystem.GETRequest('dtcd_utils/v1/user?photo_quality=low')
     .then((response) => {
       const groups = response.data.groups;
-      if (!groups.length) return[];
+      if (!groups?.length) return[];
       return groups
     });
     const groupsForWorkSpaces = groups.filter(group => group.name.includes('workspace.')).map((item) => item.name.split('.')[1])
