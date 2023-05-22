@@ -1020,7 +1020,7 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#interactionSystem.GETRequest('dtcd_utils/v1/user?photo_quality=low')
       .then((response) => {
         const groups = response.data.groups;
-        if (!groups.length) return;
+        if (!groups?.length) return;
         
         for (let i = 0; i < groups.length; i++) {
           this.#vueComponent.toggleVisibleTabByName(groups[i].name);
