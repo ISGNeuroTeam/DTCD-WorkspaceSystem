@@ -232,7 +232,7 @@ export class WorkspaceSystem extends SystemPlugin {
             callback: this.#handleTypeInitChange.bind(this),
           },
           options: [
-            { value: 'TYPE-1', label: 'Окрыватются сразу все вкладки' },
+            { value: 'TYPE-1', label: 'Окрываются сразу все вкладки' },
             { value: 'TYPE-2', label: 'Открывается только активная' },
           ],
         }

@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.1]
+
+### Fixed 
+
+- misprint in select menu of panels initialization script
+
 ## [0.16.0]
 
 ### Added
@@ -15,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - new `setActiveTab()` public method
 - new `WorkspaceTabSelected` event
 - new `WorkspaceTabClicked` event
-- selection of panel initialization script 
+- selection of panels initialization script 
 - tab cloning
 - subscribtion for displaying of workspace title when it's opened
 - role model for workspaces

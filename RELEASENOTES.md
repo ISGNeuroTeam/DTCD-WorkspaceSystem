@@ -1,3 +1,9 @@
+# [0.16.1]
+
+## Fixed 
+
+- misprint in select menu of panels initialization script
+
 # [0.16.0]
 
 ## Added
