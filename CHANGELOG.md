@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.0]
+
+### Added
+
+- plugin panel fixation when switching tabs
+- recovery dashboard state from URL
+- permissions of display tab panels
+- new `setActiveTab()` public method
+- new `WorkspaceTabSelected` event
+- new `WorkspaceTabClicked` event
+- selection of panel initialization script 
+- tab cloning
+- subscribtion for displaying of workspace title when it's opened
+- role model for workspaces
+
+### Changed
+
+- rename `WorkspaceTabSelected` event to `WorkspaceTabSelectedProgrammly`
+
+### Removed
+
+- tabs activation during workspace initialization
+- `await` during panels initialization
+
+### Fixed 
+
+- fix redirection data for workspaces in folders on tab change
+- remove fetch data on tab change
+
 ## [0.15.0]
 
 ### Changed

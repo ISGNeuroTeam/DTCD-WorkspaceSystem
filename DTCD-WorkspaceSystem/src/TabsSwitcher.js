@@ -34,6 +34,10 @@ class TabsSwitcher {
     return this.#htmlElement;
   }
 
+  get tabsCollection() {
+    return this.#tabsCollection;
+  }
+
   /**
    * Creating new tab panel.
    * @param {string} [tabId] ID of tab panel.
@@ -89,6 +93,20 @@ class TabsSwitcher {
 
   clearTabItemsContainer() {
     this.#tabsContainer.innerHTML = '';
+  }
+
+  copyTab(tabId, id, collection) {
+    this.addNewTab(tabId, collection);
+
+    this.#htmlElement.dispatchEvent(new CustomEvent('tab-copy', {
+      bubbles: true,
+      cancelable: false,
+      detail: {
+        tabId: tabId,
+        id,
+        collection,
+      },
+    }));
   }
 }
 

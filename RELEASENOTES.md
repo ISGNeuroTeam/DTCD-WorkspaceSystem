@@ -1,3 +1,25 @@
+# [0.16.0]
+
+## Added
+
+- plugin panel fixation when switching tabs
+- recovery dashboard state from URL
+- new `setActiveTab()` public method
+- new `WorkspaceTabSelected` event
+- new `WorkspaceTabClicked` event
+- selection of panel initialization script 
+- tab cloning
+- subscribtion for displaying of workspace title when it's opened
+- role model for workspaces (for example, permissions of display tab panels)
+
+## Changed
+
+- rename `WorkspaceTabSelected` event to `WorkspaceTabSelectedProgrammly`
+
+## Removed
+
+- tabs activation during workspace initialization
+
 # [0.15.0]
 
 ## Changed
