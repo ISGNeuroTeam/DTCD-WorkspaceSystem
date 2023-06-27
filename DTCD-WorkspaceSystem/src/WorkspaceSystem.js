@@ -25,6 +25,7 @@ export class WorkspaceSystem extends SystemPlugin {
   #eventSystem;
   #interactionSystem;
   #logSystem;
+  #router;
   #notificationSystem;
   #tabPanelsConfig;
 
@@ -60,10 +61,7 @@ export class WorkspaceSystem extends SystemPlugin {
     };
   }
 
-  static INIT_TYPES = [
-    'TYPE-1',
-    'TYPE-2',
-  ];
+  static INIT_TYPES = ['TYPE-1', 'TYPE-2'];
 
   constructor(guid) {
     super();
@@ -111,9 +109,7 @@ export class WorkspaceSystem extends SystemPlugin {
   }
 
   set typeInit(newValue) {
-    this.#typeInit = WorkspaceSystem.INIT_TYPES.includes(newValue)
-                    ? newValue
-                    : WorkspaceSystem.INIT_TYPES[0];
+    this.#typeInit = WorkspaceSystem.INIT_TYPES.includes(newValue) ? newValue : WorkspaceSystem.INIT_TYPES[0];
   }
 
   getFormSettings() {
@@ -235,7 +231,7 @@ export class WorkspaceSystem extends SystemPlugin {
             { value: 'TYPE-1', label: 'Окрываются сразу все вкладки' },
             { value: 'TYPE-2', label: 'Открывается только активная' },
           ],
-        }
+        },
       ],
     };
   }
@@ -252,6 +248,7 @@ export class WorkspaceSystem extends SystemPlugin {
   }
 
   mountDashboardContainer(element) {
+    if (!this.#router) this.#router = Application.getSystem('RouteSystem', '0.4.0');
     if (!this.#notificationSystem) {
       try {
         this.#notificationSystem = new NotificationSystemAdapter('0.1.1');
@@ -306,10 +303,9 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#eventSystem.subscribe(this.#guid, 'WorkspaceTitleLoaded', 'HeaderPanel_top', 'showTitle');
 
     const workspaceID = history.state.workspaceID;
-    this.setConfiguration(workspaceID)
-        .then(() => {
-          this.recoveryPluginStateFromUrl();
-        });
+    this.setConfiguration(workspaceID).then(() => {
+      this.recoveryPluginStateFromUrl();
+    });
 
     return true;
   }
@@ -347,10 +343,9 @@ export class WorkspaceSystem extends SystemPlugin {
       });
 
     // панели, которые не были созданы
-    this.#hiddenPanelPlugins
-      .forEach(panel => {
-        if (panel) plugins.push(panel);
-      });
+    this.#hiddenPanelPlugins.forEach(panel => {
+      if (panel) plugins.push(panel);
+    });
 
     const tabPanelsConfig = this.#vueComponent.getConfig;
 
@@ -375,10 +370,15 @@ export class WorkspaceSystem extends SystemPlugin {
 
     // Tabs panels
     let activeTabId = this.#getTabIdUrlParam();
+
     config.tabPanelsConfig instanceof Object
       ? (this.#tabPanelsConfig = config.tabPanelsConfig)
       : (this.#tabPanelsConfig = null);
     this.#createTabsSwitcher();
+
+    if (!config.tabPanelsConfig?.tabsOptions?.some(tab => tab.id === activeTabId)) {
+      activeTabId = null;
+    }
 
     // remember id of active tab panel if tab id dont exist in url
     if (!activeTabId) {
@@ -389,6 +389,8 @@ export class WorkspaceSystem extends SystemPlugin {
         }
       });
     }
+
+    if (!activeTabId) activeTabId = config.tabPanelsConfig?.tabsOptions?.id;
 
     // ---- COLUMN ----
     if (typeof config.column != 'undefined') this.setColumn(config.column);
@@ -407,19 +409,12 @@ export class WorkspaceSystem extends SystemPlugin {
     // ---- installing-plugins-from-config ----
     const GUIDMap = {};
     pluginsLoop: for (let plugin of config.plugins) {
-      const {
-        meta,
-        config,
-        position = {},
-        guid,
-        toFixPanel,
-      } = plugin;
+      const { meta, config, position = {}, guid, toFixPanel } = plugin;
 
       switch (meta?.type) {
         case 'panel':
           let widget;
           if (typeof meta.name !== 'undefined') {
-
             if (this.typeInit === 'TYPE-2') {
               const isPanelOnActiveTab = position?.tabId === activeTabId;
               if (!toFixPanel && !isPanelOnActiveTab) {
@@ -446,7 +441,7 @@ export class WorkspaceSystem extends SystemPlugin {
                 toFixPanel,
               });
             }
-            
+
             const pluginInstance = this.#panels.find(panel => panel.widget === widget).instance;
             const pluginGUID = this.getGUID(pluginInstance);
             this.#logSystem.debug(`Mapping guid of ${meta.name} from ${guid} to ${pluginGUID}`);
@@ -480,7 +475,7 @@ export class WorkspaceSystem extends SystemPlugin {
 
     // активируем таб, который должен быть активным после открытия рабочего стола.
     this.#vueComponent.setActiveTab(activeTabId);
-    
+
     this.#hideTabsPanel();
 
     // EVENT-SYSTEM-MAPPING
@@ -493,7 +488,7 @@ export class WorkspaceSystem extends SystemPlugin {
     }
     this.#eventSystem.setPluginConfig(eventSystemConfig);
 
-    this.#panels.forEach((panel) => {
+    this.#panels.forEach(panel => {
       if (panel.toFixPanel) this.#createGridCellClones(panel.guid);
     });
 
@@ -510,25 +505,24 @@ export class WorkspaceSystem extends SystemPlugin {
 
   async downloadConfiguration(downloadPath) {
     const delimIndex = downloadPath.search(/:id=/);
-    const id = delimIndex !== -1
-      ? downloadPath.split('?id=')[0].slice(delimIndex + 4)
-      : downloadPath.split('?id=')[0];
+    const id = delimIndex !== -1 ? downloadPath.split('?id=')[0].slice(delimIndex + 4) : downloadPath.split('?id=')[0];
     const path = delimIndex !== -1 ? downloadPath.slice(0, delimIndex) : '';
 
-    const groups = await this.#interactionSystem.GETRequest('dtcd_utils/v1/user?photo_quality=low')
-    .then((response) => {
+    const groups = await this.#interactionSystem.GETRequest('dtcd_utils/v1/user?photo_quality=low').then(response => {
       const groups = response.data.groups;
-      if (!groups?.length) return[];
-      return groups
+      if (!groups?.length) return [];
+      return groups;
     });
-    const groupsForWorkSpaces = groups.filter(group => group.name.includes('workspace.')).map((item) => item.name.split('.')[1])
+    const groupsForWorkSpaces = groups
+      .filter(group => group.name.includes('workspace.'))
+      .map(item => item.name.split('.')[1]);
 
     this.#logSystem.debug(`Trying to download configuration with id:${id}`);
     const { data } = await this.#interactionSystem.GETRequest(`/dtcd_workspaces/v1/workspace/object/${path}?id=${id}`);
     this.#logSystem.debug(`Parsing configuration from response`);
 
     if (groupsForWorkSpaces.includes(data.title)) {
-      Application.getSystem('RouteSystem', '0.3.0').navigate('/workspaces')
+      this.#router.navigate('/workspaces');
     }
 
     const content = data.content;
@@ -656,10 +650,7 @@ export class WorkspaceSystem extends SystemPlugin {
     let targetGrid = this.#gridCollection.get(tabId)?.gridInstance;
     targetGrid = targetGrid ? targetGrid : this.#activeGrid;
 
-    const widget = this.#createWidget(
-      targetGrid,
-      { x, y, w, h, autoPosition, guid, toFixPanel }
-    );
+    const widget = this.#createWidget(targetGrid, { x, y, w, h, autoPosition, guid, toFixPanel });
 
     const panelInstance = this.installPanel({
       name,
@@ -723,14 +714,11 @@ export class WorkspaceSystem extends SystemPlugin {
 
     panel.toFixPanel = !Boolean(panel.toFixPanel);
     const targetGrid = this.#gridCollection.get(panel.position.tabId).gridInstance;
-    targetGrid.update(
-      panel.widget,
-      {
-        noMove: panel.toFixPanel,
-        noResize: panel.toFixPanel,
-        locked: panel.toFixPanel,
-      }
-    );
+    targetGrid.update(panel.widget, {
+      noMove: panel.toFixPanel,
+      noResize: panel.toFixPanel,
+      locked: panel.toFixPanel,
+    });
 
     if (panel.toFixPanel) this.#createGridCellClones(guid);
     else this.#deleteGridCellClones(guid);
@@ -749,7 +737,7 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#editMode = !this.#editMode;
 
     const panelBorder = document.querySelectorAll('.grid-stack-item');
-    panelBorder.forEach((gridCell) => {
+    panelBorder.forEach(gridCell => {
       if (this.#editMode) gridCell.classList.add('grid-stack-item_editing');
       else gridCell.classList.remove('grid-stack-item_editing');
     });
@@ -782,15 +770,12 @@ export class WorkspaceSystem extends SystemPlugin {
       console.error(err);
       this.#logSystem.error(`Error occured while downloading workspace configuration: ${err.message}`);
       const errorMsg = 'Произошла ошибка в процессе загрузки и установки данных рабочего стола.';
-      this.#notificationSystem && this.#notificationSystem.create(
-        'Ошибка на рабочем столе.',
-        errorMsg,
-        {
+      this.#notificationSystem &&
+        this.#notificationSystem.create('Ошибка на рабочем столе.', errorMsg, {
           floatMode: true,
           floatTime: 5,
           type: 'error',
-        }
-      );
+        });
       this.getSystem('AppGUISystem', '0.1.0').goTo404();
     }
   }
@@ -807,25 +792,23 @@ export class WorkspaceSystem extends SystemPlugin {
         },
       ]);
 
-      this.#notificationSystem && this.#notificationSystem.create(
-        'Готово!',
-        'Настройки рабочего стола сохранены.',
-        {
+      this.#notificationSystem &&
+        this.#notificationSystem.create('Готово!', 'Настройки рабочего стола сохранены.', {
           floatMode: true,
           floatTime: 5,
           type: 'success',
-        }
-      );
+        });
     } catch (error) {
-      this.#notificationSystem && this.#notificationSystem.create(
-        'Ошибка на рабочем столе.',
-        'Произошла ошибка в процессе сохранения данных рабочего стола.',
-        {
-          floatMode: true,
-          floatTime: 5,
-          type: 'error',
-        }
-      );
+      this.#notificationSystem &&
+        this.#notificationSystem.create(
+          'Ошибка на рабочем столе.',
+          'Произошла ошибка в процессе сохранения данных рабочего стола.',
+          {
+            floatMode: true,
+            floatTime: 5,
+            type: 'error',
+          }
+        );
       throw error;
     }
   }
@@ -894,15 +877,12 @@ export class WorkspaceSystem extends SystemPlugin {
       } catch (err) {
         this.#logSystem.error(`Can't create modal with panel '${panelName} ${version}' due to error: ${err}`);
         const errorMsg = `Не удалось создать модальное окно с панелью '${panelName} (${version})'. Ошибка: ${err}`;
-        this.#notificationSystem && this.#notificationSystem.create(
-          'Ошибка на рабочем столе.',
-          errorMsg,
-          {
+        this.#notificationSystem &&
+          this.#notificationSystem.create('Ошибка на рабочем столе.', errorMsg, {
             floatMode: true,
             floatTime: 5,
             type: 'error',
-          }
-        );
+          });
       }
     }
   }
@@ -924,24 +904,16 @@ export class WorkspaceSystem extends SystemPlugin {
 
     try {
       const state = this.#collectStatesFromPlugins();
-      const response = await this.#interactionSystem.POSTRequest(
-        'dtcd_storage_system_backend/v1/state',
-        {
-          applicationName: 'DataCAD',
-          workspaceID: this.#currentID,
-          state,
-        }
-      );
-      response.then((result) => {
-        const {
-          stateID,
-        } = JSON.parse(result);
+      const response = await this.#interactionSystem.POSTRequest('dtcd_storage_system_backend/v1/state', {
+        applicationName: 'DataCAD',
+        workspaceID: this.#currentID,
+        state,
+      });
+      response.then(result => {
+        const { stateID } = JSON.parse(result);
 
         if (stateID) {
-          const {
-            origin,
-            pathname,
-          } = window.location;
+          const { origin, pathname } = window.location;
           return origin + pathname + `?stateID="${stateID}"`;
         }
       });
@@ -959,79 +931,69 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#logSystem.debug('Start dashboard state recovery from URL.');
 
     try {
-      const urlSearchParams = new URL(
-        typeof url === 'string' ? url : window.location.href
-      ).searchParams;
+      const urlSearchParams = new URL(typeof url === 'string' ? url : window.location.href).searchParams;
       const stateID = urlSearchParams.get('stateID');
       if (!stateID) return;
 
-      const response = this.#interactionSystem.POSTRequest(
-        'dtcd_storage_system_backend/v1/state',
-        {
-          applicationName: 'DataCAD',
-          stateID,
-        },
-      );
-      response.then((result) => {
-        const dashboardState = JSON.parse(result).state;
-        for (const key in dashboardState) {
-          if (!Object.hasOwnProperty.call(dashboardState, key)) continue;
-
-          try {
-            this.#logSystem.debug(`Start plugin state recovery of '${key}' from URL.`);
-            if (typeof Application.autocomplete[key]?.setState === 'function') {
-              Application.autocomplete[key].setState(dashboardState[key]);
-            }
-          } catch (error) {
-            this.#logSystem.error(`Error plugin state recovery of '${key}' from URL.`);
-            console.error(error);
-          }
-        }
-      }).catch((error) => {
-        throw error;
+      const response = this.#interactionSystem.POSTRequest('dtcd_storage_system_backend/v1/state', {
+        applicationName: 'DataCAD',
+        stateID,
       });
+      response
+        .then(result => {
+          const dashboardState = JSON.parse(result).state;
+          for (const key in dashboardState) {
+            if (!Object.hasOwnProperty.call(dashboardState, key)) continue;
+
+            try {
+              this.#logSystem.debug(`Start plugin state recovery of '${key}' from URL.`);
+              if (typeof Application.autocomplete[key]?.setState === 'function') {
+                Application.autocomplete[key].setState(dashboardState[key]);
+              }
+            } catch (error) {
+              this.#logSystem.error(`Error plugin state recovery of '${key}' from URL.`);
+              console.error(error);
+            }
+          }
+        })
+        .catch(error => {
+          throw error;
+        });
     } catch (error) {
       this.#logSystem.error('Error recovery dashboard state from URL: ' + error.message);
-      this.#notificationSystem && this.#notificationSystem.create(
-        'Error.',
-        'Ошибка восстановления состояния рабочего стола из URL.',
-        {
+      this.#notificationSystem &&
+        this.#notificationSystem.create('Error.', 'Ошибка восстановления состояния рабочего стола из URL.', {
           floatMode: true,
           floatTime: 5,
           type: 'error',
-        }
-      );
+        });
       throw error;
     }
 
     this.#logSystem.info('Ended dashboard state recovery from URL.');
-    this.#notificationSystem && this.#notificationSystem.create(
-      'Выполнено.',
-      'Данные рабочего стола успешно восстановлены из URL.',
-      {
+    this.#notificationSystem &&
+      this.#notificationSystem.create('Выполнено.', 'Данные рабочего стола успешно восстановлены из URL.', {
         floatMode: true,
         floatTime: 5,
         type: 'success',
-      }
-    );
+      });
   }
 
   #hideTabsPanel() {
-    this.#interactionSystem.GETRequest('dtcd_utils/v1/user?photo_quality=low')
-      .then((response) => {
-        const groups = response.data.groups;
-        if (!groups?.length) return;
-        
-        for (let i = 0; i < groups.length; i++) {
-          this.#vueComponent.toggleVisibleTabByName(groups[i].name);
-        }
-      });
+    this.#interactionSystem.GETRequest('dtcd_utils/v1/user?photo_quality=low').then(response => {
+      const groups = response.data.groups;
+      if (!groups?.length) return;
+
+      for (let i = 0; i < groups.length; i++) {
+        this.#vueComponent.toggleVisibleTabByName(groups[i].name);
+      }
+    });
   }
 
   #collectStatesFromPlugins() {
     const pluginsState = {};
 
-    this.#panels.forEach((panel) => {
+    this.#panels.forEach(panel => {
       if (typeof panel.instance?.getState === 'function') {
         pluginsState[panel.guid] = panel.instance.getState();
       }
@@ -1055,7 +1017,7 @@ export class WorkspaceSystem extends SystemPlugin {
       }
       this.#vueComponent.visibleNavBar = this.#tabPanelsConfig.visibleNavBar;
     } else {
-      const tabId = this.#vueComponent.addNewTab({id: this.#getTabIdUrlParam()});
+      const tabId = this.#vueComponent.addNewTab({ id: this.#getTabIdUrlParam() });
       this.#vueComponent.setActiveTab(tabId);
       this.#vueComponent.visibleNavBar = false;
     }
@@ -1070,9 +1032,7 @@ export class WorkspaceSystem extends SystemPlugin {
     gridStackEl.className = 'grid-stack';
     this.#vueComponent.getTab(tabId).tabPanel.appendChild(gridStackEl);
 
-    const gridstackChangedOpts = this.#editMode
-                                  ? {...gridstackOptions, staticGrid: false}
-                                  : gridstackOptions;
+    const gridstackChangedOpts = this.#editMode ? { ...gridstackOptions, staticGrid: false } : gridstackOptions;
     const newGrid = GridStack.init(gridstackChangedOpts, gridStackEl);
 
     this.#gridCollection.set(tabId, {
@@ -1080,7 +1040,7 @@ export class WorkspaceSystem extends SystemPlugin {
       gridInstance: newGrid,
     });
 
-    this.#panels.forEach((panel) => {
+    this.#panels.forEach(panel => {
       if (panel.toFixPanel) this.#createGridCellClones(panel.guid);
     });
   };
@@ -1091,25 +1051,24 @@ export class WorkspaceSystem extends SystemPlugin {
     const id = event.detail?.id;
     const plugins = this.getPluginConfig().plugins;
 
-    collection.forEach((tab) => {
+    collection.forEach(tab => {
       // Формирования списка плагинов
-      const targetPlugins =  plugins.reduce((acc, plugin) => {
+      const targetPlugins = plugins.reduce((acc, plugin) => {
         if (plugin.meta?.type === 'panel') {
           if (plugin?.position?.tabId === tab?.id && plugin?.position?.tabId === id) {
-
-            acc.push(plugin)
+            acc.push(plugin);
           }
         }
-        return acc
-      },[]);
+        return acc;
+      }, []);
 
       // инифиализация плагинов на новой вкладке
       const pluginsGuid = targetPlugins.reduce((acc, plugin) => {
-        const {name, version} = plugin.meta
-        const {h, w, x, y} = plugin.position
-        const autoPosition = false
-        const toFixPanel = false
-        const widget = this.createCell({ name, version, guid:null, w, h, x, y, tabId, autoPosition, toFixPanel });
+        const { name, version } = plugin.meta;
+        const { h, w, x, y } = plugin.position;
+        const autoPosition = false;
+        const toFixPanel = false;
+        const widget = this.createCell({ name, version, guid: null, w, h, x, y, tabId, autoPosition, toFixPanel });
         const currentPlugin = Application.autocomplete[widget.getAttribute('gs-id')];
         if (plugin.config) {
           currentPlugin.setPluginConfig(plugin.config);
@@ -1117,41 +1076,44 @@ export class WorkspaceSystem extends SystemPlugin {
         acc.push({
           originPlugin: plugin.guid,
           targetPlugin: widget.getAttribute('gs-id'),
-        })
-        return acc
+        });
+        return acc;
       }, []);
 
-      pluginsGuid.forEach((guid) => {
-        const subscriptions = this.#eventSystem.subscriptions.filter((item) => item.event.guid === guid.originPlugin && item.subscriptionName !== undefined)
-         if (subscriptions.length > 0) {
-           subscriptions.forEach((event) => {
-             let eventGuid, actionGuid = null;
-             if (event.subscriptionName) {
-               eventGuid = pluginsGuid.find((cellGuid) => cellGuid.originPlugin === event.event.guid);
-               if (event.action.guid) {
-                 actionGuid = pluginsGuid.find((cellGuid) => cellGuid.originPlugin === event.action.guid);
-               } else {
-                 actionGuid = event.action.guid;
-               }
-               if (!actionGuid?.targetPlugin) {
-                 this.#eventSystem.registerCustomAction(event.action.name+'-'+tabId, event.action.callback)
-               }
-               this.#eventSystem.subscribe({
-                 eventGUID: eventGuid.targetPlugin,
-                 eventName: event.event.name,
-                 actionGUID: actionGuid?.targetPlugin ? actionGuid?.targetPlugin : 'Пользовательское событие',
-                 actionName: actionGuid?.targetPlugin ? event.action.name : event.action.name+'-'+tabId,
-                 eventArgs: event.action.args,
-                 subscriptionName: event.subscriptionName+'-'+tabId,
-               });
-             }
-           })
-         }
+      pluginsGuid.forEach(guid => {
+        const subscriptions = this.#eventSystem.subscriptions.filter(
+          item => item.event.guid === guid.originPlugin && item.subscriptionName !== undefined
+        );
+        if (subscriptions.length > 0) {
+          subscriptions.forEach(event => {
+            let eventGuid,
+              actionGuid = null;
+            if (event.subscriptionName) {
+              eventGuid = pluginsGuid.find(cellGuid => cellGuid.originPlugin === event.event.guid);
+              if (event.action.guid) {
+                actionGuid = pluginsGuid.find(cellGuid => cellGuid.originPlugin === event.action.guid);
+              } else {
+                actionGuid = event.action.guid;
+              }
+              if (!actionGuid?.targetPlugin) {
+                this.#eventSystem.registerCustomAction(event.action.name + '-' + tabId, event.action.callback);
+              }
+              this.#eventSystem.subscribe({
+                eventGUID: eventGuid.targetPlugin,
+                eventName: event.event.name,
+                actionGUID: actionGuid?.targetPlugin ? actionGuid?.targetPlugin : 'Пользовательское событие',
+                actionName: actionGuid?.targetPlugin ? event.action.name : event.action.name + '-' + tabId,
+                eventArgs: event.action.args,
+                subscriptionName: event.subscriptionName + '-' + tabId,
+              });
+            }
+          });
+        }
       });
     });
   };
 
-  #handleTabsSwitcherActive = (event) => {
+  #handleTabsSwitcherActive = event => {
     if (!this.#gridCollection) return;
 
     const activeTabId = event.detail.tabId;
@@ -1172,14 +1134,14 @@ export class WorkspaceSystem extends SystemPlugin {
       this.#createPanelsInActiveTab(activeTabId);
     }
 
-    this.#panels.forEach((panel) => {
+    this.#panels.forEach(panel => {
       if (panel.toFixPanel) {
         this.#changeFixedPanelPosition(panel);
       }
       if (typeof panel.instance.setVisible === 'function') {
-        panel.instance.setVisible(activeTabId === panel?.position.tabId)
+        panel.instance.setVisible(activeTabId === panel?.position.tabId);
       }
-    })
+    });
   };
 
   async #createPanelsInActiveTab(activeTabId) {
@@ -1187,13 +1149,7 @@ export class WorkspaceSystem extends SystemPlugin {
       const plugin = this.#hiddenPanelPlugins[i];
       if (!plugin) continue;
 
-      const {
-        meta,
-        config,
-        position = {},
-        guid,
-        toFixPanel,
-      } = plugin;
+      const { meta, config, position = {}, guid, toFixPanel } = plugin;
 
       if (position.tabId !== activeTabId) continue;
 
@@ -1231,13 +1187,7 @@ export class WorkspaceSystem extends SystemPlugin {
     if (this.currentWorkspaceID) {
       const urlSearchParams = new URLSearchParams(window.location.search);
       urlSearchParams.set('ws-tab-id', tabId);
-      const currentWorkspaceSlug = window.location.pathname
-      .replace('/workspaces/','').split('?')[0]
-      Application.getSystem('RouteSystem', '0.3.0').navigate(
-        `${window.location.pathname}?${urlSearchParams.toString()}`,
-        true,
-        {workspaceID: currentWorkspaceSlug},
-      )
+      this.#router.replace(`${window.location.pathname}?${urlSearchParams.toString()}`);
     }
   }
 
@@ -1246,7 +1196,7 @@ export class WorkspaceSystem extends SystemPlugin {
     return urlSearchParams.get('ws-tab-id');
   }
 
-  #handleTabsSwitcherDelete = (event) => {
+  #handleTabsSwitcherDelete = event => {
     if (!this.#gridCollection) return;
 
     const deletingTabId = event.detail.tabId;
@@ -1349,10 +1299,10 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#wssStyleTag.textContent = borderStyles;
   }
 
-  #handleTypeInitChange = (event) => {
+  #handleTypeInitChange = event => {
     const { value } = event.target;
     this.typeInit = value;
-  }
+  };
 
   #createGridCellClones(guid) {
     this.#logSystem.debug(`Start of creation grid cell clones for panel ${guid}.`);
@@ -1369,7 +1319,7 @@ export class WorkspaceSystem extends SystemPlugin {
       if (key === tabId) return;
 
       let isExistGridCell = false;
-      gridData.gridInstance.getGridItems().forEach((gridCell) => {
+      gridData.gridInstance.getGridItems().forEach(gridCell => {
         // find doubles grid items
         if (gridCell.getAttribute('gs-id') === guid) {
           isExistGridCell = true;
@@ -1378,10 +1328,16 @@ export class WorkspaceSystem extends SystemPlugin {
       });
 
       if (!isExistGridCell) {
-        this.#createWidget(
-          gridData.gridInstance,
-          { x, y, w, h, autoPosition: false, guid, toFixPanel: true, empty: true, }
-        );
+        this.#createWidget(gridData.gridInstance, {
+          x,
+          y,
+          w,
+          h,
+          autoPosition: false,
+          guid,
+          toFixPanel: true,
+          empty: true,
+        });
       }
     });
 
@@ -1398,7 +1354,7 @@ export class WorkspaceSystem extends SystemPlugin {
     }
 
     this.#gridCollection.forEach((gridData, key) => {
-      gridData.gridInstance.getGridItems().forEach((gridCell) => {
+      gridData.gridInstance.getGridItems().forEach(gridCell => {
         if (gridCell.getAttribute('gs-id') === guid) {
           if (gridCell.hasAttribute('data-empty-item')) {
             gridData.gridInstance.removeWidget(gridCell);
@@ -1463,8 +1419,15 @@ export class WorkspaceSystem extends SystemPlugin {
       </div>
       `,
       {
-        x, y, w, h, autoPosition, id,
-        locked: toFixPanel, noMove: toFixPanel, noResize: toFixPanel,
+        x,
+        y,
+        w,
+        h,
+        autoPosition,
+        id,
+        locked: toFixPanel,
+        noMove: toFixPanel,
+        noResize: toFixPanel,
       }
     );
 
@@ -1472,10 +1435,8 @@ export class WorkspaceSystem extends SystemPlugin {
       if (!this.#editMode) this.#eventSystem.publishEvent('WorkspaceCellClicked', { guid });
     });
 
-    widget.querySelector('.close-panel-button')
-          .addEventListener('click', this.deleteCell.bind(this, guid));
-    widget.querySelector('.fix-panel-button')
-          .addEventListener('click', this.toggleFixPanel.bind(this, guid));
+    widget.querySelector('.close-panel-button').addEventListener('click', this.deleteCell.bind(this, guid));
+    widget.querySelector('.fix-panel-button').addEventListener('click', this.toggleFixPanel.bind(this, guid));
 
     this.#logSystem.info(`End of creation grid item cell.`);
     return widget;
@@ -1492,7 +1453,7 @@ export class WorkspaceSystem extends SystemPlugin {
 
     panel.widget.setAttribute('data-empty-item', '');
 
-    this.#activeGrid.getGridItems().forEach((gridCell) => {
+    this.#activeGrid.getGridItems().forEach(gridCell => {
       if (gridCell.getAttribute('gs-id') === panel.guid) {
         gridCell.querySelector('.gridstack-content-container').append(htmlOfPanelInstance);
         gridCell.removeAttribute('data-empty-item');
@@ -1511,7 +1472,7 @@ export class WorkspaceSystem extends SystemPlugin {
     const tab = this.tabsCollection.find(tab => tabID === tab.id);
 
     if (!tab) {
-      return this.#logSystem.debug(`Tab with ID ${tabID} not found`);;
+      return this.#logSystem.debug(`Tab with ID ${tabID} not found`);
     }
 
     this.#vueComponent.setActiveTab(tabID);

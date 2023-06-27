@@ -5,9 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- refactored to new router method replace
+
 ## [0.16.1]
 
-### Fixed 
+### Fixed
 
 - misprint in select menu of panels initialization script
 
@@ -21,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - new `setActiveTab()` public method
 - new `WorkspaceTabSelected` event
 - new `WorkspaceTabClicked` event
-- selection of panels initialization script 
+- selection of panels initialization script
 - tab cloning
 - subscribtion for displaying of workspace title when it's opened
 - role model for workspaces
@@ -35,7 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - tabs activation during workspace initialization
 - `await` during panels initialization
 
-### Fixed 
+### Fixed
 
 - fix redirection data for workspaces in folders on tab change
 - remove fetch data on tab change
