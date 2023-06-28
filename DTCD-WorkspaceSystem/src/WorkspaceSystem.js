@@ -463,11 +463,13 @@ export class WorkspaceSystem extends SystemPlugin {
               meta.name = 'LiveDashPanel';
               meta.version = '0.18.0';
               originalVersion = '0.18.0';
+              config.graphCalcMode = 'sm';
               break;
             case('PrimitivePropertiesPanel_SimpleMath'):
               meta.name = 'PrimitivePropertiesPanel';
               meta.version = '0.10.0';
               originalVersion = '0.10.0';
+              config.graphCalcMode = 'sm';
               break;
           }
 
