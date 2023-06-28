@@ -59,6 +59,7 @@ export class WorkspaceSystem extends SystemPlugin {
 
   #GUIDMap = {};
   #existedPlugins = {};
+  #replacedPlugins = {};
   #notFoundPlugins = [];
 
   static getRegistrationMeta() {
@@ -412,6 +413,7 @@ export class WorkspaceSystem extends SystemPlugin {
 
     this.#GUIDMap = {};
     this.#existedPlugins = {};
+    this.#replacedPlugins = {};
     this.#notFoundPlugins = [];
 
     let eventSystemConfig = {};
@@ -450,6 +452,32 @@ export class WorkspaceSystem extends SystemPlugin {
       }
 
       if (meta?.type === 'panel') {
+        if (['LiveDashPanel_SimpleMath', 'PrimitivePropertiesPanel_SimpleMath'].includes(meta.name)) {
+          const panelIDs = calcPanelIDs(replaces[meta.name]);
+
+          let maxID = Math.max(...panelIDs);
+          maxID = maxID !== -Infinity ? maxID + 1 : 1;
+
+          switch(meta.name) {
+            case('LiveDashPanel_SimpleMath'):
+              meta.name = 'LiveDashPanel';
+              meta.version = '0.18.0';
+              originalVersion = '0.18.0';
+              break;
+            case('PrimitivePropertiesPanel_SimpleMath'):
+              meta.name = 'PrimitivePropertiesPanel';
+              meta.version = '0.10.0';
+              originalVersion = '0.10.0';
+              break;
+          }
+
+          const replacedGUID = `${meta.name}_${maxID}`;
+
+          this.#replacedPlugins[replacedGUID] = guid;
+          this.#GUIDMap[guid] = replacedGUID;
+          guid = replacedGUID;
+        }
+
         if (this.typeInit === 'TYPE-2') {
           const isPanelOnActiveTab = position?.tabId === activeTabId;
           if (!toFixPanel && !isPanelOnActiveTab) {
@@ -525,6 +553,14 @@ export class WorkspaceSystem extends SystemPlugin {
       }
     }
 
+    if (eventSystemConfig.hasOwnProperty('actions')) {
+      for (const action of eventSystemConfig.actions) {
+        for (const [guid, originalGuid] of Object.entries(this.#replacedPlugins)) {
+          action.callback = action.callback.replaceAll(originalGuid, guid);
+        }
+      }
+    }
+
     this.#eventSystem.setPluginConfig(eventSystemConfig);
 
     this.#panels.forEach((panel) => {
@@ -561,7 +597,9 @@ export class WorkspaceSystem extends SystemPlugin {
       const createPanelAndConfigure = () => {
         this.#createPanel({ ...panel, version: curVersion });
 
-        const instance = this.getInstance(this.#GUIDMap[guid])
+        const instance = !this.#replacedPlugins[guid]
+          ? this.getInstance(this.#GUIDMap[guid])
+          : this.getInstance(this.#GUIDMap[this.#replacedPlugins[guid]]);
 
         if (instance && instance.setPluginConfig && config) {
           instance.setPluginConfig(config);
