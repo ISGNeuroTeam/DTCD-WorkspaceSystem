@@ -461,8 +461,8 @@ export class WorkspaceSystem extends SystemPlugin {
           switch(meta.name) {
             case('LiveDashPanel_SimpleMath'):
               meta.name = 'LiveDashPanel';
-              meta.version = '0.18.0';
-              originalVersion = '0.18.0';
+              meta.version = '0.17.0';
+              originalVersion = '0.17.0';
               config.graphCalcMode = 'sm';
               break;
             case('PrimitivePropertiesPanel_SimpleMath'):
