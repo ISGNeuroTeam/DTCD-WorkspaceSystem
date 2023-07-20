@@ -467,8 +467,8 @@ export class WorkspaceSystem extends SystemPlugin {
               break;
             case('PrimitivePropertiesPanel_SimpleMath'):
               meta.name = 'PrimitivePropertiesPanel';
-              meta.version = '0.10.0';
-              originalVersion = '0.10.0';
+              meta.version = '0.10.3';
+              originalVersion = '0.10.3';
               config.graphCalcMode = 'sm';
               break;
           }
