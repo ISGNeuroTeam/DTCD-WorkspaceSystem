@@ -1,5 +1,6 @@
+import './styles/panel.scss';
+import './styles/modal.scss';
 import 'gridstack/dist/gridstack.min.css';
-import { GridStack } from 'gridstack';
 import 'gridstack/dist/h5/gridstack-dd-native';
 
 import {
@@ -10,14 +11,20 @@ import {
   StyleSystemAdapter,
   NotificationSystemAdapter,
 } from './../../DTCD-SDK/index';
-import { version } from './../package.json';
 
-import './styles/panel.scss';
-import './styles/modal.scss';
+import { version } from './../package.json';
+import { GridStack } from 'gridstack';
+
 import gridstackOptions from './utils/gridstackOptions';
 import TabsSwitcher from './TabsSwitcher';
 import utf8_to_base64 from './libs/utf8tobase64';
 import TabsPanelComponent from './TabsPanelComponent';
+import createWidgetErrorMessage from './utils/createWidgetErrorMessage';
+
+const replaces = {
+  LiveDashPanel_SimpleMath: 'LiveDashPanel',
+  PrimitivePropertiesPanel_SimpleMath: 'PrimitivePropertiesPanel',
+};
 
 export class WorkspaceSystem extends SystemPlugin {
   // ---- PLUGIN PROPS ----
@@ -50,6 +57,11 @@ export class WorkspaceSystem extends SystemPlugin {
 
   #tabsCollection = [];
   #vueComponent;
+
+  #GUIDMap = {};
+  #existedPlugins = {};
+  #replacedPlugins = {};
+  #notFoundPlugins = [];
 
   static getRegistrationMeta() {
     return {
@@ -365,15 +377,14 @@ export class WorkspaceSystem extends SystemPlugin {
   }
 
   async setPluginConfig(config = {}) {
-    this.resetWorkspace();
-    this.#logSystem.info(`Setting workspace configuration (id:${config?.id}, title:${config?.title})`);
+    this.#logSystem.info(`Setting workspace configuration (id: ${config?.id}, title: ${config?.title})`);
 
-    // Tabs panels
+    this.resetWorkspace();
+
     let activeTabId = this.#getTabIdUrlParam();
 
-    config.tabPanelsConfig instanceof Object
-      ? (this.#tabPanelsConfig = config.tabPanelsConfig)
-      : (this.#tabPanelsConfig = null);
+    this.#tabPanelsConfig = config.tabPanelsConfig instanceof Object ? config.tabPanelsConfig : null;
+
     this.#createTabsSwitcher();
 
     if (!config.tabPanelsConfig?.tabsOptions?.some(tab => tab.id === activeTabId)) {
@@ -390,10 +401,7 @@ export class WorkspaceSystem extends SystemPlugin {
       });
     }
 
-    if (!activeTabId) activeTabId = config.tabPanelsConfig?.tabsOptions?.id;
-
-    // ---- COLUMN ----
-    if (typeof config.column != 'undefined') this.setColumn(config.column);
+    if (typeof config.column !== 'undefined') this.setColumn(config.column);
 
     this.#currentTitle = config.title;
     this.#currentID = config.id;
@@ -402,75 +410,134 @@ export class WorkspaceSystem extends SystemPlugin {
 
     this.#eventSystem.publishEvent('WorkspaceTitleLoaded', this.#currentTitle);
 
-    // ---- PLUGINS ----
+    this.#GUIDMap = {};
+    this.#existedPlugins = {};
+    this.#replacedPlugins = {};
+    this.#notFoundPlugins = [];
 
     let eventSystemConfig = {};
 
-    // ---- installing-plugins-from-config ----
-    const GUIDMap = {};
-    pluginsLoop: for (let plugin of config.plugins) {
-      const { meta, config, position = {}, guid, toFixPanel } = plugin;
+    const panelPlugins = [];
 
-      switch (meta?.type) {
-        case 'panel':
-          let widget;
-          if (typeof meta.name !== 'undefined') {
-            if (this.typeInit === 'TYPE-2') {
-              const isPanelOnActiveTab = position?.tabId === activeTabId;
-              if (!toFixPanel && !isPanelOnActiveTab) {
-                this.#hiddenPanelPlugins.push(plugin);
-                continue pluginsLoop;
-              }
-            }
+    const calcPanelIDs = name => {
+      const panels = config.plugins.filter(p => p.meta.name === name);
+      return panels.map(p => p.guid.split('_').pop());
+    };
 
-            const pluginExists = this.getPlugin(meta.name, meta.version);
-            if (pluginExists) {
-              this.#logSystem.debug('Creating empty cell');
+    for (const plugin of config.plugins) {
+      const {
+        meta = {},
+        config = {},
+        position = {},
+        toFixPanel,
+      } = plugin;
 
-              // активирование таба нужно для корректной отрисовки визуализаций
-              // if (position?.tabId && !position.isActive) {
-              //   this.#vueComponent.setActiveTab(position.tabId);
-              // }
+      let guid = plugin.guid;
+      let originalVersion = meta.version;
 
-              widget = this.createCell({
-                name: meta.name,
-                version: meta.version,
-                guid,
-                ...position,
-                autoPosition: false,
-                toFixPanel,
-              });
-            }
+      this.#GUIDMap[guid] = guid;
 
-            const pluginInstance = this.#panels.find(panel => panel.widget === widget).instance;
-            const pluginGUID = this.getGUID(pluginInstance);
-            this.#logSystem.debug(`Mapping guid of ${meta.name} from ${guid} to ${pluginGUID}`);
-            GUIDMap[guid] = pluginGUID;
-          } else {
-            const { w, h, x, y, tabId } = position;
-            this.createEmptyCell(w, h, x, y, tabId, false);
-          }
-          break;
-        case 'core':
-          const systemInstance = this.getSystem(meta.name, meta.version);
-          const systemGUID = this.getGUID(systemInstance);
-          this.#logSystem.debug(`Mapped guid of ${meta.name} from ${guid} to ${systemGUID}`);
-          GUIDMap[guid] = systemGUID;
+      if (meta?.type === 'core') {
+        if (meta.name === 'EventSystem') {
+          eventSystemConfig = config;
+          continue;
+        }
 
-          if (meta.name === 'EventSystem') {
-            eventSystemConfig = config;
-            continue pluginsLoop;
-          }
-          if (meta.name === 'WorkspaceSystem') continue pluginsLoop;
-          break;
-        default:
-          break;
+        const instance = this.getInstance(this.#GUIDMap[guid]);
+
+        if (instance && instance !== this && instance.setPluginConfig && config) {
+          instance.setPluginConfig(config);
+        }
       }
 
-      const instance = this.getInstance(GUIDMap[guid]);
-      if (instance && instance !== this && instance.setPluginConfig && config) {
-        instance.setPluginConfig(config);
+      if (meta?.type === 'panel') {
+        if (['LiveDashPanel_SimpleMath', 'PrimitivePropertiesPanel_SimpleMath'].includes(meta.name)) {
+          const panelIDs = calcPanelIDs(replaces[meta.name]);
+
+          let maxID = Math.max(...panelIDs);
+          maxID = maxID !== -Infinity ? maxID + 1 : 1;
+
+          switch(meta.name) {
+            case('LiveDashPanel_SimpleMath'):
+              meta.name = 'LiveDashPanel';
+              meta.version = '0.17.0';
+              originalVersion = '0.17.0';
+              config.graphCalcMode = 'sm';
+              break;
+            case('PrimitivePropertiesPanel_SimpleMath'):
+              meta.name = 'PrimitivePropertiesPanel';
+              meta.version = '0.10.3';
+              originalVersion = '0.10.3';
+              config.graphCalcMode = 'sm';
+              break;
+          }
+
+          const replacedGUID = `${meta.name}_${maxID}`;
+
+          this.#replacedPlugins[replacedGUID] = guid;
+          this.#GUIDMap[guid] = replacedGUID;
+          guid = replacedGUID;
+        }
+
+        if (this.typeInit === 'TYPE-2') {
+          const isPanelOnActiveTab = position?.tabId === activeTabId;
+          if (!toFixPanel && !isPanelOnActiveTab) {
+            this.#hiddenPanelPlugins.push(plugin);
+            continue;
+          }
+        }
+
+        const widget = this.#createWidget(null, {
+          ...position,
+          guid,
+          toFixPanel,
+          autoPosition: false,
+        });
+
+        const id = `${meta.name}_${originalVersion}`;
+
+        panelPlugins.push({
+          ...meta,
+          id,
+          guid,
+          config,
+          widget,
+          toFixPanel,
+          version: originalVersion,
+          tabIdOrGrid: position.tabId,
+        });
+
+        try {
+          if (this.#existedPlugins.hasOwnProperty(id) || this.#notFoundPlugins.includes(id)) continue;
+
+          const pluginClass = this.getPlugin(meta.name, originalVersion, 3);
+          const { version } = pluginClass?.getRegistrationMeta();
+
+          this.#existedPlugins[id] = { version, originalVersion, pluginClass };
+        } catch (error) {
+          this.#notFoundPlugins.push(id);
+          console.error(error);
+          this.#notificationSystem.create(
+            'Отсутствует плагин',
+            `Плагин не найден: ${meta.name} ${meta.version}`,
+            { floatMode: true, floatTime: 5, type: 'warning' },
+          );
+        }
       }
+    }
+
+    this.#createPanelPluginsInstances(panelPlugins);
+
+    const checkOriginalVersion = Object.values(this.#existedPlugins).some(p => {
+      return p.originalVersion !== p.version;
+    });
+
+    if (this.#notFoundPlugins.length > 0 || checkOriginalVersion) {
+      this.#notificationSystem.create(
+        'Версии плагинов изменены',
+        `Версии некоторых плагинов не найдены или были изменены на альтернативные. Проверьте работоспособность рабочего стола.`,
+        { floatMode: true, floatTime: 5, type: 'warning' },
+      );
     }
 
     // активируем таб, который должен быть активным после открытия рабочего стола.
@@ -480,27 +547,89 @@ export class WorkspaceSystem extends SystemPlugin {
 
     // EVENT-SYSTEM-MAPPING
     if (eventSystemConfig.hasOwnProperty('subscriptions')) {
-      for (let sub of eventSystemConfig.subscriptions) {
+      for (const sub of eventSystemConfig.subscriptions) {
         const { event, action } = sub;
-        event.guid = GUIDMap[event.guid];
-        action.guid = GUIDMap[action.guid];
+        event.guid = this.#GUIDMap[event.guid];
+        action.guid = this.#GUIDMap[action.guid];
       }
     }
+
+    if (eventSystemConfig.hasOwnProperty('actions')) {
+      for (const action of eventSystemConfig.actions) {
+        for (const [guid, originalGuid] of Object.entries(this.#replacedPlugins)) {
+          action.callback = action.callback.replaceAll(originalGuid, guid);
+        }
+      }
+    }
+
     this.#eventSystem.setPluginConfig(eventSystemConfig);
 
     this.#panels.forEach(panel => {
       if (panel.toFixPanel) this.#createGridCellClones(panel.guid);
     });
 
-    // settings panel styles
     this.#panelStyles = {
       'border-width': config.panelBorderWidth || '2px',
       'border-style': config.panelBorderStyle || 'solid',
       'border-color': config.panelBorderColor || 'var(--background_secondary)',
     };
+
     this.#setPanelStyles();
 
     return true;
+  }
+
+  #createPanelPluginsInstances(panelPlugins) {
+    for (const panel of panelPlugins) {
+      const { id, name, version, guid, config, widget } = panel;
+
+      const widgetBody = widget.querySelector(`#panel-${guid}`);
+
+      if (this.#notFoundPlugins.includes(id)) {
+        createWidgetErrorMessage(widgetBody, name, version);
+        continue;
+      }
+
+      const plugin = this.#existedPlugins[id];
+
+      const { originalVersion, version: curVersion } = plugin;
+      const isOriginalVersion = curVersion === originalVersion;
+
+      const createPanelAndConfigure = () => {
+        this.#createPanel({ ...panel, version: curVersion });
+
+        const instance = !this.#replacedPlugins[guid]
+          ? this.getInstance(this.#GUIDMap[guid])
+          : this.getInstance(this.#GUIDMap[this.#replacedPlugins[guid]]);
+
+        if (instance && instance.setPluginConfig && config) {
+          instance.setPluginConfig(config);
+        }
+      };
+
+      if (isOriginalVersion) {
+        createPanelAndConfigure();
+        continue;
+      }
+
+      const msg = `Не удалось найти плагин ${name} v${version}. Использовать версию ${curVersion} как альтернативную?`;
+
+      if (plugin.hasOwnProperty('isConfirmVersion')) {
+        if (plugin.isConfirmVersion) {
+          createPanelAndConfigure();
+        } else {
+          createWidgetErrorMessage(widgetBody, name, version);
+        }
+      } else {
+        if (confirm(msg)) {
+          createPanelAndConfigure();
+          plugin.isConfirmVersion = true;
+        } else {
+          createWidgetErrorMessage(widgetBody, name, version);
+          plugin.isConfirmVersion = false;
+        }
+      }
+    }
   }
 
   async downloadConfiguration(downloadPath) {
@@ -634,9 +763,26 @@ export class WorkspaceSystem extends SystemPlugin {
     return maxID !== -Infinity ? maxID + 1 : 1;
   }
 
+  #createPanel(panelParams = {}) {
+    const { name, version, guid, toFixPanel, widget, tabIdOrGrid } = panelParams;
+
+    const selector = `#panel-${guid}`;
+    const instance = this.installPanel({ name, version, guid, selector });
+    const tabId = tabIdOrGrid instanceof GridStack ? this.#getGridIdByObject(tabIdOrGrid) : tabIdOrGrid;
+
+    this.#panels.push({
+      guid,
+      widget,
+      instance,
+      toFixPanel,
+      position: { tabId },
+      meta : instance.constructor.getRegistrationMeta(),
+    });
+  }
+
   createCell({ name, version, guid = null, w = 6, h = 8, x = 0, y = 0, tabId, autoPosition = true, toFixPanel }) {
     this.#logSystem.debug(
-      `Adding panel-plugin widget with name:'${name}', version:${version}, w:${w},h:${h},x:${x},y:${y}, autoPosition:${autoPosition}`
+      `Adding panel-plugin widget with name:'${name}', version: ${version}, w: ${w}, h: ${h}, x: ${x}, y: ${y}, autoPosition:${autoPosition}`
     );
     this.#logSystem.info(`Adding panel widget with name: '${name}', version: '${version}'`);
 
@@ -652,31 +798,7 @@ export class WorkspaceSystem extends SystemPlugin {
 
     const widget = this.#createWidget(targetGrid, { x, y, w, h, autoPosition, guid, toFixPanel });
 
-    const panelInstance = this.installPanel({
-      name,
-      guid,
-      version,
-      selector: `#panel-${guid}`,
-    });
-
-    const meta = panelInstance.constructor.getRegistrationMeta();
-
-    this.#panels.push({
-      widget,
-      position: {
-        tabId: this.#getGridIdByObject(targetGrid),
-      },
-      instance: panelInstance,
-      guid,
-      meta,
-      toFixPanel,
-    });
-
-    // отключил этот код, так как при инициализации рабочего стола
-    // панели в сетках устанавливаются не так, как их сохранили.
-    // if (toFixPanel) {
-    //   this.#createGridCellClones(guid);
-    // }
+    this.#createPanel({ name, version, guid, toFixPanel, widget, tabIdOrGrid: targetGrid });
 
     return widget;
   }
@@ -1145,40 +1267,66 @@ export class WorkspaceSystem extends SystemPlugin {
   };
 
   async #createPanelsInActiveTab(activeTabId) {
+    const panelPlugins = [];
+
     for (let i = 0; i < this.#hiddenPanelPlugins.length; i++) {
       const plugin = this.#hiddenPanelPlugins[i];
+
       if (!plugin) continue;
 
-      const { meta, config, position = {}, guid, toFixPanel } = plugin;
+      const {
+        meta,
+        config,
+        position = {},
+        toFixPanel,
+      } = plugin;
 
       if (position.tabId !== activeTabId) continue;
 
-      switch (meta?.type) {
-        case 'panel':
-          let widget;
-          if (typeof meta.name !== 'undefined') {
-            const pluginExists = this.getPlugin(meta.name, meta.version);
-            if (pluginExists) {
-              widget = this.createCell({
-                name: meta.name,
-                version: meta.version,
-                guid,
-                ...position,
-                autoPosition: false,
-                toFixPanel,
-              });
-            }
-          }
-          break;
-      }
+      let guid = plugin.guid;
+      let originalVersion = meta.version;
 
-      const instance = this.getInstance(guid);
-      if (instance && instance !== this && instance.setPluginConfig && config) {
-        instance.setPluginConfig(config);
-      }
+      const widget = this.#createWidget(null, {
+        ...position,
+        guid,
+        toFixPanel,
+        autoPosition: false,
+      });
 
-      this.#hiddenPanelPlugins[i] = null;
+      const id = `${meta.name}_${originalVersion}`;
+
+      panelPlugins.push({
+        ...meta,
+        id,
+        guid,
+        config,
+        widget,
+        toFixPanel,
+        version: originalVersion,
+        tabIdOrGrid: position.tabId,
+      });
+
+      try {
+        if (this.#existedPlugins.hasOwnProperty(id) || this.#notFoundPlugins.includes(id)) continue;
+
+        const pluginClass = this.getPlugin(meta.name, originalVersion, 3);
+        const { version } = pluginClass?.getRegistrationMeta();
+
+        this.#existedPlugins[id] = { version, originalVersion, pluginClass };
+      } catch (error) {
+        this.#notFoundPlugins.push(id);
+        console.error(error);
+        this.#notificationSystem.create(
+          'Отсутствует плагин',
+          `Плагин не найден: ${meta.name} ${meta.version}`,
+          { floatMode: true, floatTime: 5, type: 'warning' },
+        );
+      } finally {
+        this.#hiddenPanelPlugins[i] = null;
+      }
     }
+
+    this.#createPanelPluginsInstances(panelPlugins);
   }
 
   #setTabIdUrlParam(tabId) {
@@ -1243,8 +1391,8 @@ export class WorkspaceSystem extends SystemPlugin {
   };
 
   #getGridIdByObject(desiredGrid) {
-    for (const gridData of this.#gridCollection) {
-      if (gridData[1].gridInstance === desiredGrid) return gridData[0];
+    for (const [id, data] of this.#gridCollection) {
+      if (data?.gridInstance === desiredGrid) return id;
     }
     return null;
   }
@@ -1380,12 +1528,18 @@ export class WorkspaceSystem extends SystemPlugin {
       autoPosition = true,
       toFixPanel,
       empty,
+      tabId,
     } = gridItemOptions;
+
+    if (!(targetGrid instanceof GridStack)) {
+      targetGrid = this.#gridCollection.get(tabId)?.gridInstance;
+      targetGrid ??= this.#activeGrid;
+    }
 
     const widget = targetGrid.addWidget(
       `
       <div
-        class="grid-stack-item${this.#editMode ? ' grid-stack-item_editing' : ''}"
+        class="grid-stack-item ${this.#editMode ? 'grid-stack-item_editing' : ''}"
         ${empty ? ' data-empty-item' : ''}
       >
         <div class="grid-stack-item-content">
@@ -1432,11 +1586,19 @@ export class WorkspaceSystem extends SystemPlugin {
     );
 
     widget.addEventListener('click', () => {
-      if (!this.#editMode) this.#eventSystem.publishEvent('WorkspaceCellClicked', { guid });
+      if (!this.#editMode) {
+        const panel = this.#panels.find(p => p.guid === guid);
+        panel && this.#eventSystem.publishEvent('WorkspaceCellClicked', { guid });
+      }
     });
 
-    widget.querySelector('.close-panel-button').addEventListener('click', this.deleteCell.bind(this, guid));
-    widget.querySelector('.fix-panel-button').addEventListener('click', this.toggleFixPanel.bind(this, guid));
+    widget
+      .querySelector('.close-panel-button')
+      .addEventListener('click', this.deleteCell.bind(this, guid));
+
+    widget
+      .querySelector('.fix-panel-button')
+      .addEventListener('click', this.toggleFixPanel.bind(this, guid));
 
     this.#logSystem.info(`End of creation grid item cell.`);
     return widget;

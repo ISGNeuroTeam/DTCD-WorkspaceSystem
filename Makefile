@@ -21,7 +21,7 @@ SET_PACK_NAME = $(eval PACK_NAME=$(PROJECT_NAME)-$(VERSION)-$(BRANCH).tar.gz)
 
 DEV_STORAGE = https://storage.dev.isgneuro.com/repository/components
 DTCD_SDK = DTCD-SDK
-DTCD_SDK_URL = $(DEV_STORAGE)/$(DTCD_SDK)/$(DTCD_SDK)-0.2.0-master-0002.tar.gz
+DTCD_SDK_URL = $(DEV_STORAGE)/$(DTCD_SDK)/$(DTCD_SDK)-0.8.0-master-0010.tar.gz
 
 .SILENT:
 
