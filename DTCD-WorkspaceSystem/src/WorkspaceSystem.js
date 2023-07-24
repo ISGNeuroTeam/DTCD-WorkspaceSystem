@@ -476,6 +476,7 @@ export class WorkspaceSystem extends SystemPlugin {
 
           this.#replacedPlugins[replacedGUID] = guid;
           this.#GUIDMap[guid] = replacedGUID;
+          plugin.guid = replacedGUID;
           guid = replacedGUID;
         }
 
