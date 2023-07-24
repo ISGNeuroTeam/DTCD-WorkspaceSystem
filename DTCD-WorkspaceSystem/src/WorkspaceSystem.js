@@ -1428,20 +1428,25 @@ export class WorkspaceSystem extends SystemPlugin {
     }
 
     const htmlTabsSwitcher = this.#tabsSwitcherInstance.htmlElement;
+
     if (!htmlTabsSwitcher.querySelector('#panel-border-styles')) {
       htmlTabsSwitcher.appendChild(this.#wssStyleTag);
     }
 
-    let borderStyles = '.grid-stack-item-content{';
+    let borderStyles = '.grid-stack-item .grid-stack-item-content{';
+
     if (this.#panelStyles['border-width']) {
       borderStyles += `border-width: ${this.#panelStyles['border-width']};`;
     }
+
     if (this.#panelStyles['border-style']) {
       borderStyles += `border-style: ${this.#panelStyles['border-style']};`;
     }
+
     if (this.#panelStyles['border-color']) {
       borderStyles += `border-color: ${this.#panelStyles['border-color']};`;
     }
+
     borderStyles += '}';
 
     this.#wssStyleTag.textContent = borderStyles;
