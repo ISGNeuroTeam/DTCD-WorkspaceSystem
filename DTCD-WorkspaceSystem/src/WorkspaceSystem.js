@@ -37,7 +37,8 @@ export class WorkspaceSystem extends SystemPlugin {
   #tabPanelsConfig;
 
   // ---- STATE ----
-  #panels;
+  #panels = [];
+  #widgets = [];
   #panelStyles;
   #wssStyleTag;
   #currentTitle;
@@ -45,13 +46,13 @@ export class WorkspaceSystem extends SystemPlugin {
   #currentID;
   #column;
   #typeInit;
-  #hiddenPanelPlugins;
+  #hiddenPanelPlugins = [];
 
   // ---- INTERNAL'S ----
   #activeGrid;
   #gridCollection;
-  #editMode;
-  #modalInstance;
+  #editMode = false;
+  #modalInstance = null;
   #tabsSwitcherInstance;
   #styleSystem;
 
@@ -89,11 +90,7 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#logSystem = new LogSystemAdapter('0.5.0', this.#guid, 'WorkspaceSystem');
     this.#styleSystem = new StyleSystemAdapter('0.5.0');
 
-    this.#panels = [];
-    this.#editMode = false;
-    this.#modalInstance = null;
     this.#typeInit = WorkspaceSystem.INIT_TYPES[0];
-    this.#hiddenPanelPlugins = [];
   }
 
   get currentWorkspaceTitle() {
@@ -676,6 +673,7 @@ export class WorkspaceSystem extends SystemPlugin {
       }
     });
     this.#panels = [];
+    this.#widgets = [];
     this.#editMode = false;
     this.#panelStyles = {};
     this.#logSystem.debug(`Clearing panels array`);
@@ -806,22 +804,28 @@ export class WorkspaceSystem extends SystemPlugin {
 
   deleteCell(guid) {
     this.#logSystem.debug(`Trying to delete cell from workspace with guid: ${guid}`);
-    const panel = this.#panels.find(panel => panel.guid === guid);
-    if (!panel) {
+
+    const panel = this.#panels.find(p => p.guid === guid);
+    const widget = this.#widgets.find(w => w.guid === guid);
+
+    if (!panel && !widget) {
       this.#logSystem.debug(`No cell element found on workspace with given guid: ${guid}`);
-      return;
+      throw new Error(`Workspace cell with guid "${guid}" not exist`);
     }
 
-    if (panel.toFixPanel) this.#deleteGridCellClones(panel.guid);
-    const targetGrid = this.#gridCollection.get(panel.position.tabId).gridInstance;
-    targetGrid.removeWidget(panel.widget);
+    if (panel) {
+      const panelIndex = this.#panels.findIndex(p => p.guid === guid);
+      this.uninstallPluginByGUID(guid);
+      this.#panels.splice(panelIndex, 1);
+    }
 
-    this.uninstallPluginByGUID(guid);
+    if (widget) {
+      const widgetIndex = this.#widgets.findIndex(w => w.guid === guid);
+      widget.targetGrid.removeWidget(widget.widget);
+      this.#widgets.splice(widgetIndex, 1);
+    }
 
-    this.#panels.splice(
-      this.#panels.findIndex(plg => plg.guid === guid),
-      1
-    );
+    panel?.toFixPanel && this.#deleteGridCellClones(guid);
 
     this.#logSystem.info(`Deleted cell from workspace with guid: ${guid}`);
   }
@@ -1501,17 +1505,13 @@ export class WorkspaceSystem extends SystemPlugin {
   #deleteGridCellClones(guid) {
     this.#logSystem.debug(`Start of deleting grid cell clones for panel ${guid}.`);
 
-    const panel = this.#panels.find(panel => panel.guid === guid);
-    if (!panel) {
-      this.#logSystem.debug(`No cell element found on workspace with given guid: ${guid}`);
-      return;
-    }
-
     this.#gridCollection.forEach((gridData, key) => {
       gridData.gridInstance.getGridItems().forEach(gridCell => {
         if (gridCell.getAttribute('gs-id') === guid) {
           if (gridCell.hasAttribute('data-empty-item')) {
+            const index = this.#widgets.findIndex(w => w.widget === gridCell);
             gridData.gridInstance.removeWidget(gridCell);
+            this.#widgets.splice(index, 1);
             return;
           }
         }
@@ -1605,6 +1605,8 @@ export class WorkspaceSystem extends SystemPlugin {
     widget
       .querySelector('.fix-panel-button')
       .addEventListener('click', this.toggleFixPanel.bind(this, guid));
+
+    this.#widgets.push({ guid, widget, targetGrid });
 
     this.#logSystem.info(`End of creation grid item cell.`);
     return widget;
