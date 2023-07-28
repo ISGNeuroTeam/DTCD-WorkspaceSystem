@@ -430,9 +430,6 @@ export class WorkspaceSystem extends SystemPlugin {
       } = plugin;
 
       let guid = plugin.guid;
-      let originalVersion = meta.version;
-
-      this.#GUIDMap[guid] = guid;
 
       if (meta?.type === 'core') {
         if (meta.name === 'EventSystem') {
@@ -440,12 +437,19 @@ export class WorkspaceSystem extends SystemPlugin {
           continue;
         }
 
-        const instance = this.getInstance(this.#GUIDMap[guid]);
+        const instance = this.getSystem(meta.name, meta.version);
+        const systemGUID = this.getGUID(instance);
+        this.#GUIDMap[guid] = systemGUID;
 
         if (instance && instance !== this && instance.setPluginConfig && config) {
           instance.setPluginConfig(config);
         }
+
+        continue;
       }
+
+      let originalVersion = meta.version;
+      this.#GUIDMap[guid] = guid;
 
       if (meta?.type === 'panel') {
         if (['LiveDashPanel_SimpleMath', 'PrimitivePropertiesPanel_SimpleMath'].includes(meta.name)) {
