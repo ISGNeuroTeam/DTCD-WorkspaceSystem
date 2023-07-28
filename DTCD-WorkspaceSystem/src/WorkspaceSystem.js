@@ -556,9 +556,12 @@ export class WorkspaceSystem extends SystemPlugin {
       }
     }
 
-    if (eventSystemConfig.hasOwnProperty('actions')) {
+    const replacedGUIDS = Object.keys(this.#replacedPlugins);
+
+    if (replacedGUIDS.length > 0 && eventSystemConfig.hasOwnProperty('actions')) {
       for (const action of eventSystemConfig.actions) {
-        for (const [guid, originalGuid] of Object.entries(this.#replacedPlugins)) {
+        for (const guid of replacedGUIDS) {
+          const originalGuid = this.#replacedPlugins[guid];
           action.callback = action.callback.replaceAll(originalGuid, guid);
         }
       }
