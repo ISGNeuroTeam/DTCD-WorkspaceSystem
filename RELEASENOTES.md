@@ -1,6 +1,15 @@
+# [0.17.0]
+
+## Added
+
+- ability to change the plugin version if the original version is not found
+- plugins replacing mapping mechanism (TEMPORALLY)
+  - from `LiveDashPanel_SimpleMath` to `LiveDashPanel`
+  - from `PrimitivePropertiesPanel_SimpleMath` to `PrimitivePropertiesPanel`
+
 # [0.16.1]
 
-## Fixed 
+## Fixed
 
 - misprint in select menu of panels initialization script
 
@@ -13,7 +22,7 @@
 - new `setActiveTab()` public method
 - new `WorkspaceTabSelected` event
 - new `WorkspaceTabClicked` event
-- selection of panel initialization script 
+- selection of panel initialization script
 - tab cloning
 - subscribtion for displaying of workspace title when it's opened
 - role model for workspaces (for example, permissions of display tab panels)
