@@ -1657,4 +1657,8 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#logSystem.debug(`Tab selected: ${tabID}`);
     this.#eventSystem.publishEvent('WorkspaceTabSelectedProgrammly', tab);
   }
+
+  getGUIDListOfWidgets() {
+    return this.#widgets.map((widget) => widget.guid);
+  }
 }
