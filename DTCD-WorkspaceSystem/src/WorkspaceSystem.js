@@ -1658,6 +1658,9 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#eventSystem.publishEvent('WorkspaceTabSelectedProgrammly', tab);
   }
 
+  /**
+   * @returns {Array<string>} Array of GUIDs of widgets (panels on workspace).
+   */
   getGUIDListOfWidgets() {
     return this.#widgets.map((widget) => widget.guid);
   }
