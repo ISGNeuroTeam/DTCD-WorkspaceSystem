@@ -1,3 +1,5 @@
+import { GridStack } from 'gridstack';
+
 import './styles/panel.scss';
 import './styles/modal.scss';
 import 'gridstack/dist/gridstack.min.css';
@@ -12,14 +14,14 @@ import {
   NotificationSystemAdapter,
 } from './../../DTCD-SDK/index';
 
-import { version } from './../package.json';
-import { GridStack } from 'gridstack';
 
-import gridstackOptions from './utils/gridstackOptions';
-import TabsSwitcher from './TabsSwitcher';
+import { version } from './../package.json';
 import utf8_to_base64 from './libs/utf8tobase64';
-import TabsPanelComponent from './TabsPanelComponent';
+import gridstackOptions from './utils/gridstackOptions';
 import createWidgetErrorMessage from './utils/createWidgetErrorMessage';
+import TabsSwitcher from './TabsSwitcher';
+import TabsPanelComponent from './TabsPanelComponent';
+import gridStackItemHtml from './templates/gridStackItem.html';
 
 const replaces = {
   LiveDashPanel_SimpleMath: 'LiveDashPanel',
@@ -1549,42 +1551,19 @@ export class WorkspaceSystem extends SystemPlugin {
       targetGrid ??= this.#activeGrid;
     }
 
+    const gridStackItemEl = document.createElement('div');
+          gridStackItemEl.className = `grid-stack-item${this.#editMode ? ' grid-stack-item_editing' : ''}`;
+          gridStackItemEl.innerHTML = gridStackItemHtml;
+
+    if (empty) {
+      gridStackItemEl.setAttribute('data-empty-item', '');
+    } else {
+      gridStackItemEl.querySelector('.VisualizationContainer-js')
+                  .setAttribute('id', `panel-${guid}`);
+    }
+
     const widget = targetGrid.addWidget(
-      `
-      <div
-        class="grid-stack-item ${this.#editMode ? 'grid-stack-item_editing' : ''}"
-        ${empty ? ' data-empty-item' : ''}
-      >
-        <div class="grid-stack-item-content">
-          <div class="handle-drag-of-panel gridstack-panel-header">
-            <button
-              class="fix-panel-button"
-              type="button"
-              title="Зафиксировать панель"
-            >
-              <span class="FontIcon name_location size_lg"></span>
-            </button>
-            <button
-              class="close-panel-button"
-              type="button"
-              title="Удалить панель"
-            >
-              <span class="FontIcon name_closeBig size_lg"></span>
-            </button>
-            <button
-              class="drag-panel-button"
-              type="button"
-              title="Переместить панель"
-            >
-              <span class="FontIcon name_move size_lg"></span>
-            </button>
-          </div>
-          <div class="gridstack-content-container">
-            ${empty ? '' : `<div id="panel-${guid}"></div>`}
-          </div>
-        </div>
-      </div>
-      `,
+      gridStackItemEl,
       {
         x,
         y,
