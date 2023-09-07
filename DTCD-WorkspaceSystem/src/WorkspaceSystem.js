@@ -251,7 +251,7 @@ export class WorkspaceSystem extends SystemPlugin {
     const { title, column } = config;
     this.#currentTitle = title;
     this.setColumn(column);
-    this.saveConfiguration();
+    // this.saveConfiguration();
   }
 
   async init() {

@@ -133,8 +133,6 @@
         overflow-x: hidden;
         
         &:before {
-          --temp_aero_32: rgba(98, 144, 195, .32);
-
           content: '';
           display: block;
           position: absolute;
@@ -143,7 +141,8 @@
           height: 100%;
           width: 100%;
           z-index: 8;
-          background-color: var(--aero_32, var(--temp_aero_32));
+          background-color: var(--aero);
+          opacity: .32;
         }
       }
   
