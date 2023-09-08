@@ -87,6 +87,7 @@ export class WorkspaceSystem extends SystemPlugin {
       'WorkspaceTabSelectedProgrammly',
       'WorkspaceTabClicked',
       'WorkspaceTitleLoaded',
+      'WorkspaceEditModeChanged',
     ]);
     this.#interactionSystem = new InteractionSystemAdapter('0.4.0');
     this.#logSystem = new LogSystemAdapter('0.5.0', this.#guid, 'WorkspaceSystem');
@@ -133,6 +134,11 @@ export class WorkspaceSystem extends SystemPlugin {
       });
     }
 
+    const editModeSwitchAttrs = {
+      label: 'Редактировать рабочий стол',
+    };
+    if (this.#editMode) editModeSwitchAttrs.checked = true;
+
     return {
       fields: [
         {
@@ -158,12 +164,12 @@ export class WorkspaceSystem extends SystemPlugin {
         {
           component: 'switch',
           propName: 'editMode',
-          attrs: {
-            label: 'Редактировать рабочий стол',
-          },
+          attrs: editModeSwitchAttrs,
           handler: {
             event: 'input',
-            callback: this.changeMode.bind(this),
+            callback: (event) => {
+              this.changeMode(event.target.checked);
+            },
           },
         },
         {
@@ -311,7 +317,14 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#tabsSwitcherInstance.htmlElement.addEventListener('tab-delete', this.#handleTabsSwitcherDelete);
     this.#tabsSwitcherInstance.htmlElement.addEventListener('tab-add', this.#handleTabsSwitcherAdd);
     this.#tabsSwitcherInstance.htmlElement.addEventListener('tab-copy', this.#handleTabsSwitcherCopy);
-    this.#eventSystem.subscribe(this.#guid, 'WorkspaceTitleLoaded', 'HeaderPanel_top', 'showTitle');
+    
+    this.#eventSystem.subscribe({
+      eventGUID: this.#guid,
+      eventName: 'WorkspaceTitleLoaded',
+      actionGUID: 'HeaderPanel_top',
+      actionName: 'showTitle',
+      subsctiptionType: 'system',
+    });
 
     const workspaceID = history.state.workspaceID;
     this.setConfiguration(workspaceID).then(() => {
@@ -869,13 +882,13 @@ export class WorkspaceSystem extends SystemPlugin {
     }
   }
 
-  changeMode() {
-    this.#editMode = !this.#editMode;
+  changeMode(doEdit) {
+    doEdit ?? (doEdit = !this.#editMode);
+    this.#editMode = Boolean(doEdit);
 
     const panelBorder = document.querySelectorAll('.grid-stack-item');
     panelBorder.forEach(gridCell => {
-      if (this.#editMode) gridCell.classList.add('grid-stack-item_editing');
-      else gridCell.classList.remove('grid-stack-item_editing');
+      gridCell.classList[this.#editMode ? 'add' : 'remove']('grid-stack-item_editing');
     });
 
     const margin = this.#editMode ? '2px' : '0px';
@@ -890,6 +903,9 @@ export class WorkspaceSystem extends SystemPlugin {
       this.#vueComponent.editMode = this.#editMode;
     }
 
+    this.#eventSystem.publishEvent('WorkspaceEditModeChanged', {
+      editMode: this.#editMode,
+    });
     this.#logSystem.info(`Workspace edit mode turned ${this.#editMode ? 'on' : 'off'}`);
   }
 
