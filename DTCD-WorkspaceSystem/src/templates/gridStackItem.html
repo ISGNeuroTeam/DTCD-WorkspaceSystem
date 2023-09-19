@@ -1,19 +1,15 @@
 <div class="grid-stack-item-content">
   <div class="gridstack-panel-header">
-    <button
-      class="fix-panel-button"
-      type="button"
-      title="Зафиксировать панель"
-    >
-      <span class="FontIcon name_location size_lg"></span>
-    </button>
-    <button
-      class="close-panel-button"
-      type="button"
-      title="Удалить панель"
-    >
-      <span class="FontIcon name_closeBig size_lg"></span>
-    </button>
+    <base-tooltip content="Зафиксировать панель" placement="bottom">
+      <button class="fix-panel-button" type="button">
+        <span class="FontIcon name_location size_lg"></span>
+      </button>
+    </base-tooltip>
+    <base-tooltip content="Удалить панель" placement="bottom">
+      <button class="close-panel-button" type="button">
+        <span class="FontIcon name_closeBig size_lg"></span>
+      </button>
+    </base-tooltip>
   </div>
   <div class="gridstack-content-container handle-drag-of-panel">
     <div class="VisualizationContainer-js"></div>
