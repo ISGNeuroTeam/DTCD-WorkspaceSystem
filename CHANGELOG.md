@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - method for getting guid list of widgets
 
+### Changed
+
+- updated design of grid panel in edit mode
+
 ### Fixed
 
 - misprint in word 'Открываются'
