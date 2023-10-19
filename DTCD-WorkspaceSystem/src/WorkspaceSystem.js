@@ -60,6 +60,7 @@ export class WorkspaceSystem extends SystemPlugin {
 
   #tabsCollection = [];
   #vueComponent;
+  #workspaceContainer;
 
   #GUIDMap = {};
   #existedPlugins = {};
@@ -285,38 +286,7 @@ export class WorkspaceSystem extends SystemPlugin {
       return false;
     }
 
-    const { default: VueJS } = this.getDependence('Vue');
-
-    element.innerHTML = '';
-
-    this.#tabsSwitcherInstance = new TabsSwitcher({
-      tabsCollection: this.#tabsCollection,
-    });
-
-    const data = {
-      guid: this.#guid,
-      interactionSystem: this.#interactionSystem,
-      logSystem: this.#logSystem,
-      eventSystem: this.#eventSystem,
-      plugin: this,
-      tabsCollection: this.#tabsCollection,
-      editMode: this.#editMode,
-      visibleNavBar: false,
-      tabsSwitcherInstance: this.#tabsSwitcherInstance,
-    };
-    const panel = new VueJS({
-      data: () => data,
-      render: h => h(TabsPanelComponent),
-    }).$mount();
-    this.#vueComponent = panel.$children[0];
-
-    this.#tabsSwitcherInstance.htmlElement.appendChild(this.#vueComponent.$el);
-    element.appendChild(this.#tabsSwitcherInstance.htmlElement);
-
-    this.#tabsSwitcherInstance.htmlElement.addEventListener('tab-active', this.#handleTabsSwitcherActive);
-    this.#tabsSwitcherInstance.htmlElement.addEventListener('tab-delete', this.#handleTabsSwitcherDelete);
-    this.#tabsSwitcherInstance.htmlElement.addEventListener('tab-add', this.#handleTabsSwitcherAdd);
-    this.#tabsSwitcherInstance.htmlElement.addEventListener('tab-copy', this.#handleTabsSwitcherCopy);
+    this.#workspaceContainer = element;
     
     this.#eventSystem.subscribe({
       eventGUID: this.#guid,
@@ -394,9 +364,7 @@ export class WorkspaceSystem extends SystemPlugin {
     this.resetWorkspace();
 
     let activeTabId = this.#getTabIdUrlParam();
-
     this.#tabPanelsConfig = config.tabPanelsConfig instanceof Object ? config.tabPanelsConfig : null;
-
     this.#createTabsSwitcher();
 
     if (!config.tabPanelsConfig?.tabsOptions?.some(tab => tab.id === activeTabId)) {
@@ -683,6 +651,7 @@ export class WorkspaceSystem extends SystemPlugin {
 
   resetWorkspace() {
     this.#logSystem.debug('Resetting current workspace configuration');
+
     this.#panels.forEach(plugin => {
       const { meta, widget, instance } = plugin;
       if (meta?.type !== 'core') {
@@ -694,10 +663,13 @@ export class WorkspaceSystem extends SystemPlugin {
         if (instance) this.uninstallPluginByInstance(instance);
       }
     });
+    
     this.#panels = [];
     this.#widgets = [];
     this.#editMode = false;
     this.#panelStyles = {};
+    this.#tabPanelsConfig = null;
+
     this.#logSystem.debug(`Clearing panels array`);
     // this.setColumn();
   }
@@ -1155,8 +1127,42 @@ export class WorkspaceSystem extends SystemPlugin {
   }
 
   #createTabsSwitcher() {
-    this.#gridCollection = new Map();
+    this.#workspaceContainer.innerHTML = '';
     this.#tabsCollection = [];
+
+    this.#tabsSwitcherInstance = new TabsSwitcher({
+      tabsCollection: this.#tabsCollection,
+    });
+
+    const data = {
+      guid: this.#guid,
+      interactionSystem: this.#interactionSystem,
+      logSystem: this.#logSystem,
+      eventSystem: this.#eventSystem,
+      plugin: this,
+      tabsCollection: this.#tabsCollection,
+      editMode: this.#editMode,
+      visibleNavBar: false,
+      tabsSwitcherInstance: this.#tabsSwitcherInstance,
+    };
+
+    const { default: VueJS } = this.getDependence('Vue');
+    this.#vueComponent?.$destroy && this.#vueComponent.$destroy();
+    const panel = new VueJS({
+      data: () => data,
+      render: h => h(TabsPanelComponent),
+    }).$mount();
+    this.#vueComponent = panel.$children[0];
+
+    this.#tabsSwitcherInstance.htmlElement.appendChild(this.#vueComponent.$el);
+    this.#workspaceContainer.appendChild(this.#tabsSwitcherInstance.htmlElement);
+
+    this.#tabsSwitcherInstance.htmlElement.addEventListener('tab-active', this.#handleTabsSwitcherActive);
+    this.#tabsSwitcherInstance.htmlElement.addEventListener('tab-delete', this.#handleTabsSwitcherDelete);
+    this.#tabsSwitcherInstance.htmlElement.addEventListener('tab-add', this.#handleTabsSwitcherAdd);
+    this.#tabsSwitcherInstance.htmlElement.addEventListener('tab-copy', this.#handleTabsSwitcherCopy);
+
+    this.#gridCollection = new Map();
 
     if (this.#tabPanelsConfig instanceof Object) {
       for (let i = 0; i < this.#tabPanelsConfig.tabsOptions.length; i++) {
