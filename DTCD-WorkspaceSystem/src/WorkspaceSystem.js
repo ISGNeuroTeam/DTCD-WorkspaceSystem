@@ -1469,7 +1469,7 @@ export class WorkspaceSystem extends SystemPlugin {
       htmlTabsSwitcher.appendChild(this.#wssStyleTag);
     }
 
-    let borderStyles = '.grid-stack-item .grid-stack-item-content{';
+    let borderStyles = '.grid-stack > .grid-stack-item .grid-stack-item-content{';
 
     if (this.#panelStyles['border-width']) {
       borderStyles += `border-width: ${this.#panelStyles['border-width']};`;
