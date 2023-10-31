@@ -152,6 +152,7 @@ export class WorkspaceSystem extends SystemPlugin {
           attrs: {
             label: 'Название рабочего стола',
             required: true,
+            disabled: true,
           },
         },
         {
@@ -287,7 +288,7 @@ export class WorkspaceSystem extends SystemPlugin {
     }
 
     this.#workspaceContainer = element;
-    
+
     this.#eventSystem.subscribe({
       eventGUID: this.#guid,
       eventName: 'WorkspaceTitleLoaded',
@@ -344,7 +345,6 @@ export class WorkspaceSystem extends SystemPlugin {
     const tabPanelsConfig = this.#vueComponent.getConfig;
 
     return {
-      id: this.#currentID,
       title: this.#currentTitle,
       column: this.#column,
       editMode: this.#editMode,
@@ -419,6 +419,8 @@ export class WorkspaceSystem extends SystemPlugin {
           eventSystemConfig = config;
           continue;
         }
+
+        if (meta.name === 'AuthSystem') continue;
 
         const instance = this.getSystem(meta.name, meta.version);
         const systemGUID = this.getGUID(instance);
@@ -620,32 +622,15 @@ export class WorkspaceSystem extends SystemPlugin {
     }
   }
 
-  async downloadConfiguration(downloadPath) {
-    const delimIndex = downloadPath.search(/:id=/);
-    const id = delimIndex !== -1 ? downloadPath.split('?id=')[0].slice(delimIndex + 4) : downloadPath.split('?id=')[0];
-    const path = delimIndex !== -1 ? downloadPath.slice(0, delimIndex) : '';
-
-    const groups = await this.#interactionSystem.GETRequest('dtcd_utils/v1/user?photo_quality=low').then(response => {
-      const groups = response.data.groups;
-      if (!groups?.length) return [];
-      return groups;
-    });
-    const groupsForWorkSpaces = groups
-      .filter(group => group.name.includes('workspace.'))
-      .map(item => item.name.split('.')[1]);
-
-    this.#logSystem.debug(`Trying to download configuration with id:${id}`);
-    const { data } = await this.#interactionSystem.GETRequest(`/dtcd_workspaces/v1/workspace/object/${path}?id=${id}`);
+  async downloadConfiguration(path) {
+    this.#logSystem.debug(`Trying to download configuration '${path}'`);
+    const { data } = await this.#interactionSystem.GETRequest(`/dtcd_workspaces/v1/workspace?path=${path}&action=get`);
     this.#logSystem.debug(`Parsing configuration from response`);
 
-    if (groupsForWorkSpaces.includes(data.title)) {
-      this.#router.navigate('/workspaces');
-    }
-
     const content = data.content;
-    content['id'] = data.id;
-    content['title'] = data.title;
-    content['path'] = path;
+    content.path = path;
+    content.title = data.meta.title;
+
     return content;
   }
 
@@ -663,7 +648,7 @@ export class WorkspaceSystem extends SystemPlugin {
         if (instance) this.uninstallPluginByInstance(instance);
       }
     });
-    
+
     this.#panels = [];
     this.#widgets = [];
     this.#editMode = false;
@@ -905,34 +890,26 @@ export class WorkspaceSystem extends SystemPlugin {
   }
 
   async saveConfiguration() {
-    this.#logSystem.info('Saving current configuration');
-
     try {
-      await this.#interactionSystem.PUTRequest(`/dtcd_workspaces/v1/workspace/object/${this.#currentPath}`, [
-        {
-          id: this.#currentID,
-          title: this.#currentTitle,
-          content: this.getPluginConfig(),
-        },
-      ]);
+      this.#logSystem.info('Saving current configuration');
 
-      this.#notificationSystem &&
-        this.#notificationSystem.create('Готово!', 'Настройки рабочего стола сохранены.', {
-          floatMode: true,
-          floatTime: 5,
-          type: 'success',
-        });
+      const path = decodeURIComponent(this.#currentPath);
+
+      await this.#interactionSystem.POSTRequest(`/dtcd_workspaces/v1/workspace?path=${path}&action=update`, {
+        content: this.getPluginConfig(),
+      });
+
+      this.#notificationSystem.create(
+        'Успешно сохранено',
+        'Настройки рабочего стола сохранены',
+        { floatMode: true, floatTime: 5, type: 'success' },
+      );
     } catch (error) {
-      this.#notificationSystem &&
-        this.#notificationSystem.create(
-          'Ошибка на рабочем столе.',
-          'Произошла ошибка в процессе сохранения данных рабочего стола.',
-          {
-            floatMode: true,
-            floatTime: 5,
-            type: 'error',
-          }
-        );
+      this.#notificationSystem.create(
+        'Ошибка сохранения',
+        `Произошла ошибка в процессе сохранения рабочего стола: ${error.message}`,
+        { floatMode: true, floatTime: 5, type: 'error' },
+      );
       throw error;
     }
   }
@@ -1104,14 +1081,15 @@ export class WorkspaceSystem extends SystemPlugin {
   }
 
   #hideTabsPanel() {
-    this.#interactionSystem.GETRequest('dtcd_utils/v1/user?photo_quality=low').then(response => {
-      const groups = response.data.groups;
-      if (!groups?.length) return;
+    // ! Will be refactored after tabs logic update
+    // this.#interactionSystem.GETRequest('dtcd_utils/v1/user?photo_quality=low').then(response => {
+    //   const groups = response.data.groups;
+    //   if (!groups?.length) return;
 
-      for (let i = 0; i < groups.length; i++) {
-        this.#vueComponent.toggleVisibleTabByName(groups[i].name);
-      }
-    });
+    //   for (let i = 0; i < groups.length; i++) {
+    //     this.#vueComponent.toggleVisibleTabByName(groups[i].name);
+    //   }
+    // });
   }
 
   #collectStatesFromPlugins() {
