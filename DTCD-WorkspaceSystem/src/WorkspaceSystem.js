@@ -93,6 +93,7 @@ export class WorkspaceSystem extends SystemPlugin {
     this.#interactionSystem = new InteractionSystemAdapter('0.4.0');
     this.#logSystem = new LogSystemAdapter('0.5.0', this.#guid, 'WorkspaceSystem');
     this.#styleSystem = new StyleSystemAdapter('0.5.0');
+    this.#notificationSystem = new NotificationSystemAdapter('0.1.1');
 
     this.#typeInit = WorkspaceSystem.INIT_TYPES[0];
   }
@@ -268,14 +269,6 @@ export class WorkspaceSystem extends SystemPlugin {
 
   mountDashboardContainer(element) {
     if (!this.#router) this.#router = Application.getSystem('RouteSystem', '0.4.0');
-    if (!this.#notificationSystem) {
-      try {
-        this.#notificationSystem = new NotificationSystemAdapter('0.1.1');
-      } catch (error) {
-        this.#logSystem.error('Failed to get NotificationSystem in WorkspaceSystem.');
-        console.error(error);
-      }
-    }
 
     if (!(element instanceof HTMLElement)) {
       this.#logSystem.debug('The element is not an HTMLElement');
