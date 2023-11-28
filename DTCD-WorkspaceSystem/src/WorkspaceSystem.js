@@ -793,7 +793,7 @@ export class WorkspaceSystem extends SystemPlugin {
 
     this.#createPanel({ name, version, guid, toFixPanel, widget, tabIdOrGrid: targetGrid });
 
-    document.getElementById('centralPage').scrollTop += 200;
+    document.getElementById('centralPage').scrollTop = document.getElementById('centralPage').scrollHeight;
 
     return widget;
   }
