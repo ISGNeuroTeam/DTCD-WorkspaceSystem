@@ -57,6 +57,7 @@ export class WorkspaceSystem extends SystemPlugin {
   #modalInstance = null;
   #tabsSwitcherInstance;
   #styleSystem;
+  #permissions;
 
   #tabsCollection = [];
   #vueComponent;
@@ -620,11 +621,14 @@ export class WorkspaceSystem extends SystemPlugin {
     const { data } = await this.#interactionSystem.GETRequest(`/dtcd_workspaces/v1/workspace?path=${path}&action=get`);
     this.#logSystem.debug(`Parsing configuration from response`);
 
-    const content = data.content;
+    const { content, permissions } = data;
+
     content.path = path;
     content.title = data.meta.title;
 
-    return content;
+    this.#permissions = permissions;
+
+    return content
   }
 
   resetWorkspace() {
@@ -867,18 +871,25 @@ export class WorkspaceSystem extends SystemPlugin {
   async setConfiguration(id) {
     try {
       const config = await this.downloadConfiguration(id);
-      return this.setPluginConfig(config);
+      this.setPluginConfig(config);
     } catch (err) {
-      console.error(err);
-      this.#logSystem.error(`Error occured while downloading workspace configuration: ${err.message}`);
-      const errorMsg = 'Произошла ошибка в процессе загрузки и установки данных рабочего стола.';
-      this.#notificationSystem &&
-        this.#notificationSystem.create('Ошибка на рабочем столе.', errorMsg, {
-          floatMode: true,
-          floatTime: 5,
-          type: 'error',
-        });
-      this.getSystem('AppGUISystem', '0.1.0').goTo404();
+      let message = err.message;
+      let action = 'goTo404';
+
+      if (err.isAxiosError) {
+        message = err.response.data.error;
+        if (err.response.status === 403) action = 'goTo403';
+      }
+
+      this.#logSystem.error(`Error occured while downloading workspace configuration: ${message}`);
+
+      this.#notificationSystem.create(
+        'Ошибка рабочего стола',
+        `Произошла ошибка при открытии рабочего стола: ${message}`,
+        { floatMode: true, floatTime: 5, type: 'error' },
+      );
+
+      this.getSystem('AppGUISystem', '0.1.0')[action]();
     }
   }
 
@@ -1113,6 +1124,7 @@ export class WorkspaceSystem extends SystemPlugin {
       plugin: this,
       tabsCollection: this.#tabsCollection,
       editMode: this.#editMode,
+      permissions: this.#permissions,
       visibleNavBar: false,
       tabsSwitcherInstance: this.#tabsSwitcherInstance,
     };

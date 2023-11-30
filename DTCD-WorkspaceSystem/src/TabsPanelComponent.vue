@@ -88,7 +88,7 @@
     </div>
 
     <button
-      v-show="edit"
+      v-show="edit && permissions['dtcd_workspaces.create']"
       type="button"
       class="AddBtn"
       title="Добавить новую вкладку"
@@ -123,6 +123,7 @@ export default {
       tabsSwitcherInstance: $root.tabsSwitcherInstance,
       logSystem: $root.logSystem,
       eventSystem: $root.eventSystem,
+      permissions: $root.permissions,
       currentTab: '',
       tabName: '',
       scrollButton: false,
@@ -241,7 +242,7 @@ export default {
           if (!tab.hide) {
             this.setActiveTab(tab.id);
             break;
-          } 
+          }
         }
       }
     },
