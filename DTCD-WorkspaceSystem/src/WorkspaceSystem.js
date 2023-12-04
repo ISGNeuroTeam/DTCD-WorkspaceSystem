@@ -773,7 +773,7 @@ export class WorkspaceSystem extends SystemPlugin {
     });
   }
 
-  createCell({ name, version, guid = null, w = 6, h = 8, x = 0, y = 0, tabId, autoPosition = true, toFixPanel }) {
+  createCell({ name, version, guid = null, w = 3, h = 8, x = 0, y = 0, tabId, autoPosition = true, toFixPanel }) {
     this.#logSystem.debug(
       `Adding panel-plugin widget with name:'${name}', version: ${version}, w: ${w}, h: ${h}, x: ${x}, y: ${y}, autoPosition:${autoPosition}`
     );
@@ -792,6 +792,8 @@ export class WorkspaceSystem extends SystemPlugin {
     const widget = this.#createWidget(targetGrid, { x, y, w, h, autoPosition, guid, toFixPanel });
 
     this.#createPanel({ name, version, guid, toFixPanel, widget, tabIdOrGrid: targetGrid });
+
+    document.getElementById('centralPage').scrollTop = document.getElementById('centralPage').scrollHeight;
 
     return widget;
   }
@@ -1220,7 +1222,7 @@ export class WorkspaceSystem extends SystemPlugin {
         return acc;
       }, []);
 
-      // инифиализация плагинов на новой вкладке
+      // инициализация плагинов на новой вкладке
       const pluginsGuid = targetPlugins.reduce((acc, plugin) => {
         const { name, version } = plugin.meta;
         const { h, w, x, y } = plugin.position;
@@ -1558,7 +1560,7 @@ export class WorkspaceSystem extends SystemPlugin {
     const {
       guid = null,
       id = guid,
-      w = 6,
+      w = 3,
       h = 8,
       x = 0,
       y = 0,

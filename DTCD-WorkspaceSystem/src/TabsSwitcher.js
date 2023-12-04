@@ -24,7 +24,7 @@ class TabsSwitcher {
 
     this.#htmlElement = document.createElement('div');
     this.#htmlElement.classList.add('TabsSwitcher');
-    this.#htmlElement.innerHTML = `<div class="TabItemsContainer TabItemsContainer-js"></div>`;
+    this.#htmlElement.innerHTML = `<div id="centralPage" class="TabItemsContainer TabItemsContainer-js"></div>`;
 
     this.#tabsContainer = this.#htmlElement.querySelector('.TabItemsContainer-js');
 
