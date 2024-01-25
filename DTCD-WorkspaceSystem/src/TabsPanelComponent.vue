@@ -148,10 +148,16 @@ export default {
       return this.visibleNavBar;
     },
     getConfig () {
+      const tabsOptions = this.tabList;
+
+      tabsOptions.forEach((opt, i) => {
+        opt.order = i + 1;
+      });
+
       const config = {
+        tabsOptions,
         editMode: this.edit,
         visibleNavBar: this.visible,
-        tabsOptions: this.tabList,
       };
 
       return config;

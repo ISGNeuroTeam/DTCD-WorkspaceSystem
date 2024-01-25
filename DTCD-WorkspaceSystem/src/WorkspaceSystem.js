@@ -358,7 +358,11 @@ export class WorkspaceSystem extends SystemPlugin {
     this.resetWorkspace();
 
     let activeTabId = this.#getTabIdUrlParam();
+
     this.#tabPanelsConfig = config.tabPanelsConfig instanceof Object ? config.tabPanelsConfig : null;
+
+    this.#tabPanelsConfig?.tabsOptions?.sort((a, b) => a.order - b.order);
+
     this.#createTabsSwitcher();
 
     if (!config.tabPanelsConfig?.tabsOptions?.some(tab => tab.id === activeTabId)) {

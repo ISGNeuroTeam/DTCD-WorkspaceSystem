@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - method for getting guid list of widgets
 - integration with Keycloak
+- `order` prop to workspace tabs
 
 ### Changed
 
